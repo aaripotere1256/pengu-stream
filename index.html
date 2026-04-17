@@ -96,17 +96,29 @@ nav.scrolled{background:rgba(3,18,30,.96);padding:10px 40px;box-shadow:0 4px 24p
 .role-admin{background:rgba(231,76,60,.2);color:#e74c3c;border:1px solid rgba(231,76,60,.35);}
 .role-fondateur{background:linear-gradient(135deg,rgba(123,104,238,.3),rgba(255,111,183,.3));color:#fff;border:1px solid rgba(255,111,183,.4);}
 
-/* HERO */
-.hero{position:relative;z-index:1;min-height:100vh;display:flex;align-items:center;justify-content:center;flex-direction:column;text-align:center;padding:100px 20px 60px;gap:26px;}
-.hero-penguin{width:min(320px,75vw);filter:drop-shadow(0 20px 60px rgba(67,230,181,.25));animation:float 5s ease-in-out infinite;}
-@keyframes float{0%,100%{transform:translateY(0);}50%{transform:translateY(-16px);}}
-.hero-title{font-family:'Righteous',cursive;font-size:clamp(2.5rem,8vw,5.8rem);line-height:1.05;background:linear-gradient(135deg,#fff 30%,#b8e0f7,#43e6b5);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;}
-.hero-sub{font-size:1.1rem;color:rgba(255,255,255,.65);max-width:520px;line-height:1.7;}
-.hero-btns{display:flex;gap:14px;flex-wrap:wrap;justify-content:center;}
-.btn-primary{background:linear-gradient(135deg,var(--teal),#0e7a62);color:#fff;padding:14px 34px;border-radius:50px;font-weight:800;font-size:1rem;border:none;cursor:pointer;transition:transform .2s,box-shadow .2s;box-shadow:0 4px 20px rgba(23,165,137,.35);font-family:'Nunito',sans-serif;}
-.btn-primary:hover{transform:translateY(-3px);box-shadow:0 8px 28px rgba(23,165,137,.5);}
-.btn-secondary{background:transparent;color:var(--text-accent);padding:14px 34px;border-radius:50px;font-weight:800;font-size:1rem;border:2px solid rgba(184,224,247,.35);cursor:pointer;transition:transform .2s;font-family:'Nunito',sans-serif;}
-.btn-secondary:hover{transform:translateY(-3px);background:rgba(184,224,247,.06);}
+/* <!-- HERO --> */
+ <section class="hero">
+  <div style="font-size:clamp(7rem,20vw,11rem);animation:float 5s ease-in-out infinite;filter:drop-shadow(0 16px 50px rgba(67,230,181,.5));margin-bottom:4px;line-height:1;" aria-label="Pingouin cartoon">🐧</div>
+  <h1 class="hero-title">Le Streaming<br>des Grands Froids 🧊</h1>
+  <p class="hero-sub">Plongez dans un océan de films, séries et animés avec PenguStream — frais, rapide et sans publicités.</p>
+  <div class="hero-btns">
+
+    <!-- Bouton Discord -->
+    <button class="btn-discord" onclick="window.open('https://discord.gg/23YKtZ6NcT','_blank')">
+      <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 127.14 96.36" style="flex-shrink:0;">
+        <path fill="#fff" d="M107.7,8.07A105.15,105.15,0,0,0,81.47,0a72.06,72.06,0,0,0-3.36,6.83A97.68,97.68,0,0,0,49,6.83,72.37,72.37,0,0,0,45.64,0,105.89,105.89,0,0,0,19.39,8.09C2.79,32.65-1.71,56.6.54,80.21h0A105.73,105.73,0,0,0,32.71,96.36,77.7,77.7,0,0,0,39.6,85.25a68.42,68.42,0,0,1-10.85-5.18c.91-.66,1.8-1.34,2.66-2a75.57,75.57,0,0,0,64.32,0c.87.71,1.76,1.39,2.66,2a68.68,68.68,0,0,1-10.87,5.19,77,77,0,0,0,6.89,11.1A105.25,105.25,0,0,0,126.6,80.22h0C129.24,52.84,122.09,29.11,107.7,8.07ZM42.45,65.69C36.18,65.69,31,60,31,53s5-12.74,11.43-12.74S54,46,53.89,53,48.84,65.69,42.45,65.69Zm42.24,0C78.41,65.69,73.25,60,73.25,53s5-12.74,11.44-12.74S96.23,46,96.12,53,91.08,65.69,84.69,65.69Z"/>
+      </svg>
+      Rejoindre le Discord
+    </button>
+
+    <!-- Bouton inscription -->
+    <button class="btn-primary" onclick="openModal('register')">🐧 Rejoindre la colonie</button>
+
+    <!-- Bouton catalogue -->
+    <button class="btn-secondary" onclick="document.getElementById('catalogue').scrollIntoView({behavior:'smooth'})">Découvrir le catalogue</button>
+
+  </div>
+</section>
 
 /* CATALOGUE */
 .catalogue{position:relative;z-index:1;padding:80px 40px;max-width:1200px;margin:0 auto;}
@@ -1074,21 +1086,8 @@ footer a{color:rgba(255,255,255,.3);text-decoration:none;}
   <h1 class="hero-title">Le Streaming<br>des Grands Froids 🧊</h1>
   <p class="hero-sub">Plongez dans un océan de films, séries et animés avec PenguStream — frais, rapide et sans publicités.</p>
   <div class="hero-btns">
-
-    <!-- Bouton Discord -->
-    <button class="btn-discord" onclick="window.open('https://discord.gg/23YKtZ6NcT','_blank')">
-      <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 127.14 96.36" style="flex-shrink:0;">
-        <path fill="#fff" d="M107.7,8.07A105.15,105.15,0,0,0,81.47,0a72.06,72.06,0,0,0-3.36,6.83A97.68,97.68,0,0,0,49,6.83,72.37,72.37,0,0,0,45.64,0,105.89,105.89,0,0,0,19.39,8.09C2.79,32.65-1.71,56.6.54,80.21h0A105.73,105.73,0,0,0,32.71,96.36,77.7,77.7,0,0,0,39.6,85.25a68.42,68.42,0,0,1-10.85-5.18c.91-.66,1.8-1.34,2.66-2a75.57,75.57,0,0,0,64.32,0c.87.71,1.76,1.39,2.66,2a68.68,68.68,0,0,1-10.87,5.19,77,77,0,0,0,6.89,11.1A105.25,105.25,0,0,0,126.6,80.22h0C129.24,52.84,122.09,29.11,107.7,8.07ZM42.45,65.69C36.18,65.69,31,60,31,53s5-12.74,11.43-12.74S54,46,53.89,53,48.84,65.69,42.45,65.69Zm42.24,0C78.41,65.69,73.25,60,73.25,53s5-12.74,11.44-12.74S96.23,46,96.12,53,91.08,65.69,84.69,65.69Z"/>
-      </svg>
-      Rejoindre le Discord
-    </button>
-
-    <!-- Bouton inscription -->
     <button class="btn-primary" onclick="openModal('register')">🐧 Rejoindre la colonie</button>
-
-    <!-- Bouton catalogue -->
     <button class="btn-secondary" onclick="document.getElementById('catalogue').scrollIntoView({behavior:'smooth'})">Découvrir le catalogue</button>
-
   </div>
 </section>
 
@@ -2836,7 +2835,6 @@ setTimeout(function(){
       <div style="text-align:center;margin-bottom:18px;">
         <div style="font-size:2rem;margin-bottom:6px;">💡</div>
         <h2 class="modal-title">Suggérer un contenu</h2>
-        <button class="btn-submit" id="btn-suggest-submit" onclick="submitSuggestion()" style="margin-bottom:12px;margin-top:14px;">🚀 Envoyer ma suggestion</button>
         <p class="modal-switch" style="margin-bottom:0;">Tu veux voir un film ou une série sur PenguStream ?<br>Propose-le, on l'examinera !</p>
       </div>
 
@@ -2876,6 +2874,7 @@ setTimeout(function(){
         <textarea id="suggest-reason" placeholder="J'ai adoré car…"></textarea>
       </div>
 
+      <button class="btn-submit" id="btn-suggest-submit" onclick="submitSuggestion()">🚀 Envoyer ma suggestion</button>
     </div>
 
     <!-- Etape 2 : succès -->
