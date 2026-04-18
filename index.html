@@ -1075,6 +1075,12 @@ footer a{color:rgba(255,255,255,.3);text-decoration:none;}
   <p class="hero-sub">Plongez dans un océan de films, séries et animés avec PenguStream — frais, rapide et sans publicités.</p>
   <div class="hero-btns">
 
+    <!-- Bouton inscription -->
+    <button class="btn-primary" onclick="openModal('register')">🐧 Rejoindre la colonie</button>
+
+    <!-- Bouton catalogue -->
+    <button class="btn-secondary" onclick="document.getElementById('catalogue').scrollIntoView({behavior:'smooth'})">Découvrir le catalogue</button>
+
     <!-- Bouton Discord -->
     <button class="btn-primary" onclick="window.open('https://discord.gg/23YKtZ6NcT','_blank')">
       <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 127.14 96.36" style="flex-shrink:0;">
@@ -1082,13 +1088,7 @@ footer a{color:rgba(255,255,255,.3);text-decoration:none;}
       </svg>
       Rejoindre le Discord
     </button>
-
-    <!-- Bouton inscription -->
-    <button class="btn-primary" onclick="openModal('register')">🐧 Rejoindre la colonie</button>
-
-    <!-- Bouton catalogue -->
-    <button class="btn-secondary" onclick="document.getElementById('catalogue').scrollIntoView({behavior:'smooth'})">Découvrir le catalogue</button>
-
+    
   </div>
 </section>
 
