@@ -5651,15 +5651,45 @@
                     return { c1: g[0], c2: g[1] };
                 }
 
+                /* ── Registre global des données de cartes ── */
+                if (!window._penguCards) window._penguCards = {};
+                window._penguCardClick = function (cardKey) {
+                    var data = window._penguCards[cardKey];
+                    if (!data) return;
+                    var role = window.currentRole || 'user';
+                    var user = window.currentUser;
+                    if (data.access === 'vip' && (ROLES[role] || ROLES.user).level < 2) {
+                        if (!user) { toast('🔒 Connecte-toi !', true); window.openModal('login'); return; }
+                        toast('👑 Contenu réservé VIP+', true); return;
+                    }
+                    if (data.type === 'film') {
+                        window.openDetailModal({
+                            type: 'film', title: data.title, description: data.description || '', thumb: data.thumbUrl,
+                            banner: data.bannerUrl, emoji: data.emoji, badge: data.badge, cat: data.cat, access: data.access,
+                            embedCode: data.embedCode, c1: data.c1, c2: data.c2
+                        });
+                    } else {
+                        window.openDetailModal({
+                            type: 'serie', title: data.title, description: data.description || '', thumb: data.thumbUrl,
+                            banner: data.bannerUrl, emoji: data.emoji || '📺', badge: data.badge || 'serie', cat: data.cat, access: data.access,
+                            nb_saisons: data.nb_saisons, episodes: data.episodes || [], id: data.id, c1: data.c1, c2: data.c2
+                        });
+                    }
+                };
+
                 function addFilmCard(f) {
                     var g = catGradient(f.cat); var c1 = f.c1 || g.c1; var c2 = f.c2 || g.c2;
                     var empty = document.getElementById('empty-msg');
                     if (empty) empty.style.display = 'none';
 
+                    var cardKey = 'film_' + (f.id || (f.title || '').replace(/\s+/g, '_') + '_' + Date.now());
+                    window._penguCards[cardKey] = { type: 'film', title: f.title, description: f.description, thumbUrl: f.thumbUrl, bannerUrl: f.bannerUrl, emoji: f.emoji, badge: f.badge, cat: f.cat, access: f.access, embedCode: f.embedCode, c1: c1, c2: c2, id: f.id };
+
                     var card = document.createElement('div');
                     card.className = 'card'; card.dataset.type = 'film'; card.dataset.cat = f.cat; card.dataset.title = f.title || '';
                     if (f.id) card.dataset.filmId = f.id;
                     if (f.access === 'vip') card.dataset.access = 'vip';
+                    card.setAttribute('onclick', 'window._penguCardClick("' + cardKey + '")');
 
                     var thumb = '<div class="card-thumb" style="background:linear-gradient(135deg,' + c1 + ',' + c2 + ');position:relative">';
                     if (f.thumbUrl) thumb += '<img src="' + f.thumbUrl + '" alt="' + f.title + '" onerror="this.style.display=\'none\'">';
@@ -5677,36 +5707,26 @@
                     info += badgeHtml(f.badge) + '</div>';
 
                     card.innerHTML = thumb + info;
-                    card.addEventListener('click', function () {
-                        var role = window.currentRole || currentRole || 'user';
-                        var user = window.currentUser || currentUser;
-                        if (f.access === 'vip' && (ROLES[role] || ROLES.user).level < 2) {
-                            if (!user) { toast('🔒 Connecte-toi !', true); window.openModal('login'); return; }
-                            toast('👑 Contenu réservé VIP+', true); return;
-                        }
-                        window.openDetailModal({
-                            type: 'film', title: f.title, description: f.description || '', thumb: f.thumbUrl,
-                            banner: f.bannerUrl, emoji: f.emoji, badge: f.badge, cat: f.cat, access: f.access,
-                            embedCode: f.embedCode, c1: c1, c2: c2
-                        });
-                    });
                     document.getElementById('cards-grid').appendChild(card);
+                    if (f.id && window.getProgress) { var _pf = window.getProgress('film', f.id); if (_pf) refreshCardProgress(f.id, 'film', _pf.pct || 0, _pf.watched); }
                     addFilterCatBtn(f.cat);
                     applyFilters();
-                }
-
-                function addSerieCard(s, episodes) {
+                }(s, episodes) {
                     var g = catGradient(s.cat); var c1 = s.c1 || g.c1; var c2 = s.c2 || g.c2;
                     var empty = document.getElementById('empty-msg');
                     if (empty) empty.style.display = 'none';
+
+                    var nbSaisons = s.nb_saisons || 1;
+                    var nbEp = episodes ? episodes.length : 0;
+
+                    var cardKey = 'serie_' + (s.id || (s.title || '').replace(/\s+/g, '_') + '_' + Date.now());
+                    window._penguCards[cardKey] = { type: 'serie', title: s.title, description: s.description, thumbUrl: s.thumbUrl, bannerUrl: s.bannerUrl, emoji: s.emoji || '📺', badge: s.badge || 'serie', cat: s.cat, access: s.access, nb_saisons: nbSaisons, episodes: episodes || [], id: s.id, c1: c1, c2: c2 };
 
                     var card = document.createElement('div');
                     card.className = 'card'; card.dataset.type = 'serie'; card.dataset.cat = s.cat; card.dataset.title = s.title || '';
                     if (s.id) card.dataset.serieId = s.id;
                     if (s.access === 'vip') card.dataset.access = 'vip';
-
-                    var nbSaisons = s.nb_saisons || 1;
-                    var nbEp = episodes ? episodes.length : 0;
+                    card.setAttribute('onclick', 'window._penguCardClick("' + cardKey + '")');
 
                     var thumb = '<div class="card-thumb" style="background:linear-gradient(135deg,' + c1 + ',' + c2 + ');position:relative">';
                     if (s.thumbUrl) thumb += '<img src="' + s.thumbUrl + '" alt="' + s.title + '" onerror="this.style.display=\'none\'">';
@@ -5724,25 +5744,11 @@
                     info += badgeHtml(s.badge || 'serie') + '</div>';
 
                     card.innerHTML = thumb + info;
-                    card.addEventListener('click', function () {
-                        var role = window.currentRole || currentRole || 'user';
-                        var user = window.currentUser || currentUser;
-                        if (s.access === 'vip' && (ROLES[role] || ROLES.user).level < 2) {
-                            if (!user) { toast('🔒 Connecte-toi !', true); window.openModal('login'); return; }
-                            toast('👑 Contenu réservé VIP+', true); return;
-                        }
-                        window.openDetailModal({
-                            type: 'serie', title: s.title, description: s.description || '', thumb: s.thumbUrl,
-                            banner: s.bannerUrl, emoji: s.emoji || '📺', badge: s.badge || 'serie', cat: s.cat, access: s.access,
-                            nb_saisons: nbSaisons, episodes: episodes || [], id: s.id, c1: c1, c2: c2
-                        });
-                    });
                     document.getElementById('cards-grid').appendChild(card);
+                    if (s.id && window.getProgress) { var _ps = window.getProgress('serie', s.id); if (_ps) refreshCardProgress(s.id, 'serie', _ps.pct || 0, _ps.watched, _ps.saison ? 'S' + _ps.saison + ' E' + _ps.episode : ''); }
                     addFilterCatBtn(s.cat);
                     applyFilters();
-                }
-
-                function addFilterCatBtn(catKey) {
+                }(catKey) {
                     if (document.querySelector('.cat-btn[data-cat="' + catKey + '"]')) return;
                     var def = DEFAULT_CATS.find(function (c) { return c.key === catKey; });
                     if (def) return; // bouton déjà dans le HTML
@@ -7583,24 +7589,17 @@
                     }
                 }, 800);
 
-                /* Ré-appliquer quand une nouvelle carte est ajoutée */
-                var _origAddFilm = window.addFilmCard ? null : null;
-                setTimeout(function () {
-                    var origAddFilm = window.addFilmCard;
-                    if (origAddFilm) window.addFilmCard = function (f) {
-                        origAddFilm(f);
-                        if (f.id) { var p = window.getProgress('film', f.id); if (p) refreshCardProgress(f.id, 'film', p.pct || 0, p.watched); }
-                    };
-                    var origAddSerie = window.addSerieCard;
-                    if (origAddSerie) window.addSerieCard = function (s, eps) {
-                        origAddSerie(s, eps);
-                        if (s.id) { var p = window.getProgress('serie', s.id); if (p) refreshCardProgress(s.id, 'serie', p.pct || 0, p.watched, p.saison ? 'S' + p.saison + ' E' + p.episode : ''); }
-                    };
-                }, 500);
+                /* Le refresh progress par carte est maintenant intégré directement
+                   dans addFilmCard / addSerieCard via window._penguCards — plus besoin du wrapper. */
 
                 /* ── Injection bouton "Reprendre" dans openDetailModal ── */
+                /* openDetailModal est défini dans l'IIFE précédente, capture synchrone OK */
                 var _origOpenDetail = window.openDetailModal;
                 window.openDetailModal = function (item) {
+                    if (!_origOpenDetail) {
+                        console.error('[PenguStream] openDetailModal original non trouvé');
+                        return;
+                    }
                     _origOpenDetail(item);
                     // Injecter bouton reprendre après rendu
                     setTimeout(function () { injectResumeInDetail(item); }, 50);
