@@ -4612,7 +4612,7 @@
     </div>
 
     <!-- CATALOGUE -->
-    <section class="catalogue reveal" id="catalogue">
+    <section class="catalogue" id="catalogue">
         <h2 class="section-title">🎬 Catalogue Glacial</h2>
         <p class="section-sub">Films, séries et bien plus — sélectionnés par nos pingouins experts</p>
 
@@ -7317,15 +7317,15 @@
                     playBtn.className = 'btn-play-detail';
                     playBtn.innerHTML = canPlay ? '▶&nbsp;Lancer le film' : '📭&nbsp;Pas encore disponible';
                     playBtn.disabled = !canPlay;
-                    if (canPlay) playBtn.onclick = function () { closeDetailModal(); openPlayer(item.embedCode, item.title, item.cat, item.access, null); };
+                    if (canPlay) playBtn.onclick = function () { window.closeDetailModal(); window.openPlayer(item.embedCode, item.title, item.cat, item.access, null); };
                     actionsEl.appendChild(playBtn);
                 } else {
-                    var firstEp = item.episodes && item.episodes.length > 0 ? item.episodes[0] : null;
+                    var firstEp = item.episodes && item.episodes.find(function(e){ return !!(e.video_url || e.embed); }) || (item.episodes && item.episodes[0]) || null;
                     var playBtn2 = document.createElement('button');
                     playBtn2.className = 'btn-play-detail';
                     playBtn2.innerHTML = firstEp ? '▶&nbsp;Voir S1 E1' : '📭&nbsp;Pas encore disponible';
                     playBtn2.disabled = !firstEp;
-                    if (firstEp) playBtn2.onclick = function () { closeDetailModal(); openPlayer(null, item.title, item.cat, item.access, { id: item.id, nb_saisons: item.nb_saisons || 1, episodes: item.episodes || [] }); };
+                    if (firstEp) playBtn2.onclick = function () { window.closeDetailModal(); window.openPlayer(null, item.title, item.cat, item.access, { id: item.id, nb_saisons: item.nb_saisons || 1, episodes: item.episodes || [] }); };
                     actionsEl.appendChild(playBtn2);
                 }
 
@@ -7344,7 +7344,7 @@
                 var closeBtn = document.createElement('button');
                 closeBtn.className = 'btn-close-detail';
                 closeBtn.textContent = 'Fermer';
-                closeBtn.onclick = closeDetailModal;
+                closeBtn.onclick = window.closeDetailModal;
                 actionsEl.appendChild(closeBtn);
 
                 // ── Épisodes ──
@@ -7401,9 +7401,8 @@
 
             window.playEpFromDetail = function (e, ep, item) {
                 e.stopPropagation();
-                closeDetailModal();
-                // Ouvre le player positionné sur le bon épisode
-                openPlayer(null, item.title, item.cat, item.access, {
+                window.closeDetailModal();
+                window.openPlayer(null, item.title, item.cat, item.access, {
                     id: item.id,
                     nb_saisons: item.nb_saisons || 1,
                     episodes: item.episodes || [],
