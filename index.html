@@ -5711,7 +5711,9 @@
                     if (f.id && window.getProgress) { var _pf = window.getProgress('film', f.id); if (_pf) refreshCardProgress(f.id, 'film', _pf.pct || 0, _pf.watched); }
                     addFilterCatBtn(f.cat);
                     applyFilters();
-                }(s, episodes) {
+                }
+
+                function addSerieCard(s, episodes) {
                     var g = catGradient(s.cat); var c1 = s.c1 || g.c1; var c2 = s.c2 || g.c2;
                     var empty = document.getElementById('empty-msg');
                     if (empty) empty.style.display = 'none';
@@ -5748,7 +5750,9 @@
                     if (s.id && window.getProgress) { var _ps = window.getProgress('serie', s.id); if (_ps) refreshCardProgress(s.id, 'serie', _ps.pct || 0, _ps.watched, _ps.saison ? 'S' + _ps.saison + ' E' + _ps.episode : ''); }
                     addFilterCatBtn(s.cat);
                     applyFilters();
-                }(catKey) {
+                }
+
+                function addFilterCatBtn(catKey) {
                     if (document.querySelector('.cat-btn[data-cat="' + catKey + '"]')) return;
                     var def = DEFAULT_CATS.find(function (c) { return c.key === catKey; });
                     if (def) return; // bouton déjà dans le HTML
