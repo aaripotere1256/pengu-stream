@@ -1221,22 +1221,197 @@ footer a{color:rgba(255,255,255,.3);text-decoration:none;}
 <!-- ══════════════════════════════════════
      PANNEAU FONDATEUR / ADMIN
 ══════════════════════════════════════ -->
-<div id="founder-panel">
-  <div class="fp-container">
-    <div class="fp-header">
-      <div class="fp-title">⚙️ Panneau de Contrôle <span id="fp-role-label" style="font-size:.95rem;color:var(--aurora1)"></span></div>
-      <button class="fp-close" onclick="closeFounderPanel()">✕</button>
-    </div>
-    <div class="fp-tabs">
-      <button class="fp-tab active" id="tab-users-btn" onclick="fpTab('users',this)">👥 Utilisateurs</button>
-      <button class="fp-tab" id="tab-films-btn" onclick="fpTab('films',this)">🎬 Films</button>
-      <button class="fp-tab" id="tab-series-btn" onclick="fpTab('series',this)">📺 Séries</button>
-      <button class="fp-tab" id="tab-sagas-btn" onclick="fpTab('sagas',this)">🎭 Sagas</button>
-      <button class="fp-tab" id="tab-cats-btn" onclick="fpTab('cats',this)">🏷️ Catégories</button>
-      <button class="fp-tab" id="tab-themes-btn" onclick="fpTab('themes',this)">🎨 Thèmes</button>
-      <button class="fp-tab" id="tab-spotlight-btn" onclick="fpTab('spotlight',this)">🔥 Spotlight</button>
-    </div>
+    <div id="founder-panel">
+        <div class="fp-container">
+            <div class="fp-header">
+                <div class="fp-title">⚙️ Panneau de Contrôle <span id="fp-role-label"
+                        style="font-size:.95rem;color:var(--aurora1)"></span></div>
+                <button class="fp-close" onclick="closeFounderPanel()">✕</button>
+            </div>
+            <div class="fp-tabs">
+                <button class="fp-tab active" id="tab-users-btn" onclick="fpTab('users',this)">👥 Utilisateurs</button>
+                <button class="fp-tab" id="tab-films-btn" onclick="fpTab('films',this)">🎬 Films</button>
+                <button class="fp-tab" id="tab-series-btn" onclick="fpTab('series',this)">📺 Séries</button>
+                <button class="fp-tab" id="tab-sagas-btn" onclick="fpTab('sagas',this)">🎭 Sagas</button>
+                <button class="fp-tab" id="tab-cats-btn" onclick="fpTab('cats',this)">🏷️ Catégories</button>
+                <button class="fp-tab" id="tab-themes-btn" onclick="fpTab('themes',this)">🎨 Thèmes</button>
+                <button class="fp-tab" id="tab-suggestions-btn" onclick="fpTab('suggestions',this)">💡
+                    Suggestions</button>
+                <button class="fp-tab" id="tab-spotlight-btn" onclick="fpTab('spotlight',this)">🔥 Spotlight</button>
+            </div>
 
+            <!-- ── UTILISATEURS ── -->
+            <div class="fp-section active" id="fp-users">
+                <p style="color:rgba(255,255,255,.4);font-size:.84rem;margin-bottom:13px;">Recherche un utilisateur par
+                    email ou pseudo pour modifier son rôle.</p>
+                <div style="display:flex;gap:9px;margin-bottom:16px;flex-wrap:wrap;">
+                    <input id="fp-search" type="text" placeholder="🔍 Email ou pseudo..."
+                        style="flex:1;min-width:180px;background:rgba(255,255,255,.06);border:1.5px solid rgba(184,224,247,.15);border-radius:9px;padding:9px 13px;color:#fff;font-family:'Nunito',sans-serif;font-size:.88rem;outline:none;">
+                    <button onclick="searchUsers(false)"
+                        style="background:var(--teal);border:none;color:#fff;padding:9px 20px;border-radius:9px;font-family:'Nunito',sans-serif;font-weight:700;cursor:pointer;">Rechercher</button>
+                    <button onclick="searchUsers(true)"
+                        style="background:rgba(255,255,255,.08);border:1px solid rgba(184,224,247,.2);color:#fff;padding:9px 16px;border-radius:9px;font-family:'Nunito',sans-serif;font-weight:700;cursor:pointer;">Tous</button>
+                </div>
+                <div style="overflow-x:auto;">
+                    <table class="users-table">
+                        <thead>
+                            <tr>
+                                <th>Pseudo</th>
+                                <th>Email</th>
+                                <th>Rôle actuel</th>
+                                <th>Nouveau rôle</th>
+                                <th>Action</th>
+                            </tr>
+                        </thead>
+                        <tbody id="users-tbody">
+                            <tr>
+                                <td colspan="5" style="text-align:center;color:rgba(255,255,255,.3);padding:26px;">
+                                    Clique sur "Tous" pour afficher les utilisateurs</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- ── FILMS ── -->
+            <div class="fp-section" id="fp-films">
+                <!-- Liste films existants -->
+                <div id="films-list-wrap">
+                    <div
+                        style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;flex-wrap:wrap;gap:8px;">
+                        <p style="color:rgba(255,255,255,.6);font-size:.9rem;font-weight:700;">Films dans le catalogue
+                        </p>
+                        <button class="btn-fp-action" onclick="showFilmForm(null)">➕ Nouveau film</button>
+                    </div>
+                    <div style="position:relative;margin-bottom:14px;">
+                        <span
+                            style="position:absolute;left:13px;top:50%;transform:translateY(-50%);font-size:1rem;opacity:.4;pointer-events:none;">🔍</span>
+                        <input type="text" oninput="searchFilmsPanel(this.value)" placeholder="Rechercher un film…"
+                            style="width:100%;padding:9px 14px 9px 40px;background:rgba(255,255,255,.06);border:1.5px solid rgba(184,224,247,.15);border-radius:50px;color:#fff;font-family:'Nunito',sans-serif;font-size:.88rem;outline:none;transition:border-color .2s;"
+                            onfocus="this.style.borderColor='var(--aurora1)'"
+                            onblur="this.style.borderColor='rgba(184,224,247,.15)'">
+                    </div>
+                    <div id="films-list" class="content-list"></div>
+                </div>
+                <!-- Formulaire film (caché par défaut) -->
+                <div id="film-form-wrap" style="display:none">
+                    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:18px;">
+                        <h3 id="film-form-title"
+                            style="font-family:'Righteous',cursive;font-size:1.2rem;color:var(--text-accent)">Nouveau
+                            film</h3>
+                        <button onclick="hideFilmForm()"
+                            style="background:none;border:none;color:rgba(255,255,255,.4);font-size:1.3rem;cursor:pointer;">✕</button>
+                    </div>
+                    <input type="hidden" id="film-edit-id">
+                    <div class="fp-grid-2">
+                        <div class="fp-form-group"><label>Titre *</label><input type="text" id="film-title"
+                                placeholder="Ex: Interstellar"></div>
+                        <div class="fp-form-group"><label>Catégorie</label><select id="film-cat"></select></div>
+                        <div class="fp-form-group"><label>Emoji</label><input type="text" id="film-emoji"
+                                placeholder="🎬" maxlength="4" value="🎬"></div>
+                        <div class="fp-form-group"><label>Badge</label>
+                            <select id="film-badge">
+                                <option value="new">NOUVEAU</option>
+                                <option value="popular">⭐ POPULAIRE</option>
+                                <option value="vip">👑 VIP</option>
+                                <option value="4k">4K HDR</option>
+                            </select>
+                        </div>
+                        <input type="hidden" id="film-color1" value="#1a1a2e">
+                        <input type="hidden" id="film-color2" value="#7b68ee">
+                    </div>
+                    <div class="fp-form-group" style="margin-top:12px;"><label>Description</label><textarea
+                            id="film-desc" placeholder="Synopsis du film..."></textarea></div>
+                    <div class="fp-grid-2" style="margin-top:12px;">
+                        <div class="fp-form-group"><label>URL Miniature (affiche)</label><input type="url"
+                                id="film-thumb" placeholder="https://...image.jpg"></div>
+                        <div class="fp-form-group"><label>URL Bannière (fond large)</label><input type="url"
+                                id="film-banner" placeholder="https://...banner.jpg"></div>
+                    </div>
+                    <div class="fp-grid-2" style="margin-top:12px;">
+                        <div class="fp-form-group"><label>Accès</label><select id="film-access">
+                                <option value="all">Tout le monde</option>
+                                <option value="vip">VIP+ uniquement</option>
+                            </select></div>
+                    </div>
+                    <div class="fp-form-group" style="margin-top:12px;"><label>Code embed lecteur (iframe ou lien
+                            direct)</label><textarea id="film-embed"
+                            placeholder="&lt;iframe src=&quot;...&quot;&gt;&lt;/iframe&gt; ou https://..."></textarea>
+                    </div>
+                    <div style="display:flex;gap:10px;margin-top:16px;flex-wrap:wrap;">
+                        <button class="btn-fp-action" id="btn-save-film" onclick="saveFilm()">💾 Enregistrer le
+                            film</button>
+                        <button onclick="hideFilmForm()"
+                            style="background:rgba(255,255,255,.07);border:1px solid rgba(184,224,247,.15);color:rgba(255,255,255,.6);padding:11px 20px;border-radius:50px;font-family:'Nunito',sans-serif;font-weight:700;font-size:.9rem;cursor:pointer;">Annuler</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ── SÉRIES ── -->
+            <div class="fp-section" id="fp-series">
+                <div id="series-list-wrap">
+                    <div
+                        style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;flex-wrap:wrap;gap:8px;">
+                        <p style="color:rgba(255,255,255,.6);font-size:.9rem;font-weight:700;">Séries dans le catalogue
+                        </p>
+                        <button class="btn-fp-action" onclick="showSerieForm(null)">➕ Nouvelle série</button>
+                    </div>
+                    <div id="series-list" class="content-list"></div>
+                </div>
+                <!-- Formulaire série -->
+                <div id="serie-form-wrap" style="display:none">
+                    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:18px;">
+                        <h3 id="serie-form-title"
+                            style="font-family:'Righteous',cursive;font-size:1.2rem;color:var(--aurora3)">Nouvelle série
+                        </h3>
+                        <button onclick="hideSerieForm()"
+                            style="background:none;border:none;color:rgba(255,255,255,.4);font-size:1.3rem;cursor:pointer;">✕</button>
+                    </div>
+                    <input type="hidden" id="serie-edit-id">
+                    <div class="fp-grid-2">
+                        <div class="fp-form-group"><label>Titre *</label><input type="text" id="serie-title"
+                                placeholder="Ex: Breaking Bad"></div>
+                        <div class="fp-form-group"><label>Catégorie</label><select id="serie-cat"></select></div>
+                        <div class="fp-form-group"><label>Emoji</label><input type="text" id="serie-emoji"
+                                placeholder="📺" maxlength="4" value="📺"></div>
+                        <div class="fp-form-group"><label>Badge</label>
+                            <select id="serie-badge">
+                                <option value="serie">📺 SÉRIE</option>
+                                <option value="new">NOUVEAU</option>
+                                <option value="popular">⭐ POPULAIRE</option>
+                                <option value="vip">👑 VIP</option>
+                            </select>
+                        </div>
+                        <input type="hidden" id="serie-color1" value="#1a1a2e">
+                        <input type="hidden" id="serie-color2" value="#e74c8b">
+                        <div class="fp-form-group"><label>Nombre de saisons</label><input type="number"
+                                id="serie-nb-saisons" min="1" max="50" value="1" oninput="updateSeasonsBuilder()"></div>
+                        <div class="fp-form-group"><label>Accès</label><select id="serie-access">
+                                <option value="all">Tout le monde</option>
+                                <option value="vip">VIP+ uniquement</option>
+                            </select></div>
+                    </div>
+                    <div class="fp-form-group" style="margin-top:12px;"><label>Description</label><textarea
+                            id="serie-desc" placeholder="Synopsis de la série..."></textarea></div>
+                    <div class="fp-grid-2" style="margin-top:12px;">
+                        <div class="fp-form-group"><label>URL Miniature (affiche)</label><input type="url"
+                                id="serie-thumb" placeholder="https://...image.jpg"></div>
+                        <div class="fp-form-group"><label>URL Bannière (fond large)</label><input type="url"
+                                id="serie-banner" placeholder="https://...banner.jpg"></div>
+                    </div>
+
+                    <!-- BUILDER SAISONS / ÉPISODES -->
+                    <div class="seasons-builder" id="seasons-builder"></div>
+
+                    <div style="display:flex;gap:10px;margin-top:18px;flex-wrap:wrap;">
+                        <button class="btn-fp-action" id="btn-save-serie" onclick="saveSerie()">💾 Enregistrer la
+                            série</button>
+                        <button onclick="hideSerieForm()"
+                            style="background:rgba(255,255,255,.07);border:1px solid rgba(184,224,247,.15);color:rgba(255,255,255,.6);padding:11px 20px;border-radius:50px;font-family:'Nunito',sans-serif;font-weight:700;font-size:.9rem;cursor:pointer;">Annuler</button>
+                    </div>
+                </div>
+            </div>
+          
     <!-- ── UTILISATEURS ── -->
     <div class="fp-section active" id="fp-users">
       <p style="color:rgba(255,255,255,.4);font-size:.84rem;margin-bottom:13px;">Recherche un utilisateur par email ou pseudo pour modifier son rôle.</p>
