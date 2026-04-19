@@ -5678,8 +5678,10 @@
 
                     card.innerHTML = thumb + info;
                     card.addEventListener('click', function () {
-                        if (f.access === 'vip' && (ROLES[currentRole] || ROLES.user).level < 2) {
-                            if (!currentUser) { toast('🔒 Connecte-toi !', true); window.openModal('login'); return; }
+                        var role = window.currentRole || currentRole || 'user';
+                        var user = window.currentUser || currentUser;
+                        if (f.access === 'vip' && (ROLES[role] || ROLES.user).level < 2) {
+                            if (!user) { toast('🔒 Connecte-toi !', true); window.openModal('login'); return; }
                             toast('👑 Contenu réservé VIP+', true); return;
                         }
                         openDetailModal({
@@ -5723,8 +5725,10 @@
 
                     card.innerHTML = thumb + info;
                     card.addEventListener('click', function () {
-                        if (s.access === 'vip' && (ROLES[currentRole] || ROLES.user).level < 2) {
-                            if (!currentUser) { toast('🔒 Connecte-toi !', true); window.openModal('login'); return; }
+                        var role = window.currentRole || currentRole || 'user';
+                        var user = window.currentUser || currentUser;
+                        if (s.access === 'vip' && (ROLES[role] || ROLES.user).level < 2) {
+                            if (!user) { toast('🔒 Connecte-toi !', true); window.openModal('login'); return; }
                             toast('👑 Contenu réservé VIP+', true); return;
                         }
                         openDetailModal({
@@ -5792,7 +5796,14 @@
                     } else {
                         playerCurrentSerie = null;
                         document.getElementById('player-episodes-zone').style.display = 'none';
-                        var processed = embedCode.replace(/<iframe/gi, '<iframe style="width:100%;height:min(56.25vw,562px);border:none;border-radius:14px;"');
+                        var processed;
+                        if (!embedCode) {
+                            processed = '<p style="color:rgba(255,255,255,.4);text-align:center;padding:40px;">🔒 Aucun lecteur disponible pour ce contenu.</p>';
+                        } else if (embedCode.trim().startsWith('<')) {
+                            processed = embedCode.replace(/<iframe/gi, '<iframe style="width:100%;height:min(56.25vw,562px);border:none;border-radius:14px;"');
+                        } else {
+                            processed = '<iframe src="' + embedCode.trim() + '" style="width:100%;height:min(56.25vw,562px);border:none;border-radius:14px;" allowfullscreen></iframe>';
+                        }
                         document.getElementById('player-embed-container').innerHTML = processed;
                         // Enregistrer contexte pour sauvegarde progression
                         if (window.currentUser && serie === null) {
