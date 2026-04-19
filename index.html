@@ -7645,6 +7645,11 @@
                 /* ── Injection bouton "Reprendre" dans openDetailModal ── */
                 var _origOpenDetail = window.openDetailModal;
                 window.openDetailModal = function (item) {
+                    // Sécurité globale : jamais ouvrir la fiche si non connecté
+                    if (!window.currentUser) {
+                        window.openModal('login');
+                        return;
+                    }
                     _origOpenDetail(item);
                     // Injecter bouton reprendre après rendu
                     setTimeout(function () { injectResumeInDetail(item); }, 50);
@@ -8381,6 +8386,11 @@ body.theme-feu_artifice .aurora-bg .a3{background:#f1c40f;}
                 };
 
                 window.openSagaDetail = function (sagaId) {
+                    if (!window.currentUser) {
+                        window.openModal('login');
+                        window.toast('🔒 Connecte-toi pour accéder au catalogue !', true);
+                        return;
+                    }
                     if (!window.sb) return;
                     window.sb.from('sagas').select('*').eq('id', sagaId).single().then(function (r) {
                         if (r.error || !r.data) return;
@@ -8444,6 +8454,11 @@ body.theme-feu_artifice .aurora-bg .a3{background:#f1c40f;}
                 });
 
                 window.handleCatalogueCardClick = function (type, id) {
+                    if (!window.currentUser) {
+                        window.openModal('login');
+                        window.toast('🔒 Connecte-toi pour accéder au catalogue !', true);
+                        return;
+                    }
                     if (type === 'film') {
                         window.sb.from('films').select('*').eq('id', id).single().then(function (r) {
                             if (!r.data) return;
@@ -8677,6 +8692,11 @@ body.theme-feu_artifice .aurora-bg .a3{background:#f1c40f;}
                     };
 
                     if (moreBtn) moreBtn.onclick = function () {
+                        if (!window.currentUser) {
+                            window.openModal('login');
+                            window.toast('🔒 Connecte-toi pour accéder au catalogue !', true);
+                            return;
+                        }
                         if (data.type === 'film') {
                             window.openDetailModal({ type: 'film', title: data.title, description: data.description || '', thumb: data.thumb, banner: data.banner, emoji: data.emoji || '🎬', badge: data.badge, cat: data.cat, access: data.access, embedCode: data.embedCode, id: data.id });
                         } else {
