@@ -5684,7 +5684,7 @@
                             if (!user) { toast('🔒 Connecte-toi !', true); window.openModal('login'); return; }
                             toast('👑 Contenu réservé VIP+', true); return;
                         }
-                        openDetailModal({
+                        window.openDetailModal({
                             type: 'film', title: f.title, description: f.description || '', thumb: f.thumbUrl,
                             banner: f.bannerUrl, emoji: f.emoji, badge: f.badge, cat: f.cat, access: f.access,
                             embedCode: f.embedCode, c1: c1, c2: c2
@@ -5731,7 +5731,7 @@
                             if (!user) { toast('🔒 Connecte-toi !', true); window.openModal('login'); return; }
                             toast('👑 Contenu réservé VIP+', true); return;
                         }
-                        openDetailModal({
+                        window.openDetailModal({
                             type: 'serie', title: s.title, description: s.description || '', thumb: s.thumbUrl,
                             banner: s.bannerUrl, emoji: s.emoji || '📺', badge: s.badge || 'serie', cat: s.cat, access: s.access,
                             nb_saisons: nbSaisons, episodes: episodes || [], id: s.id, c1: c1, c2: c2
