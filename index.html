@@ -5678,17 +5678,9 @@
 
                     card.innerHTML = thumb + info;
                     card.addEventListener('click', function () {
-                        // Non connecté → login obligatoire pour tout contenu
-                        if (!currentUser) {
-                            toast('🔒 Connecte-toi pour accéder au catalogue !', true);
-                            window.openModal('login');
-                            return;
-                        }
-                        // Connecté mais pas VIP → bloqué sur contenu VIP
                         if (f.access === 'vip' && (ROLES[currentRole] || ROLES.user).level < 2) {
-                            toast('👑 Contenu réservé VIP+', true);
-                            window.openPremiumModal();
-                            return;
+                            if (!currentUser) { toast('🔒 Connecte-toi !', true); window.openModal('login'); return; }
+                            toast('👑 Contenu réservé VIP+', true); return;
                         }
                         openDetailModal({
                             type: 'film', title: f.title, description: f.description || '', thumb: f.thumbUrl,
@@ -5731,17 +5723,9 @@
 
                     card.innerHTML = thumb + info;
                     card.addEventListener('click', function () {
-                        // Non connecté → login obligatoire pour tout contenu
-                        if (!currentUser) {
-                            toast('🔒 Connecte-toi pour accéder au catalogue !', true);
-                            window.openModal('login');
-                            return;
-                        }
-                        // Connecté mais pas VIP → bloqué sur contenu VIP
                         if (s.access === 'vip' && (ROLES[currentRole] || ROLES.user).level < 2) {
-                            toast('👑 Contenu réservé VIP+', true);
-                            window.openPremiumModal();
-                            return;
+                            if (!currentUser) { toast('🔒 Connecte-toi !', true); window.openModal('login'); return; }
+                            toast('👑 Contenu réservé VIP+', true); return;
                         }
                         openDetailModal({
                             type: 'serie', title: s.title, description: s.description || '', thumb: s.thumbUrl,
@@ -7322,21 +7306,7 @@
                     playBtn.className = 'btn-play-detail';
                     playBtn.innerHTML = canPlay ? '▶&nbsp;Lancer le film' : '📭&nbsp;Pas encore disponible';
                     playBtn.disabled = !canPlay;
-                    if (canPlay) playBtn.onclick = function () {
-                        if (!window.currentUser) {
-                            closeDetailModal();
-                            window.openModal('login');
-                            window.toast('🔒 Connecte-toi pour regarder !', true);
-                            return;
-                        }
-                        if (item.access === 'vip' && (ROLES[window.currentRole] || ROLES.user).level < 2) {
-                            window.toast('👑 Contenu réservé VIP+', true);
-                            window.openPremiumModal();
-                            return;
-                        }
-                        closeDetailModal();
-                        openPlayer(item.embedCode, item.title, item.cat, item.access, null);
-                    };
+                    if (canPlay) playBtn.onclick = function () { closeDetailModal(); openPlayer(item.embedCode, item.title, item.cat, item.access, null); };
                     actionsEl.appendChild(playBtn);
                 } else {
                     var firstEp = item.episodes && item.episodes.length > 0 ? item.episodes[0] : null;
@@ -7344,21 +7314,7 @@
                     playBtn2.className = 'btn-play-detail';
                     playBtn2.innerHTML = firstEp ? '▶&nbsp;Voir S1 E1' : '📭&nbsp;Pas encore disponible';
                     playBtn2.disabled = !firstEp;
-                    if (firstEp) playBtn2.onclick = function () {
-                        if (!window.currentUser) {
-                            closeDetailModal();
-                            window.openModal('login');
-                            window.toast('🔒 Connecte-toi pour regarder !', true);
-                            return;
-                        }
-                        if (item.access === 'vip' && (ROLES[window.currentRole] || ROLES.user).level < 2) {
-                            window.toast('👑 Contenu réservé VIP+', true);
-                            window.openPremiumModal();
-                            return;
-                        }
-                        closeDetailModal();
-                        openPlayer(null, item.title, item.cat, item.access, { id: item.id, nb_saisons: item.nb_saisons || 1, episodes: item.episodes || [] });
-                    };
+                    if (firstEp) playBtn2.onclick = function () { closeDetailModal(); openPlayer(null, item.title, item.cat, item.access, { id: item.id, nb_saisons: item.nb_saisons || 1, episodes: item.episodes || [] }); };
                     actionsEl.appendChild(playBtn2);
                 }
 
@@ -7434,18 +7390,8 @@
 
             window.playEpFromDetail = function (e, ep, item) {
                 e.stopPropagation();
-                if (!window.currentUser) {
-                    closeDetailModal();
-                    window.openModal('login');
-                    window.toast('🔒 Connecte-toi pour regarder !', true);
-                    return;
-                }
-                if (item.access === 'vip' && (ROLES[window.currentRole] || ROLES.user).level < 2) {
-                    window.toast('👑 Contenu réservé VIP+', true);
-                    window.openPremiumModal();
-                    return;
-                }
                 closeDetailModal();
+                // Ouvre le player positionné sur le bon épisode
                 openPlayer(null, item.title, item.cat, item.access, {
                     id: item.id,
                     nb_saisons: item.nb_saisons || 1,
@@ -7645,11 +7591,6 @@
                 /* ── Injection bouton "Reprendre" dans openDetailModal ── */
                 var _origOpenDetail = window.openDetailModal;
                 window.openDetailModal = function (item) {
-                    // Sécurité globale : jamais ouvrir la fiche si non connecté
-                    if (!window.currentUser) {
-                        window.openModal('login');
-                        return;
-                    }
                     _origOpenDetail(item);
                     // Injecter bouton reprendre après rendu
                     setTimeout(function () { injectResumeInDetail(item); }, 50);
@@ -8386,11 +8327,6 @@ body.theme-feu_artifice .aurora-bg .a3{background:#f1c40f;}
                 };
 
                 window.openSagaDetail = function (sagaId) {
-                    if (!window.currentUser) {
-                        window.openModal('login');
-                        window.toast('🔒 Connecte-toi pour accéder au catalogue !', true);
-                        return;
-                    }
                     if (!window.sb) return;
                     window.sb.from('sagas').select('*').eq('id', sagaId).single().then(function (r) {
                         if (r.error || !r.data) return;
@@ -8454,11 +8390,6 @@ body.theme-feu_artifice .aurora-bg .a3{background:#f1c40f;}
                 });
 
                 window.handleCatalogueCardClick = function (type, id) {
-                    if (!window.currentUser) {
-                        window.openModal('login');
-                        window.toast('🔒 Connecte-toi pour accéder au catalogue !', true);
-                        return;
-                    }
                     if (type === 'film') {
                         window.sb.from('films').select('*').eq('id', id).single().then(function (r) {
                             if (!r.data) return;
@@ -8668,18 +8599,6 @@ body.theme-feu_artifice .aurora-bg .a3{background:#f1c40f;}
                     if (descEl) descEl.textContent = data.description || '';
 
                     if (playBtn) playBtn.onclick = function () {
-                        // Vérif connexion
-                        if (!window.currentUser) {
-                            window.openModal('login');
-                            window.toast('🔒 Connecte-toi pour regarder !', true);
-                            return;
-                        }
-                        // Vérif VIP
-                        if (data.access === 'vip' && (ROLES[window.currentRole] || ROLES.user).level < 2) {
-                            window.toast('👑 Contenu réservé VIP+', true);
-                            window.openPremiumModal();
-                            return;
-                        }
                         if (data.type === 'film' && data.embedCode) {
                             window.openPlayer(data.embedCode, data.title, data.cat, data.access, null);
                         } else if (data.type === 'serie') {
@@ -8692,11 +8611,6 @@ body.theme-feu_artifice .aurora-bg .a3{background:#f1c40f;}
                     };
 
                     if (moreBtn) moreBtn.onclick = function () {
-                        if (!window.currentUser) {
-                            window.openModal('login');
-                            window.toast('🔒 Connecte-toi pour accéder au catalogue !', true);
-                            return;
-                        }
                         if (data.type === 'film') {
                             window.openDetailModal({ type: 'film', title: data.title, description: data.description || '', thumb: data.thumb, banner: data.banner, emoji: data.emoji || '🎬', badge: data.badge, cat: data.cat, access: data.access, embedCode: data.embedCode, id: data.id });
                         } else {
