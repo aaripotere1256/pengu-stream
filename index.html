@@ -284,6 +284,8 @@
 
     html {
       scroll-behavior: smooth;
+      /* Fix iOS viewport height */
+      height: -webkit-fill-available;
     }
 
     body {
@@ -291,6 +293,16 @@
       background: var(--deep);
       color: #fff;
       overflow-x: hidden;
+      /* Optimisations tactiles iOS/Android */
+      -webkit-tap-highlight-color: transparent;
+      -webkit-touch-callout: none;
+      -webkit-text-size-adjust: 100%;
+      /* Fix iOS scroll bounce */
+      min-height: 100vh;
+      min-height: -webkit-fill-available;
+      /* Améliore le rendu des fonts sur mobile */
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
     }
 
     .aurora-bg {
@@ -582,11 +594,21 @@
       transition: transform .2s, box-shadow .2s;
       box-shadow: 0 4px 20px rgba(23, 165, 137, .35);
       font-family: 'Nunito', sans-serif;
+      /* Optimisations tactiles */
+      -webkit-tap-highlight-color: transparent;
+      touch-action: manipulation;
+      user-select: none;
+      -webkit-user-select: none;
     }
 
     .btn-primary:hover {
       transform: translateY(-3px);
       box-shadow: 0 8px 28px rgba(23, 165, 137, .5);
+    }
+
+    .btn-primary:active {
+      transform: translateY(-1px);
+      box-shadow: 0 6px 24px rgba(23, 165, 137, .45);
     }
 
     .btn-secondary {
@@ -600,11 +622,21 @@
       cursor: pointer;
       transition: transform .2s;
       font-family: 'Nunito', sans-serif;
+      /* Optimisations tactiles */
+      -webkit-tap-highlight-color: transparent;
+      touch-action: manipulation;
+      user-select: none;
+      -webkit-user-select: none;
     }
 
     .btn-secondary:hover {
       transform: translateY(-3px);
       background: rgba(184, 224, 247, .06);
+    }
+
+    .btn-secondary:active {
+      transform: translateY(-1px);
+      background: rgba(184, 224, 247, .08);
     }
 
     /* CATALOGUE */
@@ -741,11 +773,21 @@
       display: flex;
       flex-direction: column;
       min-width: 0;
+      /* Optimisations tactiles */
+      -webkit-tap-highlight-color: transparent;
+      touch-action: manipulation;
+      user-select: none;
+      -webkit-user-select: none;
     }
 
     .card:hover {
       transform: translateY(-7px) scale(1.02);
       box-shadow: 0 14px 36px rgba(0, 0, 0, .4);
+    }
+
+    .card:active {
+      transform: translateY(-4px) scale(1.01);
+      box-shadow: 0 10px 30px rgba(0, 0, 0, .35);
     }
 
     .card.hidden {
@@ -1852,6 +1894,13 @@
       font-size: .93rem;
       transition: border-color .2s;
       outline: none;
+      /* Optimisations mobile iOS/Android */
+      -webkit-appearance: none;
+      -moz-appearance: none;
+      appearance: none;
+      -webkit-tap-highlight-color: transparent;
+      /* Fix zoom iOS sur focus input */
+      font-size: 16px;
     }
 
     .form-group input:focus,
@@ -1889,10 +1938,20 @@
       box-shadow: 0 4px 18px rgba(23, 165, 137, .3);
       margin-top: 6px;
       font-family: 'Nunito', sans-serif;
+      /* Optimisations tactiles */
+      -webkit-tap-highlight-color: transparent;
+      touch-action: manipulation;
+      user-select: none;
+      -webkit-user-select: none;
     }
 
     .btn-submit:hover {
       transform: translateY(-2px);
+    }
+
+    .btn-submit:active {
+      transform: translateY(-1px);
+      box-shadow: 0 3px 15px rgba(23, 165, 137, .35);
     }
 
     .btn-submit:disabled {
@@ -2550,12 +2609,22 @@
       border: 1px solid rgba(184, 224, 247, .1);
       aspect-ratio: 2/3;
       transition: transform .3s cubic-bezier(.22, .68, 0, 1.2), box-shadow .3s, border-color .3s;
+      /* Optimisations tactiles */
+      -webkit-tap-highlight-color: transparent;
+      touch-action: manipulation;
+      user-select: none;
+      -webkit-user-select: none;
     }
 
     .saga-card:hover {
       transform: translateY(-8px) scale(1.02);
       box-shadow: 0 20px 50px rgba(0, 0, 0, .55);
       border-color: rgba(184, 224, 247, .3);
+    }
+
+    .saga-card:active {
+      transform: translateY(-5px) scale(1.01);
+      box-shadow: 0 16px 42px rgba(0, 0, 0, .5);
     }
 
     .saga-card-bg {
@@ -2856,12 +2925,22 @@
       background: rgba(255, 255, 255, .04);
       border: 1px solid rgba(184, 224, 247, .1);
       transition: transform .22s, box-shadow .22s, border-color .22s;
+      /* Optimisations tactiles */
+      -webkit-tap-highlight-color: transparent;
+      touch-action: manipulation;
+      user-select: none;
+      -webkit-user-select: none;
     }
 
     .saga-content-card:hover {
       transform: translateY(-5px);
       box-shadow: 0 12px 28px rgba(0, 0, 0, .4);
       border-color: rgba(184, 224, 247, .25);
+    }
+
+    .saga-content-card:active {
+      transform: translateY(-3px);
+      box-shadow: 0 9px 22px rgba(0, 0, 0, .35);
     }
 
     .saga-content-thumb {
@@ -4442,6 +4521,105 @@
       .modal {
         padding: 24px 16px;
       }
+
+      /* 🔧 FIX MOBILE iOS/Android - Affichage films sous sagas */
+      .saga-detail-box {
+        max-width: 100%;
+        margin: 0;
+        border-radius: 16px;
+      }
+
+      .saga-detail-banner {
+        height: 200px;
+        min-height: 200px;
+      }
+
+      .saga-detail-content {
+        padding: 16px 14px;
+      }
+
+      .saga-detail-poster {
+        width: 90px;
+        height: 130px;
+      }
+
+      .saga-detail-title {
+        font-size: 1.3rem;
+      }
+
+      .saga-detail-desc {
+        font-size: 0.82rem;
+        -webkit-line-clamp: 3;
+      }
+
+      /* FIX CRITIQUE - Grille films sagas mobile */
+      .saga-detail-contents {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr) !important;
+        gap: 10px !important;
+        min-height: auto;
+        max-height: none;
+        overflow: visible;
+      }
+
+      .saga-content-card {
+        width: 100%;
+        min-height: auto;
+      }
+
+      .saga-content-thumb {
+        width: 100%;
+        aspect-ratio: 2/3;
+        height: auto !important;
+        min-height: 0;
+      }
+
+      .saga-content-thumb img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        display: block;
+      }
+
+      .saga-content-info {
+        padding: 6px 8px;
+      }
+
+      .saga-content-title {
+        font-size: 0.72rem;
+        line-height: 1.25;
+        -webkit-line-clamp: 2;
+      }
+
+      /* Fix modal saga scroll iOS */
+      #saga-detail-modal {
+        padding: 20px 10px;
+        -webkit-overflow-scrolling: touch;
+      }
+
+      .saga-detail-section-title {
+        font-size: 0.9rem;
+        margin-bottom: 10px;
+      }
+
+      /* Fix sagas grid catalogue */
+      .sagas-catalogue-grid {
+        grid-template-columns: repeat(2, 1fr) !important;
+        gap: 12px;
+      }
+
+      .saga-card {
+        min-height: 200px;
+      }
+
+      .saga-card-title {
+        font-size: 0.85rem;
+      }
+
+      .saga-card-count {
+        font-size: 0.64rem;
+        padding: 2px 7px;
+      }
     }
 
     @media(min-width:601px) and (max-width:1024px) {
@@ -4497,6 +4675,106 @@
       .btn-secondary,
       .btn-submit {
         min-height: 48px;
+      }
+
+      /* Saga cards tactiles */
+      .saga-card:hover {
+        transform: none;
+      }
+
+      .saga-card:active {
+        transform: scale(.98);
+      }
+
+      .saga-content-card:hover {
+        transform: none;
+      }
+
+      .saga-content-card:active {
+        transform: scale(.97);
+      }
+    }
+
+    /* 🍎 FIXES SPÉCIFIQUES iOS Safari */
+    @supports (-webkit-touch-callout: none) {
+      /* Fix iOS viewport height avec barre d'adresse */
+      body {
+        min-height: 100vh;
+        min-height: -webkit-fill-available;
+      }
+
+      /* Fix scrolling iOS dans modales */
+      #saga-detail-modal,
+      .modal-overlay,
+      #suggest-modal,
+      #account-modal,
+      #premium-modal {
+        -webkit-overflow-scrolling: touch;
+      }
+
+      /* Fix input zoom iOS */
+      .form-group input,
+      .form-group select,
+      .form-group textarea,
+      .ep-form-row input,
+      .search-bar input {
+        font-size: 16px !important;
+      }
+
+      /* Fix Safari flexbox bug avec aspect-ratio */
+      .card-thumb,
+      .saga-card,
+      .saga-content-thumb {
+        -webkit-mask-image: -webkit-radial-gradient(white, black);
+      }
+
+      /* Fix Safari grid auto-flow */
+      .saga-detail-contents,
+      .cards-grid,
+      .sagas-catalogue-grid {
+        display: -webkit-box;
+        display: -ms-flexbox;
+        display: flex;
+        -ms-flex-wrap: wrap;
+        flex-wrap: wrap;
+      }
+
+      .saga-detail-contents {
+        display: grid !important;
+      }
+
+      /* Fix images loading iOS */
+      img {
+        -webkit-user-drag: none;
+        -khtml-user-drag: none;
+        -moz-user-drag: none;
+        -o-user-drag: none;
+      }
+
+      /* Fix sticky elements iOS */
+      nav {
+        position: -webkit-sticky;
+        position: sticky;
+      }
+    }
+
+    /* 🤖 FIXES SPÉCIFIQUES Android Chrome */
+    @media screen and (-webkit-min-device-pixel-ratio: 0) and (min-resolution: .001dpcm) {
+      /* Fix Android input autofill */
+      input:-webkit-autofill,
+      input:-webkit-autofill:hover,
+      input:-webkit-autofill:focus,
+      input:-webkit-autofill:active {
+        -webkit-box-shadow: 0 0 0 30px rgba(255, 255, 255, .06) inset !important;
+        -webkit-text-fill-color: #fff !important;
+        transition: background-color 5000s ease-in-out 0s;
+      }
+
+      /* Fix Android overflow scroll */
+      .saga-detail-contents,
+      #saga-detail-modal {
+        overflow-y: auto;
+        overflow-x: hidden;
       }
     }
   </style>
@@ -5262,7 +5540,23 @@
       <div class="form-group"><label>Confirmer</label><input type="password" id="reg-pass2" placeholder="••••••••"></div>
       <button class="btn-submit" id="btn-register" onclick="handleRegister()">🐧 Créer mon compte</button>
       <div class="divider">ou continuer avec</div>
-      <div class="social-btns"><button class="btn-social">🌐 Google</button><button class="btn-social">🍎 Apple</button></div>
+      <div class="social-btns">
+        <button class="btn-social" onclick="sb.auth.signInWithOAuth({provider:'discord', options:{redirectTo:'https://aaripotere1256.github.io/pengu-stream/'}})">
+          <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 127.14 96.36" style="flex-shrink:0;vertical-align:middle;margin-right:6px;">
+            <path fill="#fff" d="M107.7,8.07A105.15,105.15,0,0,0,81.47,0a72.06,72.06,0,0,0-3.36,6.83A97.68,97.68,0,0,0,49,6.83,72.37,72.37,0,0,0,45.64,0,105.89,105.89,0,0,0,19.39,8.09C2.79,32.65-1.71,56.6.54,80.21h0A105.73,105.73,0,0,0,32.71,96.36,77.7,77.7,0,0,0,39.6,85.25a68.42,68.42,0,0,1-10.85-5.18c.91-.66,1.8-1.34,2.66-2a75.57,75.57,0,0,0,64.32,0c.87.71,1.76,1.39,2.66,2a68.68,68.68,0,0,1-10.87,5.19,77,77,0,0,0,6.89,11.1A105.25,105.25,0,0,0,126.6,80.22h0C129.24,52.84,122.09,29.11,107.7,8.07ZM42.45,65.69C36.18,65.69,31,60,31,53s5-12.74,11.43-12.74S54,46,53.89,53,48.84,65.69,42.45,65.69Zm42.24,0C78.41,65.69,73.25,60,73.25,53s5-12.74,11.44-12.74S96.23,46,96.12,53,91.08,65.69,84.69,65.69Z"/>
+          </svg>
+          Discord
+        </button>
+        <button class="btn-social" onclick="sb.auth.signInWithOAuth({provider:'google', options:{redirectTo:'https://aaripotere1256.github.io/pengu-stream/'}})">
+          <svg width="18" height="18" viewBox="0 0 24 24" style="margin-right:6px;vertical-align:middle;flex-shrink:0;">
+            <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
+            <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
+            <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l3.66-2.84z"/>
+            <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
+          </svg>
+          Google
+        </button>
+      </div>
     </div>
     <div id="loginView" style="display:none">
       <svg class="modal-penguin" viewBox="0 0 80 80" fill="none"><ellipse cx="40" cy="48" rx="24" ry="26" fill="#1a1a2e"/><ellipse cx="40" cy="52" rx="14" ry="17" fill="#f0faff"/><ellipse cx="28" cy="36" rx="9" ry="11" fill="#1a1a2e"/><ellipse cx="52" cy="36" rx="9" ry="11" fill="#1a1a2e"/><circle cx="28" cy="34" r="4" fill="white"/><circle cx="52" cy="34" r="4" fill="white"/><circle cx="29.5" cy="34.5" r="2" fill="#0d0d0d"/><circle cx="53.5" cy="34.5" r="2" fill="#0d0d0d"/><ellipse cx="40" cy="41" rx="7" ry="4" fill="#e67e22"/><ellipse cx="27" cy="73" rx="9" ry="4" fill="#e67e22"/><ellipse cx="53" cy="73" rx="9" ry="4" fill="#e67e22"/></svg>
@@ -5273,63 +5567,26 @@
       <div style="text-align:right;margin-bottom:15px;margin-top:-7px;"><a href="#" style="color:var(--aurora1);font-size:.8rem;font-weight:700;">Mot de passe oublié ?</a></div>
       <button class="btn-submit" id="btn-login" onclick="handleLogin()">🐧 Se connecter</button>
       <div class="divider">ou continuer avec</div>
-      <div class="social-btns"><button class="btn-social">🌐 Google</button><button class="btn-social">🍎 Apple</button></div>
+      <div class="social-btns">
+        <button class="btn-social" onclick="sb.auth.signInWithOAuth({provider:'discord', options:{redirectTo:'https://aaripotere1256.github.io/pengu-stream/'}})">
+          <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 127.14 96.36" style="flex-shrink:0;vertical-align:middle;margin-right:6px;">
+            <path fill="#fff" d="M107.7,8.07A105.15,105.15,0,0,0,81.47,0a72.06,72.06,0,0,0-3.36,6.83A97.68,97.68,0,0,0,49,6.83,72.37,72.37,0,0,0,45.64,0,105.89,105.89,0,0,0,19.39,8.09C2.79,32.65-1.71,56.6.54,80.21h0A105.73,105.73,0,0,0,32.71,96.36,77.7,77.7,0,0,0,39.6,85.25a68.42,68.42,0,0,1-10.85-5.18c.91-.66,1.8-1.34,2.66-2a75.57,75.57,0,0,0,64.32,0c.87.71,1.76,1.39,2.66,2a68.68,68.68,0,0,1-10.87,5.19,77,77,0,0,0,6.89,11.1A105.25,105.25,0,0,0,126.6,80.22h0C129.24,52.84,122.09,29.11,107.7,8.07ZM42.45,65.69C36.18,65.69,31,60,31,53s5-12.74,11.43-12.74S54,46,53.89,53,48.84,65.69,42.45,65.69Zm42.24,0C78.41,65.69,73.25,60,73.25,53s5-12.74,11.44-12.74S96.23,46,96.12,53,91.08,65.69,84.69,65.69Z"/>
+          </svg>
+          Discord
+        </button>
+        <button class="btn-social" onclick="sb.auth.signInWithOAuth({provider:'google', options:{redirectTo:'https://aaripotere1256.github.io/pengu-stream/'}})">
+          <svg width="18" height="18" viewBox="0 0 24 24" style="margin-right:6px;vertical-align:middle;flex-shrink:0;">
+            <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
+            <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
+            <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l3.66-2.84z"/>
+            <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
+          </svg>
+          Google
+        </button>
+      </div>
     </div>
   </div>
 </div>
-      <div id="loginView" style="display:none">
-        <svg class="modal-penguin" viewBox="0 0 80 80" fill="none">
-          <ellipse cx="40" cy="48" rx="24" ry="26" fill="#1a1a2e" />
-          <ellipse cx="40" cy="52" rx="14" ry="17" fill="#f0faff" />
-          <ellipse cx="28" cy="36" rx="9" ry="11" fill="#1a1a2e" />
-          <ellipse cx="52" cy="36" rx="9" ry="11" fill="#1a1a2e" />
-          <circle cx="28" cy="34" r="4" fill="white" />
-          <circle cx="52" cy="34" r="4" fill="white" />
-          <circle cx="29.5" cy="34.5" r="2" fill="#0d0d0d" />
-          <circle cx="53.5" cy="34.5" r="2" fill="#0d0d0d" />
-          <ellipse cx="40" cy="41" rx="7" ry="4" fill="#e67e22" />
-          <ellipse cx="27" cy="73" rx="9" ry="4" fill="#e67e22" />
-          <ellipse cx="53" cy="73" rx="9" ry="4" fill="#e67e22" />
-        </svg>
-        <h2 class="modal-title">Bon Retour ! 🧊</h2>
-        <p class="modal-switch">Pas encore membre ? <span onclick="switchView('register')">Créer un
-            compte</span></p>
-        <div class="form-group"><label>Email</label><input type="email" id="login-email"
-            placeholder="pingouin@arctique.fr"></div>
-        <div class="form-group"><label>Mot de passe</label><input type="password" id="login-pass"
-            placeholder="••••••••"></div>
-        <div style="text-align:right;margin-bottom:15px;margin-top:-7px;"><a href="#"
-            style="color:var(--aurora1);font-size:.8rem;font-weight:700;">Mot de passe oublié ?</a></div>
-        <button class="btn-submit" id="btn-login" onclick="handleLogin()">🐧 Se connecter</button>
-        <div class="divider">ou continuer avec</div>
-        <div class="social-btns">
-          <button class="btn-social"
-            onclick="sb.auth.signInWithOAuth({provider:'discord', options:{redirectTo:'https://aaripotere1256.github.io/pengu-stream/'}})">
-            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 127.14 96.36"
-              style="flex-shrink:0;vertical-align:middle;margin-right:6px;">
-              <path fill="#fff"
-                d="M107.7,8.07A105.15,105.15,0,0,0,81.47,0a72.06,72.06,0,0,0-3.36,6.83A97.68,97.68,0,0,0,49,6.83,72.37,72.37,0,0,0,45.64,0,105.89,105.89,0,0,0,19.39,8.09C2.79,32.65-1.71,56.6.54,80.21h0A105.73,105.73,0,0,0,32.71,96.36,77.7,77.7,0,0,0,39.6,85.25a68.42,68.42,0,0,1-10.85-5.18c.91-.66,1.8-1.34,2.66-2a75.57,75.57,0,0,0,64.32,0c.87.71,1.76,1.39,2.66,2a68.68,68.68,0,0,1-10.87,5.19,77,77,0,0,0,6.89,11.1A105.25,105.25,0,0,0,126.6,80.22h0C129.24,52.84,122.09,29.11,107.7,8.07ZM42.45,65.69C36.18,65.69,31,60,31,53s5-12.74,11.43-12.74S54,46,53.89,53,48.84,65.69,42.45,65.69Zm42.24,0C78.41,65.69,73.25,60,73.25,53s5-12.74,11.44-12.74S96.23,46,96.12,53,91.08,65.69,84.69,65.69Z" />
-            </svg>
-            Discord
-          </button>
-          <button class="btn-social"
-            onclick="sb.auth.signInWithOAuth({provider:'google', options:{redirectTo:'https://aaripotere1256.github.io/pengu-stream/'}})">
-            <svg width="18" height="18" viewBox="0 0 24 24"
-              style="margin-right:6px;vertical-align:middle;flex-shrink:0;">
-              <path fill="#4285F4"
-                d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" />
-              <path fill="#34A853"
-                d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" />
-              <path fill="#FBBC05"
-                d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l3.66-2.84z" />
-              <path fill="#EA4335"
-                d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" />
-            </svg>
-            Google
-          </button>
-        </div>
-      </div>
-    </div>
 
     <div class="toast" id="toast"></div>
 
@@ -5492,41 +5749,141 @@
           var e = document.getElementById('reg-email').value.trim();
           var p = document.getElementById('reg-pass').value;
           var p2 = document.getElementById('reg-pass2').value;
-          if (!u || !e || !p || !p2) { toast('❄️ Remplis tous les champs !', true); return; }
-          if (p !== p2) { toast('🐧 Les mots de passe ne correspondent pas !', true); return; }
-          if (p.length < 6) { toast('🔒 Mot de passe trop court (6 car. min)', true); return; }
+          
+          // Validation améliorée
+          if (!u || !e || !p || !p2) { 
+            toast('❄️ Remplis tous les champs !', true); 
+            return; 
+          }
+          if (p !== p2) { 
+            toast('🐧 Les mots de passe ne correspondent pas !', true); 
+            return; 
+          }
+          if (p.length < 6) { 
+            toast('🔒 Mot de passe trop court (6 car. min)', true); 
+            return; 
+          }
+          
+          // Validation email format
+          var emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+          if (!emailRegex.test(e)) {
+            toast('📧 Format d\'email invalide !', true);
+            return;
+          }
+          
           setBtn('btn-register', true, '🐧 Créer mon compte');
-          sb.auth.signUp({ email: e, password: p, options: { data: { username: u } } }).then(function (res) {
+          
+          // Timeout pour mobile avec connexion lente
+          var timeoutId = setTimeout(function() {
             setBtn('btn-register', false, '🐧 Créer mon compte');
+            toast('⏱️ Connexion trop lente. Réessaye.', true);
+          }, 15000);
+          
+          sb.auth.signUp({ 
+            email: e, 
+            password: p, 
+            options: { 
+              data: { username: u },
+              emailRedirectTo: window.location.origin 
+            } 
+          }).then(function (res) {
+            clearTimeout(timeoutId);
+            setBtn('btn-register', false, '🐧 Créer mon compte');
+            
             if (res.error) {
               var m = '❌ Erreur lors de l\'inscription.';
-              if (res.error.message.includes('already')) m = '📧 Cet email est déjà utilisé !';
-              if (res.error.message.includes('valid')) m = '📧 Adresse email invalide !';
-              toast(m, true); return;
+              if (res.error.message.includes('already') || res.error.message.includes('registered')) {
+                m = '📧 Cet email est déjà utilisé !';
+              } else if (res.error.message.includes('valid') || res.error.message.includes('invalid')) {
+                m = '📧 Adresse email invalide !';
+              } else if (res.error.message.includes('weak') || res.error.message.includes('password')) {
+                m = '🔒 Mot de passe trop faible !';
+              }
+              console.error('Signup error:', res.error);
+              toast(m, true); 
+              return;
             }
-            if (res.data && res.data.user)
-              sb.from('profiles').upsert({ id: res.data.user.id, username: u, email: e, role: 'user' });
-            window.closeModal(); toast('🎉 Bienvenue ' + u + ' ! Vérifie ton email.');
-          }).catch(function () { setBtn('btn-register', false, '🐧 Créer mon compte'); toast('🌐 Problème réseau.', true); });
+            
+            if (res.data && res.data.user) {
+              // Créer le profil avec retry pour mobile
+              var createProfile = function(retries) {
+                sb.from('profiles').upsert({ 
+                  id: res.data.user.id, 
+                  username: u, 
+                  email: e, 
+                  role: 'user' 
+                }).then(function(profileRes) {
+                  if (profileRes.error && retries > 0) {
+                    setTimeout(function() { createProfile(retries - 1); }, 1000);
+                  }
+                }).catch(function(err) {
+                  console.warn('Profile creation error:', err);
+                });
+              };
+              createProfile(3);
+            }
+            
+            window.closeModal(); 
+            toast('🎉 Bienvenue ' + u + ' ! Vérifie ton email.');
+          }).catch(function (err) { 
+            clearTimeout(timeoutId);
+            setBtn('btn-register', false, '🐧 Créer mon compte'); 
+            console.error('Network error:', err);
+            toast('🌐 Problème réseau. Vérifie ta connexion.', true); 
+          });
         };
 
         window.handleLogin = function () {
           var e = document.getElementById('login-email').value.trim();
           var p = document.getElementById('login-pass').value;
-          if (!e || !p) { toast('❄️ Remplis tous les champs !', true); return; }
+          
+          if (!e || !p) { 
+            toast('❄️ Remplis tous les champs !', true); 
+            return; 
+          }
+          
           setBtn('btn-login', true, '🐧 Se connecter');
-          sb.auth.signInWithPassword({ email: e, password: p }).then(function (res) {
+          
+          // Timeout pour mobile
+          var timeoutId = setTimeout(function() {
             setBtn('btn-login', false, '🐧 Se connecter');
+            toast('⏱️ Connexion trop lente. Réessaye.', true);
+          }, 15000);
+          
+          sb.auth.signInWithPassword({ email: e, password: p }).then(function (res) {
+            clearTimeout(timeoutId);
+            setBtn('btn-login', false, '🐧 Se connecter');
+            
             if (res.error) {
               var m = '❌ Erreur de connexion.';
-              if (res.error.message.includes('Invalid')) m = '🔑 Email ou mot de passe incorrect !';
-              if (res.error.message.includes('confirmed')) m = '📧 Confirme ton email avant de te connecter !';
-              if (res.error.message.includes('disabled')) m = '🚫 Ce compte a été désactivé.';
-              toast(m, true); return;
+              var errMsg = res.error.message.toLowerCase();
+              
+              if (errMsg.includes('invalid') || errMsg.includes('credentials') || errMsg.includes('password')) {
+                m = '🔑 Email ou mot de passe incorrect !';
+              } else if (errMsg.includes('confirm') || errMsg.includes('email')) {
+                m = '📧 Confirme ton email avant de te connecter !';
+              } else if (errMsg.includes('disabled') || errMsg.includes('banned')) {
+                m = '🚫 Ce compte a été désactivé.';
+              } else if (errMsg.includes('network') || errMsg.includes('timeout')) {
+                m = '🌐 Problème de connexion réseau.';
+              }
+              
+              console.error('Login error:', res.error);
+              toast(m, true); 
+              return;
             }
-            var pseudo = (res.data.user.user_metadata && res.data.user.user_metadata.username) || res.data.user.email.split('@')[0];
-            window.closeModal(); toast('🎉 Bon retour, ' + pseudo + ' ! 🍿');
-          }).catch(function () { setBtn('btn-login', false, '🐧 Se connecter'); toast('🌐 Problème réseau.', true); });
+            
+            var pseudo = (res.data.user.user_metadata && res.data.user.user_metadata.username) 
+              || res.data.user.email.split('@')[0];
+            
+            window.closeModal(); 
+            toast('🎉 Bon retour, ' + pseudo + ' ! 🍿');
+          }).catch(function (err) { 
+            clearTimeout(timeoutId);
+            setBtn('btn-login', false, '🐧 Se connecter'); 
+            console.error('Network error:', err);
+            toast('🌐 Problème réseau. Vérifie ta connexion.', true); 
+          });
         };
 
         window.handleLogout = function () { sb.auth.signOut().then(function () { toast('👋 À bientôt dans la colonie !'); }); };
