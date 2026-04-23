@@ -5656,7 +5656,7 @@
       );
       window.sb = sb;
 
-      var ROLES = {
+      var ROLES = window.ROLES = {
         user: { label: '🐧 Membre', css: 'role-user', level: 0 },
         moderateur: { label: '🛡️ Modérateur', css: 'role-moderateur', level: 1 },
         vip: { label: '👑 VIP', css: 'role-vip', level: 2 },
@@ -7681,7 +7681,7 @@
           btn.disabled = false;
           btn.innerHTML = btnLabel;
           var fallback = window.currentRole || currentRole || 'user';
-          var lvl = (ROLES[fallback] || ROLES.user).level;
+          var lvl = (window.ROLES[fallback] || window.ROLES.user).level;
           if (item.access === 'vip' && lvl < 2) {
             toast('👑 Contenu réservé aux membres VIP+', true);
             return;
@@ -7695,7 +7695,7 @@
           currentRole = role;
           btn.disabled = false;
           btn.innerHTML = btnLabel;
-          var level = (ROLES[role] || ROLES.user).level;
+          var level = (window.ROLES[role] || window.ROLES.user).level;
           if (item.access === 'vip' && level < 2) {
             toast('👑 Contenu réservé aux membres VIP+', true);
             return;
