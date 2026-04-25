@@ -6006,7 +6006,8 @@
          CATALOGUE — RENDU CARTES
       ═══════════════════════════════════ */
       function badgeHtml(badge) {
-        var lbl = { new: 'NOUVEAU', popular: '⭐ POPULAIRE', vip: '👑 VIP', '4k': '4K HDR', serie: '📺 SÉRIE' };
+        if (!badge || badge === 'NULL') return '';
+       var lbl = { new: 'NOUVEAU', popular: '⭐ POPULAIRE', vip: '👑 VIP', '4k': '4K HDR', serie: '📺 SÉRIE' };
         var sty = { vip: 'background:linear-gradient(135deg,#f0c040,#e67e22);color:#000', '4k': 'background:#0055aa', serie: 'background:var(--aurora2)' };
         var cls = { new: 'badge-new', popular: 'badge-popular' };
         if (sty[badge]) return '<span class="card-badge" style="' + sty[badge] + '">' + (lbl[badge] || badge) + '</span>';
