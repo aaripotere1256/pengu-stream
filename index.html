@@ -4894,7 +4894,7 @@
                     style="width:100%;height:100%;object-fit:cover;display:block;">
             </div>
             <div class="spotlight-content">
-                <div class="spotlight-eyebrow">🔥 Film du moment</div>
+                <div class="spotlight-eyebrow" id="spotlight-eyebrow">🔥 Film du moment</div>
                 <div class="spotlight-title" id="spotlight-title">Titre du film</div>
                 <div class="spotlight-meta" id="spotlight-meta"></div>
                 <div class="spotlight-desc" id="spotlight-desc"></div>
@@ -5501,33 +5501,51 @@
 
             <!-- ── SPOTLIGHT ── -->
             <div class="fp-section" id="fp-spotlight">
-                <p style="color:rgba(255,255,255,.5);font-size:.86rem;margin-bottom:18px;">Choisis le <strong
-                        style="color:#fff;">film ou la série mis en avant</strong> en haut de la page d'accueil. Visible
-                    par tous
-                    les visiteurs.</p>
-                <div style="display:flex;gap:10px;margin-bottom:14px;flex-wrap:wrap;align-items:center;">
-                    <div style="flex:1;min-width:200px;position:relative;">
-                        <span
-                            style="position:absolute;left:13px;top:50%;transform:translateY(-50%);opacity:.4;font-size:.95rem;pointer-events:none;">🔍</span>
+
+                <!-- SPOTLIGHT ACTUEL -->
+                <div id="spotlight-current-block" style="display:none;margin-bottom:20px;">
+                    <p style="color:rgba(255,255,255,.4);font-size:.75rem;font-weight:800;text-transform:uppercase;letter-spacing:.6px;margin-bottom:10px;">🔥 Spotlight actif</p>
+                    <div style="background:rgba(67,230,181,.06);border:1.5px solid rgba(67,230,181,.25);border-radius:16px;padding:14px 16px;display:flex;gap:14px;align-items:center;flex-wrap:wrap;">
+                        <div class="spotlight-panel-preview" id="spotlight-preview-img" style="width:54px;height:80px;flex-shrink:0;border-radius:10px;overflow:hidden;"><span>?</span></div>
+                        <div style="flex:1;min-width:140px;">
+                            <div id="spot-cur-title" style="font-weight:800;font-size:1rem;color:#fff;margin-bottom:4px;">—</div>
+                            <div id="spot-cur-meta" style="font-size:.76rem;color:rgba(255,255,255,.45);margin-bottom:8px;"></div>
+                            <!-- Texte promo modifiable -->
+                            <div style="display:flex;gap:7px;align-items:center;flex-wrap:wrap;">
+                                <input type="text" id="spotlight-eyebrow-input" placeholder="🔥 Film du moment"
+                                    style="flex:1;min-width:140px;padding:6px 12px;background:rgba(255,255,255,.06);border:1.5px solid rgba(184,224,247,.15);border-radius:8px;color:#fff;font-family:'Nunito',sans-serif;font-size:.82rem;outline:none;"
+                                    onfocus="this.style.borderColor='var(--aurora1)'" onblur="this.style.borderColor='rgba(184,224,247,.15)'"
+                                    oninput="spotlightEyebrowChanged()">
+                                <button onclick="saveSpotlightEyebrow()" id="spot-eyebrow-save-btn"
+                                    style="display:none;background:rgba(67,230,181,.15);border:1px solid rgba(67,230,181,.35);color:var(--aurora1);padding:6px 13px;border-radius:8px;font-family:'Nunito',sans-serif;font-weight:700;font-size:.78rem;cursor:pointer;white-space:nowrap;">💾 Sauvegarder</button>
+                            </div>
+                        </div>
+                        <button onclick="clearSpotlight()" class="btn-fp-danger" style="align-self:flex-start;">🗑️ Retirer</button>
+                    </div>
+                </div>
+
+                <div id="spotlight-none-msg" style="background:rgba(255,255,255,.03);border:1.5px dashed rgba(184,224,247,.12);border-radius:14px;padding:16px;text-align:center;color:rgba(255,255,255,.3);font-size:.85rem;margin-bottom:18px;">
+                    Aucun spotlight actif — choisis un contenu ci-dessous.
+                </div>
+
+                <!-- FILTRES + RECHERCHE -->
+                <div style="display:flex;gap:8px;margin-bottom:12px;flex-wrap:wrap;align-items:center;">
+                    <button id="spot-filter-all" onclick="spotFilterType('all',this)" style="background:linear-gradient(135deg,var(--teal),var(--aurora2));border:none;color:#fff;padding:6px 15px;border-radius:50px;font-family:'Nunito',sans-serif;font-weight:700;font-size:.8rem;cursor:pointer;">Tout</button>
+                    <button id="spot-filter-film" onclick="spotFilterType('film',this)" style="background:rgba(255,255,255,.07);border:1.5px solid rgba(184,224,247,.15);color:rgba(255,255,255,.6);padding:6px 15px;border-radius:50px;font-family:'Nunito',sans-serif;font-weight:700;font-size:.8rem;cursor:pointer;">🎬 Films</button>
+                    <button id="spot-filter-serie" onclick="spotFilterType('serie',this)" style="background:rgba(255,255,255,.07);border:1.5px solid rgba(184,224,247,.15);color:rgba(255,255,255,.6);padding:6px 15px;border-radius:50px;font-family:'Nunito',sans-serif;font-weight:700;font-size:.8rem;cursor:pointer;">📺 Séries</button>
+                    <div style="flex:1;min-width:160px;position:relative;">
+                        <span style="position:absolute;left:12px;top:50%;transform:translateY(-50%);opacity:.4;font-size:.9rem;pointer-events:none;">🔍</span>
                         <input type="text" id="spotlight-search-input" oninput="searchSpotlightContent(this.value)"
-                            placeholder="Chercher un film ou une série…"
-                            style="width:100%;padding:9px 14px 9px 38px;background:rgba(255,255,255,.06);border:1.5px solid rgba(184,224,247,.15);border-radius:50px;color:#fff;font-family:'Nunito',sans-serif;font-size:.88rem;outline:none;"
-                            onfocus="this.style.borderColor='var(--aurora1)'"
-                            onblur="this.style.borderColor='rgba(184,224,247,.15)'">
+                            placeholder="Rechercher…"
+                            style="width:100%;padding:7px 12px 7px 34px;background:rgba(255,255,255,.06);border:1.5px solid rgba(184,224,247,.15);border-radius:50px;color:#fff;font-family:'Nunito',sans-serif;font-size:.84rem;outline:none;"
+                            onfocus="this.style.borderColor='var(--aurora1)'" onblur="this.style.borderColor='rgba(184,224,247,.15)'">
                     </div>
                 </div>
-                <div id="spotlight-search-results"
-                    style="display:flex;flex-direction:column;gap:7px;max-height:320px;overflow-y:auto;margin-bottom:18px;">
-                </div>
-                <div id="spotlight-current-preview" style="display:none;">
-                    <p
-                        style="color:rgba(255,255,255,.4);font-size:.78rem;font-weight:700;text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px;">
-                        Spotlight actuel :</p>
-                    <div class="spotlight-panel-preview" id="spotlight-preview-img"><span>Aucun</span></div>
-                    <div style="display:flex;justify-content:flex-end;margin-top:10px;">
-                        <button onclick="clearSpotlight()" class="btn-fp-danger">🗑️ Retirer le spotlight</button>
-                    </div>
-                </div>
+
+                <!-- GRILLE DE CONTENU -->
+                <div id="spotlight-grid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(90px,1fr));gap:10px;max-height:400px;overflow-y:auto;padding-right:4px;"></div>
+                <div id="spotlight-search-results" style="display:none;"></div>
+
             </div>
         </div>
     </div>
@@ -9095,8 +9113,10 @@ body.theme-feu_artifice .aurora-bg .a3{background:#f1c40f;}
 
             var _spotlightData = null;
             var SPOTLIGHT_KEY = 'pengu_spotlight_v2';
+            var _spotAllContent = [];
+            var _spotFilterCurrent = 'all';
 
-            /* Sauvegarde prioritaire : localStorage (instantané) + Supabase (persistant) */
+            /* ── LocalStorage ── */
             function saveSpotlightLocally(data) {
                 try { localStorage.setItem(SPOTLIGHT_KEY, data ? JSON.stringify(data) : ''); } catch (e) { }
             }
@@ -9104,27 +9124,46 @@ body.theme-feu_artifice .aurora-bg .a3{background:#f1c40f;}
                 try { var v = localStorage.getItem(SPOTLIGHT_KEY); return v ? JSON.parse(v) : null; } catch (e) { return null; }
             }
 
+            /* ── Sauvegarde Supabase ── */
+            function saveSpotlightToSupabase(data, cb) {
+                if (!window.sb) { if (cb) cb(false); return; }
+                var json = JSON.stringify(data);
+                window.sb.from('settings').upsert({ key: 'spotlight_content', value: json }, { onConflict: 'key' })
+                    .then(function (r) {
+                        if (r.error) {
+                            /* fallback delete + insert */
+                            window.sb.from('settings').delete().eq('key', 'spotlight_content').then(function () {
+                                window.sb.from('settings').insert({ key: 'spotlight_content', value: json }).then(function (ir) {
+                                    if (ir.error) { toast('❌ Spotlight non sauvegardé : ' + ir.error.message, true); if (cb) cb(false); }
+                                    else { if (cb) cb(true); }
+                                });
+                            });
+                        } else { if (cb) cb(true); }
+                    }).catch(function (e) { toast('❌ ' + (e.message || e), true); if (cb) cb(false); });
+            }
+
+            /* ── Chargement initial ── */
             function loadSpotlight() {
-                /* 1. Afficher d'abord depuis localStorage (immédiat) */
                 var local = loadSpotlightLocally();
                 if (local && local.id) { _spotlightData = local; renderSpotlight(local); }
-
-                /* 2. Puis sync depuis Supabase si disponible */
                 if (!window.sb) return;
                 window.sb.from('settings').select('value').eq('key', 'spotlight_content').single()
                     .then(function (r) {
                         if (r.data && r.data.value) {
-                            try {
-                                var d = JSON.parse(r.data.value);
-                                _spotlightData = d;
-                                saveSpotlightLocally(d);
-                                renderSpotlight(d);
-                            } catch (e) { }
+                            try { var d = JSON.parse(r.data.value); _spotlightData = d; saveSpotlightLocally(d); renderSpotlight(d); } catch (e) { }
                         }
-                    })
-                    .catch(function () { }); /* table settings peut ne pas exister */
+                    }).catch(function () { });
+                /* Charger aussi l'eyebrow custom */
+                window.sb.from('settings').select('value').eq('key', 'spotlight_eyebrow').single()
+                    .then(function (r) {
+                        if (r.data && r.data.value) {
+                            var ey = document.getElementById('spotlight-eyebrow');
+                            if (ey) ey.textContent = r.data.value;
+                        }
+                    }).catch(function () { });
             }
 
+            /* ── Render sur la page ── */
             function renderSpotlight(data) {
                 if (!data || !data.id) return;
                 var section = document.getElementById('spotlight-section');
@@ -9144,7 +9183,6 @@ body.theme-feu_artifice .aurora-bg .a3{background:#f1c40f;}
                 if (bg) bg.style.backgroundImage = bgUrl ? 'url("' + bgUrl + '")' : 'none';
                 if (poster && posterWrapper && data.thumb) { poster.src = data.thumb; posterWrapper.style.display = ''; }
                 else if (posterWrapper) { posterWrapper.style.display = 'none'; }
-
                 if (titleEl) titleEl.textContent = data.title || '';
                 if (metaEl) {
                     var badges = [];
@@ -9162,11 +9200,8 @@ body.theme-feu_artifice .aurora-bg .a3{background:#f1c40f;}
                         window.sb.from('episodes').select('*').eq('serie_id', data.id).order('saison').order('numero').then(function (r) {
                             window.openPlayer(null, data.title, data.cat, data.access, { id: data.id, nb_saisons: data.nb_saisons || 1, episodes: r.data || [] });
                         });
-                    } else {
-                        window.toast('📭 Pas de lecteur disponible.', true);
-                    }
+                    } else { window.toast('📭 Pas de lecteur disponible.', true); }
                 };
-
                 if (moreBtn) moreBtn.onclick = function () {
                     if (data.type === 'film') {
                         window.openDetailModal({ type: 'film', title: data.title, description: data.description || '', thumb: data.thumb, banner: data.banner, emoji: data.emoji || '🎬', badge: data.badge, cat: data.cat, access: data.access, embedCode: data.embedCode, id: data.id });
@@ -9176,25 +9211,55 @@ body.theme-feu_artifice .aurora-bg .a3{background:#f1c40f;}
                         });
                     }
                 };
-
-                syncSpotlightPanelPreview(data);
+                syncSpotlightPanelUI(data);
             }
 
-            function syncSpotlightPanelPreview(data) {
-                var prevEl = document.getElementById('spotlight-current-preview');
+            /* ── Sync UI du panel ── */
+            function syncSpotlightPanelUI(data) {
+                var curBlock = document.getElementById('spotlight-current-block');
+                var noneMsg = document.getElementById('spotlight-none-msg');
                 var imgEl = document.getElementById('spotlight-preview-img');
-                if (!prevEl || !imgEl) return;
-                if (!data || !data.id) { prevEl.style.display = 'none'; return; }
-                prevEl.style.display = 'block';
-                var bgUrl = data.banner || data.thumb;
-                imgEl.innerHTML = bgUrl
-                    ? '<img src="' + bgUrl + '" alt="' + data.title + '" style="width:100%;height:100%;object-fit:cover;object-position:center 20%;">'
-                    : '<span style="color:rgba(255,255,255,.4);">' + data.title + '</span>';
+                var titleEl = document.getElementById('spot-cur-title');
+                var metaEl = document.getElementById('spot-cur-meta');
+                var eyebrowInp = document.getElementById('spotlight-eyebrow-input');
+
+                if (!data || !data.id) {
+                    if (curBlock) curBlock.style.display = 'none';
+                    if (noneMsg) noneMsg.style.display = 'block';
+                    renderSpotlightGrid();
+                    return;
+                }
+                if (curBlock) curBlock.style.display = 'block';
+                if (noneMsg) noneMsg.style.display = 'none';
+
+                if (imgEl) {
+                    var bgUrl = data.thumb || data.banner;
+                    imgEl.innerHTML = bgUrl
+                        ? '<img src="' + bgUrl + '" style="width:100%;height:100%;object-fit:cover;">'
+                        : '<span style="font-size:1.4rem;">' + (data.type === 'film' ? '🎬' : '📺') + '</span>';
+                }
+                if (titleEl) titleEl.textContent = data.title || '—';
+                if (metaEl) {
+                    var parts = [];
+                    if (data.type) parts.push(data.type === 'film' ? '🎬 Film' : '📺 Série');
+                    if (data.cat) parts.push(data.cat);
+                    if (data.access === 'vip') parts.push('👑 VIP');
+                    metaEl.textContent = parts.join(' · ');
+                }
+
+                /* Charger l'eyebrow actuel depuis Supabase */
+                if (eyebrowInp && window.sb) {
+                    window.sb.from('settings').select('value').eq('key', 'spotlight_eyebrow').single()
+                        .then(function (r) {
+                            if (r.data && r.data.value) eyebrowInp.value = r.data.value;
+                            else eyebrowInp.value = '🔥 Film du moment';
+                        }).catch(function () { eyebrowInp.value = '🔥 Film du moment'; });
+                }
+
+                renderSpotlightGrid();
             }
 
-            /* Recherche dans le panel spotlight */
-            var _spotAllContent = [];
-
+            /* ── Grille de contenu ── */
             function loadSpotlightContentList() {
                 if (!window.sb) return;
                 Promise.all([
@@ -9204,36 +9269,52 @@ body.theme-feu_artifice .aurora-bg .a3{background:#f1c40f;}
                     _spotAllContent = [];
                     (res[0].data || []).forEach(function (f) { f._type = 'film'; _spotAllContent.push(f); });
                     (res[1].data || []).forEach(function (s) { s._type = 'serie'; _spotAllContent.push(s); });
+                    renderSpotlightGrid();
                 });
             }
 
-            window.searchSpotlightContent = function (val) {
-                var res = document.getElementById('spotlight-search-results'); if (!res) return;
-                if (!_spotAllContent.length) { loadSpotlightContentList(); }
-                if (!val || !val.trim()) { res.innerHTML = ''; return; }
-                var q = val.toLowerCase();
-                var filtered = _spotAllContent.filter(function (c) { return c.title.toLowerCase().indexOf(q) !== -1; });
-                if (!filtered.length) { res.innerHTML = '<p style="color:rgba(255,255,255,.3);font-size:.82rem;padding:6px 0;">Aucun résultat.</p>'; return; }
-                res.innerHTML = filtered.slice(0, 8).map(function (c) {
-                    var thumbHTML = c.thumb_url
-                        ? '<img src="' + c.thumb_url + '" style="width:38px;height:54px;border-radius:6px;object-fit:cover;flex-shrink:0;" onerror="this.style.display=\'none\'">'
-                        : '<div style="width:38px;height:54px;border-radius:6px;background:rgba(184,224,247,.08);display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:1.3rem;">' + (c._type === 'film' ? '🎬' : '📺') + '</div>';
+            function renderSpotlightGrid() {
+                var grid = document.getElementById('spotlight-grid'); if (!grid) return;
+                var searchVal = (document.getElementById('spotlight-search-input') || {}).value || '';
+                var q = searchVal.toLowerCase().trim();
+                var list = _spotAllContent.filter(function (c) {
+                    if (_spotFilterCurrent !== 'all' && c._type !== _spotFilterCurrent) return false;
+                    if (q && c.title.toLowerCase().indexOf(q) === -1) return false;
+                    return true;
+                });
+                if (!list.length) {
+                    grid.innerHTML = '<p style="color:rgba(255,255,255,.3);font-size:.82rem;padding:14px 0;grid-column:1/-1;">Aucun résultat.</p>';
+                    return;
+                }
+                grid.innerHTML = list.map(function (c) {
                     var isCurrent = _spotlightData && _spotlightData.id === c.id;
-                    var safeJson = JSON.stringify(c).replace(/\\/g, '\\\\').replace(/'/g, "\\'").replace(/</g, '\\u003c').replace(/>/g, '\\u003e').replace(/&/g, '\\u0026');
-                    return '<div onclick=\'setSpotlight(JSON.parse(decodeURIComponent("' + encodeURIComponent(JSON.stringify(c)) + '")))\' style="display:flex;align-items:center;gap:11px;padding:10px 12px;background:' + (isCurrent ? 'rgba(67,230,181,.06)' : 'rgba(255,255,255,.04)') + ';border:1px solid ' + (isCurrent ? 'rgba(67,230,181,.4)' : 'rgba(184,224,247,.1)') + ';border-radius:11px;cursor:pointer;transition:background .15s;">'
-                        + thumbHTML
-                        + '<div style="flex:1;min-width:0;">'
-                        + '<div style="font-weight:800;font-size:.88rem;color:#fff;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">' + c.title + '</div>'
-                        + '<div style="font-size:.72rem;color:rgba(255,255,255,.38);margin-top:2px;">' + (c._type === 'film' ? '🎬 Film' : '📺 Série') + (c.cat ? ' · ' + c.cat : '') + '</div>'
-                        + '</div>'
-                        + (isCurrent
-                            ? '<span style="background:rgba(67,230,181,.15);color:var(--aurora1);font-size:.68rem;font-weight:800;padding:3px 9px;border-radius:50px;white-space:nowrap;">✓ Actif</span>'
-                            : '<span style="background:rgba(184,224,247,.08);color:rgba(255,255,255,.5);font-size:.68rem;font-weight:700;padding:3px 9px;border-radius:50px;white-space:nowrap;">Choisir</span>')
+                    var thumb = c.thumb_url
+                        ? 'url("' + c.thumb_url + '")'
+                        : 'none';
+                    return '<div onclick=\'setSpotlight(JSON.parse(decodeURIComponent("' + encodeURIComponent(JSON.stringify(c)) + '")))\' title="' + c.title + '" style="cursor:pointer;border-radius:10px;overflow:hidden;aspect-ratio:2/3;background:rgba(184,224,247,.06) ' + thumb + ' center/cover no-repeat;position:relative;border:2px solid ' + (isCurrent ? 'var(--aurora1)' : 'transparent') + ';transition:transform .2s,border-color .2s;" onmouseover="this.style.transform=\'scale(1.04)\'" onmouseout="this.style.transform=\'scale(1)\'">'
+                        + (c.thumb_url ? '' : '<div style="width:100%;height:100%;display:flex;align-items:center;justify-content:center;font-size:1.8rem;">' + (c._type === 'film' ? '🎬' : '📺') + '</div>')
+                        + (isCurrent ? '<div style="position:absolute;inset:0;background:rgba(67,230,181,.18);display:flex;align-items:flex-end;justify-content:center;padding-bottom:6px;"><span style="background:var(--aurora1);color:#000;font-size:.6rem;font-weight:900;padding:2px 7px;border-radius:50px;">✓ Actif</span></div>' : '')
+                        + '<div style="position:absolute;bottom:0;left:0;right:0;background:linear-gradient(to top,rgba(0,0,0,.85),transparent);padding:20px 5px 5px;font-size:.65rem;font-weight:700;color:#fff;text-align:center;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">' + c.title + '</div>'
                         + '</div>';
                 }).join('');
+            }
+
+            /* Filtre type */
+            window.spotFilterType = function (type, btn) {
+                _spotFilterCurrent = type;
+                ['all', 'film', 'serie'].forEach(function (t) {
+                    var b = document.getElementById('spot-filter-' + t);
+                    if (b) { b.style.background = t === type ? 'linear-gradient(135deg,var(--teal),var(--aurora2))' : 'rgba(255,255,255,.07)'; b.style.color = t === type ? '#fff' : 'rgba(255,255,255,.6)'; b.style.border = t === type ? 'none' : '1.5px solid rgba(184,224,247,.15)'; }
+                });
+                renderSpotlightGrid();
             };
 
+            /* Recherche live */
+            window.searchSpotlightContent = function () { renderSpotlightGrid(); };
+
+            /* ── Set spotlight ── */
             window.setSpotlight = function (content) {
+                var eyebrowInp = document.getElementById('spotlight-eyebrow-input');
                 var data = {
                     id: content.id, type: content._type, title: content.title,
                     description: content.description || '', thumb: content.thumb_url || null,
@@ -9241,58 +9322,62 @@ body.theme-feu_artifice .aurora-bg .a3{background:#f1c40f;}
                     embedCode: content.video_url || null, emoji: content.emoji || null,
                     badge: content.badge || null, nb_saisons: content.nb_saisons || 1
                 };
-
-                /* Sauvegarder en localStorage immédiatement */
                 _spotlightData = data;
                 saveSpotlightLocally(data);
                 renderSpotlight(data);
-
-                /* Sync Supabase (best-effort) */
-                if (window.sb) {
-                    var json = JSON.stringify(data);
-                    /* Essayer upsert, si erreur essayer delete+insert */
-                    window.sb.from('settings').upsert({ key: 'spotlight_content', value: json }, { onConflict: 'key' })
-                        .then(function (r) {
-                            if (r.error) {
-                                console.warn('[spotlight] upsert échoué, fallback:', r.error.message);
-                                window.sb.from('settings').delete().eq('key', 'spotlight_content').then(function () {
-                                    window.sb.from('settings').insert({ key: 'spotlight_content', value: json }).then(function (ir) {
-                                        if (ir.error) { toast('❌ Spotlight non sauvegardé : ' + ir.error.message, true); console.error('[spotlight] insert error:', ir.error); }
-                                        else { console.log('[spotlight] sauvegardé (fallback insert)'); }
-                                    });
-                                });
-                            } else { console.log('[spotlight] sauvegardé dans Supabase'); }
-                        }).catch(function (e) { toast('❌ Spotlight non sauvegardé : ' + (e.message || e), true); console.error('[spotlight]', e); });
-                }
-
-                var res = document.getElementById('spotlight-search-results');
-                var inp = document.getElementById('spotlight-search-input');
-                if (res) res.innerHTML = '';
-                if (inp) inp.value = '';
-                window.toast('🔥 Spotlight "' + data.title + '" activé !');
+                saveSpotlightToSupabase(data, function (ok) {
+                    if (ok) window.toast('🔥 Spotlight "' + data.title + '" activé !');
+                });
             };
 
+            /* ── Clear spotlight ── */
             window.clearSpotlight = function () {
                 _spotlightData = null;
                 saveSpotlightLocally(null);
                 var section = document.getElementById('spotlight-section');
                 if (section) section.classList.remove('visible');
-                syncSpotlightPanelPreview(null);
+                syncSpotlightPanelUI(null);
                 if (window.sb) window.sb.from('settings').delete().eq('key', 'spotlight_content').then(function () { }).catch(function () { });
                 window.toast('✅ Spotlight retiré.');
             };
 
-            /* Écouter l'onglet spotlight dans le panel */
+            /* ── Eyebrow modifiable ── */
+            window.spotlightEyebrowChanged = function () {
+                var btn = document.getElementById('spot-eyebrow-save-btn');
+                if (btn) btn.style.display = 'inline-block';
+            };
+            window.saveSpotlightEyebrow = function () {
+                var inp = document.getElementById('spotlight-eyebrow-input');
+                var val = inp ? inp.value.trim() : '';
+                if (!val) return;
+                /* Appliquer immédiatement */
+                var ey = document.getElementById('spotlight-eyebrow');
+                if (ey) ey.textContent = val;
+                var btn = document.getElementById('spot-eyebrow-save-btn');
+                if (btn) btn.style.display = 'none';
+                /* Sauvegarder dans Supabase */
+                if (window.sb) {
+                    window.sb.from('settings').upsert({ key: 'spotlight_eyebrow', value: val }, { onConflict: 'key' })
+                        .then(function (r) {
+                            if (r.error) window.sb.from('settings').delete().eq('key', 'spotlight_eyebrow').then(function () {
+                                window.sb.from('settings').insert({ key: 'spotlight_eyebrow', value: val });
+                            });
+                        }).catch(function () { });
+                }
+                window.toast('✅ Texte promo mis à jour !');
+            };
+
+            /* ── Hook onglet ── */
             var _origFpTab3 = window.fpTab;
             window.fpTab = function (name, btn) {
                 if (_origFpTab3) _origFpTab3(name, btn);
                 if (name === 'spotlight') {
                     loadSpotlightContentList();
-                    syncSpotlightPanelPreview(_spotlightData);
+                    syncSpotlightPanelUI(_spotlightData);
                 }
             };
 
-            /* Realtime sync Supabase */
+            /* ── Realtime Supabase ── */
             setTimeout(function () {
                 loadSpotlight();
                 loadSpotlightContentList();
@@ -9304,6 +9389,14 @@ body.theme-feu_artifice .aurora-bg .a3{background:#f1c40f;}
                         } else {
                             _spotlightData = null; saveSpotlightLocally(null);
                             var s = document.getElementById('spotlight-section'); if (s) s.classList.remove('visible');
+                            syncSpotlightPanelUI(null);
+                        }
+                    }).subscribe();
+                window.sb.channel('spotlight-eyebrow-sync')
+                    .on('postgres_changes', { event: '*', schema: 'public', table: 'settings', filter: 'key=eq.spotlight_eyebrow' }, function (payload) {
+                        if (payload.new && payload.new.value) {
+                            var ey = document.getElementById('spotlight-eyebrow');
+                            if (ey) ey.textContent = payload.new.value;
                         }
                     }).subscribe();
             }, 1500);
