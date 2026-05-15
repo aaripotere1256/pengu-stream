@@ -3,6 +3,66 @@
 
 <head>
     <meta charset="UTF-8">
+<!-- ┌─────────────────────────────────────────────────────────┐
+     │  ÉTAPE 1 — colle ça dans ton <head>                    │
+     └─────────────────────────────────────────────────────────┘ -->
+
+<link rel="manifest" href="manifest.json">
+
+<meta name="theme-color" content="#0a1628">
+
+<!-- Android Chrome -->
+<meta name="mobile-web-app-capable" content="yes">
+
+<!-- iOS Safari -->
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="PenguStream">
+<link rel="apple-touch-icon" href="icon-192.png">
+
+<!-- Splash screens iOS (optionnel mais propre) -->
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+
+
+<!-- ┌─────────────────────────────────────────────────────────┐
+     │  ÉTAPE 2 — colle ça juste avant </body>                │
+     └─────────────────────────────────────────────────────────┘ -->
+
+<script>
+  // Enregistrement du Service Worker
+  if ('serviceWorker' in navigator) {
+    window.addEventListener('load', () => {
+      navigator.serviceWorker.register('./sw.js')
+        .then(reg => console.log('[PWA] SW enregistré :', reg.scope))
+        .catch(err => console.warn('[PWA] SW échec :', err));
+    });
+  }
+
+  // Bouton "Installer l'app" (banner natif Android/desktop)
+  let deferredPrompt = null;
+  window.addEventListener('beforeinstallprompt', e => {
+    e.preventDefault();
+    deferredPrompt = e;
+
+    // Si tu veux afficher un bouton custom dans ton UI, décommente :
+    // const btn = document.getElementById('btn-install-pwa');
+    // if (btn) btn.style.display = 'flex';
+  });
+
+  // Appelle cette fonction depuis ton bouton "Installer" si tu en as un
+  window.installPWA = async () => {
+    if (!deferredPrompt) return;
+    deferredPrompt.prompt();
+    const { outcome } = await deferredPrompt.userChoice;
+    console.log('[PWA] Résultat installation :', outcome);
+    deferredPrompt = null;
+  };
+
+  // Détection : est-on déjà en mode standalone (PWA installée) ?
+  window.isPWA = () =>
+    window.matchMedia('(display-mode: standalone)').matches ||
+    window.navigator.standalone === true;
+</script>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>PenguStream — Le Streaming Glacial</title>
     <link href="https://fonts.googleapis.com/css2?family=Righteous&family=Nunito:wght@400;600;700;800&display=swap"
