@@ -6196,6 +6196,18 @@
                     if (serie.startEp && serie.startEp.video_url) {
                         setTimeout(function () {
                             var url = serie.startEp.video_url;
+                            
+                            // Appliquer le temps de reprise (s'il existe)
+                            if (window._resumeAtSec) {
+                                var t = window._resumeAtSec;
+                                window._resumeAtSec = null;
+                                if (url.startsWith('<')) {
+                                    url = url.replace(/src="([^"]+)"/, function(m, u) { return 'src="' + u + (u.indexOf('?')===-1?'?':'&') + 't=' + t + '"'; });
+                                } else {
+                                    url += (url.indexOf('?')===-1?'?':'&') + 't=' + t;
+                                }
+                            }
+
                             var num = serie.startEp.numero;
                             var epTitle = serie.startEp.title || ('Épisode ' + num);
                             document.getElementById('player-title').textContent = '▶ Épisode ' + num + ' — ' + epTitle;
@@ -6215,10 +6227,24 @@
                     var processed;
                     if (!embedCode) {
                         processed = '<p style="color:rgba(255,255,255,.4);text-align:center;padding:40px;">⚠️ Aucun lecteur disponible pour ce contenu.</p>';
-                    } else if (embedCode.trim().startsWith('<')) {
-                        processed = embedCode.replace(/<iframe/gi, '<iframe style="width:100%;height:min(56.25vw,562px);border:none;border-radius:14px;"');
                     } else {
-                        processed = '<iframe src="' + embedCode.trim() + '" style="width:100%;height:min(56.25vw,562px);border:none;border-radius:14px;" allowfullscreen allow="autoplay; fullscreen"></iframe>';
+                        var eCode = embedCode.trim();
+                        // Appliquer le temps de reprise (s'il existe)
+                        if (window._resumeAtSec) {
+                            var t = window._resumeAtSec;
+                            window._resumeAtSec = null;
+                            if (eCode.startsWith('<')) {
+                                eCode = eCode.replace(/src="([^"]+)"/, function(m, u) { return 'src="' + u + (u.indexOf('?')===-1?'?':'&') + 't=' + t + '"'; });
+                            } else {
+                                eCode += (eCode.indexOf('?')===-1?'?':'&') + 't=' + t;
+                            }
+                        }
+
+                        if (eCode.startsWith('<')) {
+                            processed = eCode.replace(/<iframe/gi, '<iframe style="width:100%;height:min(56.25vw,562px);border:none;border-radius:14px;"');
+                        } else {
+                            processed = '<iframe src="' + eCode + '" style="width:100%;height:min(56.25vw,562px);border:none;border-radius:14px;" allowfullscreen allow="autoplay; fullscreen"></iframe>';
+                        }
                     }
                     document.getElementById('player-embed-container').innerHTML = processed;
                     // Enregistrer contexte pour sauvegarde progression
@@ -7505,34 +7531,47 @@
                 }
                 var uid = window.currentUser.id;
                 var plan = pending.plan;
-                var now = new Date();
-                var expiry = new Date(now);
-                if (plan === 'yearly') expiry.setFullYear(expiry.getFullYear() + 1);
-                else expiry.setMonth(expiry.getMonth() + 1);
 
                 var btn = document.getElementById('pm-confirm-paid').querySelector('button');
                 btn.disabled = true; btn.textContent = '⏳ Activation…';
 
-                window.sb.from('profiles').update({
-                    role: 'vip',
-                    vip_expires_at: expiry.toISOString(),
-                    vip_plan: plan
-                }).eq('id', uid).then(function (res) {
-                    if (res.error) {
-                        btn.disabled = false; btn.textContent = '✅ J\'ai payé — Activer mon VIP';
-                        window.toast('❌ Erreur activation : ' + res.error.message, true);
-                        return;
+                // Fetch current VIP expiry to extend it if it's still active
+                window.sb.from('profiles').select('vip_expires_at, role').eq('id', uid).single().then(function(profileRes) {
+                    var now = new Date();
+                    var baseDate = now;
+                    
+                    if (!profileRes.error && profileRes.data && profileRes.data.role === 'vip' && profileRes.data.vip_expires_at) {
+                        var currentExpiry = new Date(profileRes.data.vip_expires_at);
+                        if (currentExpiry > now) {
+                            baseDate = currentExpiry; // Extend from current expiry
+                        }
                     }
-                    localStorage.removeItem('pengu_pending_vip');
-                    window.currentRole = 'vip';
-                    if (window.updateNavbar) window.updateNavbar(window.currentUser, 'vip');
-                    var banner = document.getElementById('vip-success-banner');
-                    var planLabel = plan === 'yearly' ? '1 an' : '1 mois';
-                    document.getElementById('vip-success-text').textContent =
-                        '✨ VIP activé pour ' + planLabel + ' jusqu\'au ' + expiry.toLocaleDateString('fr-FR') + ' !';
-                    banner.classList.add('show');
-                    document.getElementById('pm-confirm-paid').remove();
-                    window.toast('👑 VIP activé avec succès ! Profite du streaming !');
+
+                    var expiry = new Date(baseDate);
+                    if (plan === 'yearly') expiry.setFullYear(expiry.getFullYear() + 1);
+                    else expiry.setMonth(expiry.getMonth() + 1);
+
+                    window.sb.from('profiles').update({
+                        role: 'vip',
+                        vip_expires_at: expiry.toISOString(),
+                        vip_plan: plan
+                    }).eq('id', uid).then(function (res) {
+                        if (res.error) {
+                            btn.disabled = false; btn.textContent = '✅ J\'ai payé — Activer mon VIP';
+                            window.toast('❌ Erreur activation : ' + res.error.message, true);
+                            return;
+                        }
+                        localStorage.removeItem('pengu_pending_vip');
+                        window.currentRole = 'vip';
+                        if (window.updateNavbar) window.updateNavbar(window.currentUser, 'vip');
+                        var banner = document.getElementById('vip-success-banner');
+                        var planLabel = plan === 'yearly' ? '1 an' : '1 mois';
+                        document.getElementById('vip-success-text').textContent =
+                            '✨ VIP prolongé (+' + planLabel + ') jusqu\'au ' + expiry.toLocaleDateString('fr-FR') + ' !';
+                        banner.classList.add('show');
+                        document.getElementById('pm-confirm-paid').remove();
+                        window.toast('👑 VIP activé/prolongé avec succès ! Profite du streaming !');
+                    });
                 });
             };
 
@@ -9363,6 +9402,379 @@ body.theme-feu_artifice .aurora-bg .a3{background:#f1c40f;}
                 if (name === 'suggestions') loadSuggestions('en_attente');
             };
 
+        })();
+    </script>
+    <script>
+        /* ═══════════════════════════════════
+           ROUTEUR HASH-BASED (#)
+           Compatible GitHub Pages / SPA
+        ═══════════════════════════════════ */
+        (function () {
+            'use strict';
+
+            /* ── Utilitaires ── */
+            function slugify(str) {
+                return (str || '')
+                    .toString()
+                    .normalize('NFD').replace(/[\u0300-\u036f]/g, '')   // accents
+                    .toLowerCase()
+                    .replace(/[^a-z0-9]+/g, '-')                       // non-alphanum → tiret
+                    .replace(/^-+|-+$/g, '')                            // trim tirets
+                    .substring(0, 80);                                  // limite longueur
+            }
+
+            // Empêche les boucles de récursion lors de la restauration de routes
+            var _routerNavigating = false;
+
+            /* ── Mise à jour du hash (sans déclencher popstate) ── */
+            function setHash(hash) {
+                if (_routerNavigating) return;
+                var target = hash ? '#' + hash : '';
+                if (window.location.hash !== target) {
+                    history.pushState({ penguRoute: hash || '' }, '', target || window.location.pathname);
+                }
+            }
+            function clearHash() {
+                if (_routerNavigating) return;
+                if (window.location.hash) {
+                    history.pushState({ penguRoute: '' }, '', window.location.pathname + window.location.search);
+                }
+            }
+
+            /* ── Stockage du dernier contenu ouvert (pour popstate) ── */
+            var _lastDetailItem = null;
+
+            /* ═══════════════════════════════════
+               WRAPPING DES FONCTIONS EXISTANTES
+            ═══════════════════════════════════ */
+
+            /* ── Detail Modal (Film / Série) ── */
+            var _origOpenDetailModal = window.openDetailModal;
+            window.openDetailModal = function (item) {
+                _lastDetailItem = item;
+                var prefix = item.type === 'serie' ? 'serie' : 'film';
+                var slug = slugify(item.title);
+                setHash(prefix + '/' + slug);
+                if (_origOpenDetailModal) _origOpenDetailModal(item);
+            };
+
+            var _origCloseDetailModal = window.closeDetailModal;
+            window.closeDetailModal = function () {
+                _lastDetailItem = null;
+                clearHash();
+                if (_origCloseDetailModal) _origCloseDetailModal();
+            };
+
+            /* ── Player ── */
+            var _origOpenPlayer2 = window.openPlayer;
+            window.openPlayer = function (embedCode, title, cat, access, serie) {
+                if (serie && serie.id) {
+                    setHash('regarder/serie/' + slugify(serie.title || title));
+                } else {
+                    setHash('regarder/' + slugify(title));
+                }
+                if (_origOpenPlayer2) _origOpenPlayer2(embedCode, title, cat, access, serie);
+            };
+
+            var _origClosePlayer = window.closePlayer;
+            window.closePlayer = function () {
+                clearHash();
+                if (_origClosePlayer) _origClosePlayer();
+            };
+
+            /* ── Premium Modal ── */
+            var _origOpenPremium = window.openPremiumModal;
+            window.openPremiumModal = function () {
+                setHash('premium');
+                if (_origOpenPremium) _origOpenPremium();
+            };
+
+            var _origClosePremium = window.closePremiumModal;
+            window.closePremiumModal = function () {
+                clearHash();
+                if (_origClosePremium) _origClosePremium();
+            };
+
+            /* ── Account Modal ── */
+            var _origOpenAccount = window.openAccountModal;
+            window.openAccountModal = function () {
+                setHash('compte');
+                if (_origOpenAccount) _origOpenAccount();
+            };
+
+            var _origCloseAccount = window.closeAccountModal;
+            window.closeAccountModal = function () {
+                clearHash();
+                if (_origCloseAccount) _origCloseAccount();
+            };
+
+            /* ── Library Modal ── */
+            var _origOpenLibrary = window.openLibraryModal;
+            window.openLibraryModal = function () {
+                setHash('bibliotheque');
+                if (_origOpenLibrary) _origOpenLibrary();
+            };
+
+            var _origCloseLibrary = window.closeLibraryModal;
+            window.closeLibraryModal = function () {
+                clearHash();
+                if (_origCloseLibrary) _origCloseLibrary();
+            };
+
+            /* ── Suggest Modal ── */
+            var _origOpenSuggest = window.openSuggestModal;
+            window.openSuggestModal = function () {
+                setHash('suggerer');
+                if (_origOpenSuggest) _origOpenSuggest();
+            };
+
+            /* ── Auth Modal ── */
+            var _origOpenAuthModal = window.openModal;
+            window.openModal = function (v) {
+                setHash(v === 'login' ? 'connexion' : 'inscription');
+                if (_origOpenAuthModal) _origOpenAuthModal(v);
+            };
+
+            var _origCloseAuthModal = window.closeModal;
+            window.closeModal = function () {
+                clearHash();
+                if (_origCloseAuthModal) _origCloseAuthModal();
+            };
+
+            /* ── Founder Panel ── */
+            var _origOpenFounder = window.openFounderPanel;
+            window.openFounderPanel = function () {
+                setHash('panel');
+                if (_origOpenFounder) _origOpenFounder();
+            };
+
+            var _origCloseFounder = window.closeFounderPanel;
+            window.closeFounderPanel = function () {
+                clearHash();
+                if (_origCloseFounder) _origCloseFounder();
+            };
+
+            /* ── Saga Detail ── */
+            var _origOpenSagaDetail = window.openSagaDetail;
+            window.openSagaDetail = function (sagaId) {
+                setHash('saga/' + sagaId);
+                if (_origOpenSagaDetail) _origOpenSagaDetail(sagaId);
+            };
+
+            var _origCloseSagaDetail = window.closeSagaDetail;
+            window.closeSagaDetail = function () {
+                clearHash();
+                if (_origCloseSagaDetail) _origCloseSagaDetail();
+            };
+
+            /* ── Recherche (synchronise le hash avec la barre de recherche) ── */
+            var searchInput = document.getElementById('search-input');
+            if (searchInput) {
+                var _searchDebounce;
+                searchInput.addEventListener('input', function () {
+                    clearTimeout(_searchDebounce);
+                    var val = searchInput.value.trim();
+                    _searchDebounce = setTimeout(function () {
+                        if (val.length > 0) {
+                            setHash('recherche/' + encodeURIComponent(val));
+                        } else {
+                            clearHash();
+                        }
+                    }, 400);
+                });
+            }
+
+            /* ═══════════════════════════════════
+               FERMER TOUT (pour popstate)
+            ═══════════════════════════════════ */
+            function closeAll() {
+                // Ferme toutes les modals/panels ouverts sans toucher au hash
+                _routerNavigating = true;
+                try {
+                    var dm = document.getElementById('detail-modal');
+                    if (dm && dm.classList.contains('active')) { if (_origCloseDetailModal) _origCloseDetailModal(); }
+
+                    var pm = document.getElementById('player-modal');
+                    if (pm && pm.classList.contains('open')) { if (_origClosePlayer) _origClosePlayer(); }
+
+                    var prm = document.getElementById('premium-modal');
+                    if (prm && prm.classList.contains('open')) { if (_origClosePremium) _origClosePremium(); }
+
+                    var am = document.getElementById('account-modal');
+                    if (am && am.classList.contains('active')) { if (_origCloseAccount) _origCloseAccount(); }
+
+                    var lm = document.getElementById('library-modal');
+                    if (lm && lm.classList.contains('open')) { if (_origCloseLibrary) _origCloseLibrary(); }
+
+                    var sm = document.getElementById('suggest-modal');
+                    if (sm && sm.classList.contains('active')) { if (_origCloseSuggest) _origCloseSuggest(); }
+
+                    var auth = document.getElementById('authModal');
+                    if (auth && auth.classList.contains('active')) { if (_origCloseAuthModal) _origCloseAuthModal(); }
+
+                    var fp = document.getElementById('founder-panel');
+                    if (fp && (fp.style.display !== 'none' && fp.style.display !== '')) { if (_origCloseFounder) _origCloseFounder(); }
+
+                    var sagaDet = document.getElementById('saga-detail-modal');
+                    if (sagaDet && sagaDet.classList.contains('open')) { if (_origCloseSagaDetail) _origCloseSagaDetail(); }
+                } catch (e) { }
+                _lastDetailItem = null;
+                _routerNavigating = false;
+            }
+
+            /* Referencing close suggest for closeAll */
+            var _origCloseSuggest = null;
+            (function findCloseSuggest() {
+                // Le suggest modal se ferme via classList.remove('active')
+                _origCloseSuggest = function () {
+                    var el = document.getElementById('suggest-modal');
+                    if (el) { el.classList.remove('active'); document.body.style.overflow = ''; }
+                };
+            })();
+
+            /* ═══════════════════════════════════
+               RESTAURER L'ÉTAT DEPUIS LE HASH
+            ═══════════════════════════════════ */
+            function restoreFromHash(hash) {
+                if (!hash || hash === '#') { closeAll(); return; }
+                var h = hash.replace(/^#/, '');
+                var parts = h.split('/');
+                var route = parts[0];
+                var param = parts.slice(1).join('/');
+
+                closeAll();
+
+                _routerNavigating = true;
+
+                try {
+                    switch (route) {
+                        case 'film':
+                        case 'serie':
+                            // param est un slug (ex: inception) ou un ID fallback
+                            if (param && window.handleCatalogueCardClick) {
+                                var type = route === 'film' ? 'film' : 'serie';
+                                var cards = document.querySelectorAll('.card[data-type="' + type + '"]');
+                                var foundId = null;
+                                for (var i = 0; i < cards.length; i++) {
+                                    var cid = type === 'film' ? cards[i].dataset.filmId : cards[i].dataset.serieId;
+                                    var cslug = slugify(cards[i].dataset.title);
+                                    if (cslug === param || cid === param) {
+                                        foundId = cid;
+                                        break;
+                                    }
+                                }
+                                if (foundId) {
+                                    window.handleCatalogueCardClick(type, foundId);
+                                } else {
+                                    window.handleCatalogueCardClick(type, param); // Fallback old IDs
+                                }
+                            }
+                            break;
+
+                        case 'regarder':
+                            // On cherche la carte par slug pour récupérer son ID
+                            var cards = document.querySelectorAll('.card');
+                            var foundCard = null;
+                            var searchParam = parts[1] === 'serie' ? parts[2] : parts[1];
+                            
+                            for (var j = 0; j < cards.length; j++) {
+                                var cslug2 = slugify(cards[j].dataset.title);
+                                var cid2 = cards[j].dataset.type === 'film' ? cards[j].dataset.filmId : cards[j].dataset.serieId;
+                                if (cslug2 === searchParam || cid2 === searchParam) {
+                                    foundCard = cards[j];
+                                    break;
+                                }
+                            }
+                            if (foundCard && window.handleCatalogueCardClick) {
+                                var ctype = foundCard.dataset.type;
+                                var cidd = ctype === 'film' ? foundCard.dataset.filmId : foundCard.dataset.serieId;
+                                if (cidd) window.handleCatalogueCardClick(ctype, cidd);
+                            }
+                            break;
+
+                        case 'recherche':
+                            var query = decodeURIComponent(param || '');
+                            if (query && searchInput) {
+                                searchInput.value = query;
+                                if (window.applyFilters) window.applyFilters();
+                                var cat = document.getElementById('catalogue');
+                                if (cat) setTimeout(function () { cat.scrollIntoView({ behavior: 'smooth' }); }, 200);
+                            }
+                            break;
+
+                        case 'premium':
+                            if (_origOpenPremium) _origOpenPremium();
+                            break;
+
+                        case 'compte':
+                            if (_origOpenAccount) _origOpenAccount();
+                            break;
+
+                        case 'bibliotheque':
+                            if (_origOpenLibrary) _origOpenLibrary();
+                            break;
+
+                        case 'suggerer':
+                            if (_origOpenSuggest) _origOpenSuggest();
+                            break;
+
+                        case 'connexion':
+                            if (_origOpenAuthModal) _origOpenAuthModal('login');
+                            break;
+
+                        case 'inscription':
+                            if (_origOpenAuthModal) _origOpenAuthModal('register');
+                            break;
+
+                        case 'panel':
+                            if (_origOpenFounder) _origOpenFounder();
+                            break;
+
+                        case 'saga':
+                            if (param && _origOpenSagaDetail) _origOpenSagaDetail(param);
+                            break;
+
+                        default:
+                            break;
+                    }
+                } catch (e) {
+                    console.warn('[PenguRouter] Erreur restauration route:', e);
+                }
+
+                _routerNavigating = false;
+            }
+
+            /* ═══════════════════════════════════
+               ÉCOUTE POPSTATE (bouton retour)
+            ═══════════════════════════════════ */
+            window.addEventListener('popstate', function (e) {
+                restoreFromHash(window.location.hash);
+            });
+
+            /* ═══════════════════════════════════
+               RESTAURATION AU CHARGEMENT
+            ═══════════════════════════════════ */
+            // Attendre que le catalogue soit chargé avant de restaurer
+            if (window.location.hash && window.location.hash !== '#') {
+                var _routeHash = window.location.hash;
+                var _routeInterval = setInterval(function () {
+                    // Attendre que le catalogue ait fini de se charger
+                    var cards = document.querySelectorAll('#cards-grid .card');
+                    if (cards.length > 0 || document.readyState === 'complete') {
+                        clearInterval(_routeInterval);
+                        setTimeout(function () {
+                            restoreFromHash(_routeHash);
+                        }, 800);
+                    }
+                }, 300);
+                // Timeout de secours
+                setTimeout(function () {
+                    clearInterval(_routeInterval);
+                    restoreFromHash(_routeHash);
+                }, 5000);
+            }
+
+            console.log('🐧 [PenguRouter] Routeur hash-based initialisé');
         })();
     </script>
 </body>
