@@ -7769,8 +7769,8 @@
         ═══════════════════════════════════ */
         (function () {
 
-            var STRIPE_MONTHLY = 'https://buy.stripe.com/dRm6oI2HX0JYgWq9M32Ji01';
-            var STRIPE_YEARLY = 'https://buy.stripe.com/6oU3cwcixfES21w2jB2Ji00';
+            var STRIPE_MONTHLY = 'https://buy.stripe.com/6oUaEYaap64i9tYe2j2Ji03';
+            var STRIPE_YEARLY = 'https://buy.stripe.com/cNi4gAdmB50eeOi5vN2Ji04';
 
             window.openPremiumModal = function () {
                 var el = document.getElementById('premium-modal');
@@ -7829,44 +7829,53 @@
                 var plan = pending.plan;
 
                 var btn = document.getElementById('pm-confirm-paid').querySelector('button');
-                btn.disabled = true; btn.textContent = '⏳ Activation…';
+                btn.disabled = true; btn.textContent = '⏳ Vérification Stripe…';
 
-                // Fetch current VIP expiry to extend it if it's still active
-                window.sb.from('profiles').select('vip_expires_at, role').eq('id', uid).single().then(function(profileRes) {
-                    var now = new Date();
-                    var baseDate = now;
-                    
-                    if (!profileRes.error && profileRes.data && profileRes.data.role === 'vip' && profileRes.data.vip_expires_at) {
-                        var currentExpiry = new Date(profileRes.data.vip_expires_at);
-                        if (currentExpiry > now) {
-                            baseDate = currentExpiry; // Extend from current expiry
-                        }
+                // Vérifier le paiement réel via la vue Stripe sécurisée
+                window.sb.from('vue_vip_verifiee').select('est_vip').eq('id', uid).single().then(function(vipCheck) {
+                    if (vipCheck.error || !vipCheck.data || !vipCheck.data.est_vip) {
+                        btn.disabled = false; btn.textContent = '✅ J\'ai payé — Activer mon VIP';
+                        window.toast('❌ Paiement non détecté sur Stripe. Attends quelques secondes et réessaie, ou contacte le support.', true);
+                        return;
                     }
 
-                    var expiry = new Date(baseDate);
-                    if (plan === 'yearly') expiry.setFullYear(expiry.getFullYear() + 1);
-                    else expiry.setMonth(expiry.getMonth() + 1);
-
-                    window.sb.from('profiles').update({
-                        role: 'vip',
-                        vip_expires_at: expiry.toISOString(),
-                        vip_plan: plan
-                    }).eq('id', uid).then(function (res) {
-                        if (res.error) {
-                            btn.disabled = false; btn.textContent = '✅ J\'ai payé — Activer mon VIP';
-                            window.toast('❌ Erreur activation : ' + res.error.message, true);
-                            return;
+                    // Paiement confirmé par Stripe ! On active le VIP
+                    window.sb.from('profiles').select('vip_expires_at, role').eq('id', uid).single().then(function(profileRes) {
+                        var now = new Date();
+                        var baseDate = now;
+                        
+                        if (!profileRes.error && profileRes.data && profileRes.data.role === 'vip' && profileRes.data.vip_expires_at) {
+                            var currentExpiry = new Date(profileRes.data.vip_expires_at);
+                            if (currentExpiry > now) {
+                                baseDate = currentExpiry;
+                            }
                         }
-                        localStorage.removeItem('pengu_pending_vip');
-                        window.currentRole = 'vip';
-                        if (window.updateNavbar) window.updateNavbar(window.currentUser, 'vip');
-                        var banner = document.getElementById('vip-success-banner');
-                        var planLabel = plan === 'yearly' ? '1 an' : '1 mois';
-                        document.getElementById('vip-success-text').textContent =
-                            '✨ VIP prolongé (+' + planLabel + ') jusqu\'au ' + expiry.toLocaleDateString('fr-FR') + ' !';
-                        banner.classList.add('show');
-                        document.getElementById('pm-confirm-paid').remove();
-                        window.toast('👑 VIP activé/prolongé avec succès ! Profite du streaming !');
+
+                        var expiry = new Date(baseDate);
+                        if (plan === 'yearly') expiry.setFullYear(expiry.getFullYear() + 1);
+                        else expiry.setMonth(expiry.getMonth() + 1);
+
+                        window.sb.from('profiles').update({
+                            role: 'vip',
+                            vip_expires_at: expiry.toISOString(),
+                            vip_plan: plan
+                        }).eq('id', uid).then(function (res) {
+                            if (res.error) {
+                                btn.disabled = false; btn.textContent = '✅ J\'ai payé — Activer mon VIP';
+                                window.toast('❌ Erreur activation : ' + res.error.message, true);
+                                return;
+                            }
+                            localStorage.removeItem('pengu_pending_vip');
+                            window.currentRole = 'vip';
+                            if (window.updateNavbar) window.updateNavbar(window.currentUser, 'vip');
+                            var banner = document.getElementById('vip-success-banner');
+                            var planLabel = plan === 'yearly' ? '1 an' : '1 mois';
+                            document.getElementById('vip-success-text').textContent =
+                                '✨ VIP activé (+' + planLabel + ') jusqu\'au ' + expiry.toLocaleDateString('fr-FR') + ' !';
+                            banner.classList.add('show');
+                            document.getElementById('pm-confirm-paid').remove();
+                            window.toast('👑 Paiement Stripe vérifié ✅ VIP activé avec succès !');
+                        });
                     });
                 });
             };
