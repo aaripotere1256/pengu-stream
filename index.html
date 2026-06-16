@@ -1213,6 +1213,57 @@
             color: #e74c3c;
         }
 
+        .btn-bug-detail {
+            background: rgba(255, 165, 0, .08);
+            border: 1.5px solid rgba(255, 165, 0, .2);
+            color: rgba(255, 165, 0, .8);
+            padding: 13px 20px;
+            border-radius: 50px;
+            font-weight: 700;
+            font-size: .95rem;
+            cursor: pointer;
+            font-family: 'Nunito', sans-serif;
+            display: flex;
+            align-items: center;
+            gap: 7px;
+            transition: all .2s;
+        }
+
+        .btn-bug-detail:hover {
+            background: rgba(255, 165, 0, .18);
+            border-color: rgba(255, 165, 0, .5);
+            color: #ffa500;
+        }
+
+        /* Bug report modal */
+        .bug-modal-overlay {
+            position: fixed; inset: 0; z-index: 10010;
+            background: rgba(0,0,0,.65); backdrop-filter: blur(6px);
+            display: none; align-items: center; justify-content: center;
+        }
+        .bug-modal-overlay.active { display: flex; }
+        .bug-modal-box {
+            background: #0f1319; border: 1px solid rgba(184,224,247,.12);
+            border-radius: 18px; padding: 28px 26px; max-width: 440px; width: 92%;
+            box-shadow: 0 12px 40px rgba(0,0,0,.5);
+        }
+        .bug-modal-box h3 { margin: 0 0 16px; font-size: 1.15rem; color: #ffa500; }
+        .bug-modal-box textarea {
+            width: 100%; min-height: 100px; background: rgba(255,255,255,.05);
+            border: 1px solid rgba(184,224,247,.15); border-radius: 10px;
+            color: #fff; padding: 12px; font-family: 'Nunito', sans-serif;
+            font-size: .9rem; resize: vertical;
+        }
+        .bug-modal-box textarea:focus { outline: none; border-color: rgba(255,165,0,.4); }
+        .bug-modal-actions { display: flex; gap: 10px; margin-top: 14px; }
+        .bug-modal-actions button {
+            padding: 10px 20px; border-radius: 50px; font-weight: 700;
+            font-family: 'Nunito', sans-serif; font-size: .88rem; cursor: pointer; border: none;
+        }
+        .bug-send-btn { background: linear-gradient(135deg, #ff8c00, #ffa500); color: #fff; }
+        .bug-send-btn:hover { opacity: .85; }
+        .bug-cancel-btn { background: rgba(255,255,255,.07); color: rgba(255,255,255,.5); border: 1px solid rgba(184,224,247,.12) !important; }
+
         /* ══ BANNIÈRE FILM DU MOMENT ══ */
         #spotlight-section {
             position: relative;
@@ -5244,8 +5295,13 @@
                     </div>
                     <input type="hidden" id="film-edit-id">
                     <div class="fp-grid-2">
-                        <div class="fp-form-group"><label>Titre *</label><input type="text" id="film-title"
-                                placeholder="Ex: Interstellar"></div>
+                        <div class="fp-form-group">
+                            <label>Titre *</label>
+                            <div style="display:flex;gap:8px;">
+                                <input type="text" id="film-title" placeholder="Ex: Interstellar" style="flex:1;">
+                                <button onclick="autoFetchTMDB('film')" type="button" style="background:var(--accent);border:none;border-radius:9px;color:#fff;padding:0 15px;cursor:pointer;font-weight:bold;display:flex;align-items:center;justify-content:center;" title="Recherche Auto TMDB">🔍 TMDB</button>
+                            </div>
+                        </div>
                         <div class="fp-form-group"><label>Catégorie</label><select id="film-cat"></select></div>
                         <div class="fp-form-group"><label>Emoji</label><input type="text" id="film-emoji"
                                 placeholder="🎬" maxlength="4" value="🎬"></div>
@@ -5310,8 +5366,13 @@
                     </div>
                     <input type="hidden" id="serie-edit-id">
                     <div class="fp-grid-2">
-                        <div class="fp-form-group"><label>Titre *</label><input type="text" id="serie-title"
-                                placeholder="Ex: Breaking Bad"></div>
+                        <div class="fp-form-group">
+                            <label>Titre *</label>
+                            <div style="display:flex;gap:8px;">
+                                <input type="text" id="serie-title" placeholder="Ex: Breaking Bad" style="flex:1;">
+                                <button onclick="autoFetchTMDB('serie')" type="button" style="background:var(--accent);border:none;border-radius:9px;color:#fff;padding:0 15px;cursor:pointer;font-weight:bold;display:flex;align-items:center;justify-content:center;" title="Recherche Auto TMDB">🔍 TMDB</button>
+                            </div>
+                        </div>
                         <div class="fp-form-group"><label>Catégorie</label><select id="serie-cat"></select></div>
                         <div class="fp-form-group"><label>Emoji</label><input type="text" id="serie-emoji"
                                 placeholder="📺" maxlength="4" value="📺"></div>
@@ -5745,6 +5806,7 @@
             var customCats = JSON.parse(localStorage.getItem('pengu_cats') || '[]');
             // Données temporaires pour builder épisodes
             var seasonsData = {}; // {saison: [{num, title, embed, duration}]}
+            window.replaceSeasonsData = function(d) { seasonsData = d; };
 
             /* ═══════════════════════════════════
                UTILITAIRES
@@ -5756,6 +5818,7 @@
                 t.classList.add('show');
                 setTimeout(function () { t.classList.remove('show'); }, 3500);
             }
+            window.toast = toast;
             window.setBtn = function setBtn(id, on, lbl) {
                 var b = document.getElementById(id); if (!b) return;
                 b.disabled = on; b.textContent = on ? '⏳ Chargement…' : lbl; b.style.opacity = on ? '0.6' : '1';
@@ -7301,7 +7364,7 @@
                     ? 'https://api.themoviedb.org/3/search/tv'
                     : 'https://api.themoviedb.org/3/search/movie';
 
-                fetch(endpoint + '?api_key=8265bd1679663a7ea12ac168da84d2e8&query=' + encodeURIComponent(q) + '&language=fr-FR&page=1')
+                fetch(endpoint + '?api_key=f34c56c945e5e0de8bd72f85371deea0&query=' + encodeURIComponent(q) + '&language=fr-FR&page=1')
                     .then(function (r) { return r.json(); })
                     .then(function (data) {
                         loading.style.display = 'none';
@@ -7889,6 +7952,18 @@
             closeBtn.textContent = 'Fermer';
             closeBtn.onclick = closeDetailModal;
             actionsEl.appendChild(closeBtn);
+
+            // Bouton signaler un bug
+            var bugBtn = document.createElement('button');
+            bugBtn.className = 'btn-bug-detail';
+            bugBtn.innerHTML = '🐛&nbsp;Signaler un bug';
+            bugBtn.onclick = function () {
+                window._bugReportItem = { title: item.title, type: item.type, id: item.id };
+                document.getElementById('bug-report-title').textContent = '🐛 Signaler un bug — ' + item.title;
+                document.getElementById('bug-report-text').value = '';
+                document.getElementById('bug-report-modal').classList.add('active');
+            };
+            actionsEl.appendChild(bugBtn);
 
             // ── Épisodes ──
             var epsWrap = document.getElementById('detail-episodes-wrap');
@@ -9775,6 +9850,211 @@ body.theme-feu_artifice .aurora-bg .a3{background:#f1c40f;}
             }
 
             console.log('🐧 [PenguRouter] Routeur hash-based initialisé');
+        })();
+    </script>
+    
+    <script>
+        (function() {
+            window.autoFetchTMDB = function(type) {
+                var inputId = type === 'film' ? 'film-title' : 'serie-title';
+                var query = document.getElementById(inputId).value.trim();
+                
+                if (!query) {
+                    window.toast("❌ Veuillez entrer un titre à rechercher.", true);
+                    return;
+                }
+
+                // Utilise la clé API publique TMDB déjà présente dans le projet
+                var key = 'f34c56c945e5e0de8bd72f85371deea0';
+                var tmdbType = type === 'film' ? 'movie' : 'tv';
+                var url = 'https://api.themoviedb.org/3/search/' + tmdbType + '?api_key=' + key + '&language=fr-FR&query=' + encodeURIComponent(query);
+                
+                window.toast("⏳ Recherche TMDB en cours...");
+
+                fetch(url)
+                    .then(function(r) { return r.json(); })
+                    .then(function(data) {
+                        if (!data.results || data.results.length === 0) {
+                            window.toast("❌ Aucun résultat trouvé pour ce titre.", true);
+                            return;
+                        }
+                        
+                        // Prendre le premier résultat
+                        var item = data.results[0];
+                        
+                        // Fetch details complets pour avoir la bannière
+                        var detailUrl = 'https://api.themoviedb.org/3/' + tmdbType + '/' + item.id + '?api_key=' + key + '&language=fr-FR';
+                        
+                        fetch(detailUrl).then(function(r) { return r.json(); }).then(function(details) {
+                            var prefix = type === 'film' ? 'film' : 'serie';
+                            var title = details.title || details.name;
+                            var overview = details.overview || '';
+                            var thumb = details.poster_path ? 'https://image.tmdb.org/t/p/w500' + details.poster_path : '';
+                            var banner = details.backdrop_path ? 'https://image.tmdb.org/t/p/original' + details.backdrop_path : '';
+                            
+                            document.getElementById(prefix + '-title').value = title;
+                            document.getElementById(prefix + '-desc').value = overview;
+                            document.getElementById(prefix + '-thumb').value = thumb;
+                            document.getElementById(prefix + '-banner').value = banner;
+
+                            // Catégorie et Emoji Automatique
+                            if (details.genres && details.genres.length > 0) {
+                                var genreMap = {
+                                    16: 'anime', 27: 'horreur', 28: 'action', 878: 'scifi', 35: 'comedie',
+                                    18: 'drame', 99: 'documentaire', 53: 'thriller', 10749: 'romance', 14: 'fantasy',
+                                    12: 'action', 80: 'thriller', 9648: 'thriller', 10759: 'action', 10765: 'scifi', 10768: 'documentaire', 10762: 'anime'
+                                };
+                                var emojis = { 'anime': '🌸', 'horreur': '🔪', 'action': '🔥', 'scifi': '👽', 'comedie': '😂', 'drame': '🎭', 'documentaire': '📽️', 'thriller': '🕵️', 'romance': '❤️', 'fantasy': '🧙' };
+                                
+                                var genreId = details.genres[0].id;
+                                var mapped = genreMap[genreId];
+                                if (!mapped && details.genres.length > 1) mapped = genreMap[details.genres[1].id];
+                                
+                                if (mapped) {
+                                    document.getElementById(prefix + '-cat').value = mapped;
+                                    var emojiField = document.getElementById(prefix + '-emoji');
+                                    if (emojiField) emojiField.value = emojis[mapped] || '🍿';
+                                }
+                            }
+
+                            if (type === 'film') {
+                                var embed = '<iframe width="640" height="384" src="https://apis.wavewatch.top/zeus.php?type=movie&id=' + item.id + '" frameborder="0" scrolling="no" allowfullscreen></iframe>';
+                                document.getElementById('film-embed').value = embed;
+                                window.toast("✅ Auto-remplissage TMDB réussi !");
+                            } else if (type === 'serie') {
+                                var nbSaisons = details.number_of_seasons || 1;
+                                document.getElementById('serie-nb-saisons').value = nbSaisons;
+                                var newSeasonsData = {};
+                                
+                                var promises = [];
+                                for (var s = 1; s <= nbSaisons; s++) {
+                                    promises.push(
+                                        fetch('https://api.themoviedb.org/3/tv/' + item.id + '/season/' + s + '?api_key=' + key + '&language=fr-FR')
+                                        .then(function(r) { return r.json(); })
+                                        .then(function(seasonData) {
+                                            var sn = seasonData.season_number;
+                                            if (!sn && sn !== 0) return; // sécurité
+                                            newSeasonsData[sn] = [];
+                                            (seasonData.episodes || []).forEach(function(ep) {
+                                                newSeasonsData[sn].push({
+                                                    num: ep.episode_number,
+                                                    title: ep.name || ('Épisode ' + ep.episode_number),
+                                                    description: ep.overview || '',
+                                                    embed: '<iframe width="640" height="384" src="https://apis.wavewatch.top/zeus.php?type=tv&id=' + item.id + '&s=' + sn + '&e=' + ep.episode_number + '" frameborder="0" scrolling="no" allowfullscreen></iframe>',
+                                                    duration: ep.runtime ? (ep.runtime >= 60 ? Math.floor(ep.runtime / 60) + ':' + ('0' + (ep.runtime % 60)).slice(-2) + ':00' : ep.runtime + ':00') : ''
+                                                });
+                                            });
+                                        })
+                                    );
+                                }
+
+                                Promise.all(promises).then(function() {
+                                    window.replaceSeasonsData(newSeasonsData);
+                                    window.updateSeasonsBuilder();
+                                    window.toast("✅ Série & Épisodes importés avec succès !");
+                                }).catch(function(e) {
+                                    window.updateSeasonsBuilder();
+                                    window.toast("⚠️ Série remplie, mais erreur lors du scan des épisodes.", true);
+                                });
+                            }
+                        });
+                    })
+                    .catch(function(err) {
+                        window.toast("❌ Erreur TMDB: " + err.message, true);
+                    });
+            };
+        })();
+    </script>
+
+    <!-- MODAL SIGNALER UN BUG -->
+    <div id="bug-report-modal" class="bug-modal-overlay">
+        <div class="bug-modal-box">
+            <h3 id="bug-report-title">🐛 Signaler un bug</h3>
+            <div style="margin-bottom:12px;">
+                <label style="color:rgba(255,255,255,.5);font-size:.82rem;font-weight:700;display:block;margin-bottom:5px;">Pseudo</label>
+                <input type="text" id="bug-report-pseudo" placeholder="Ton pseudo..."
+                    style="width:100%;background:rgba(255,255,255,.05);border:1px solid rgba(184,224,247,.15);border-radius:10px;color:#fff;padding:10px 12px;font-family:'Nunito',sans-serif;font-size:.9rem;outline:none;"
+                >
+            </div>
+            <div>
+                <label style="color:rgba(255,255,255,.5);font-size:.82rem;font-weight:700;display:block;margin-bottom:5px;">Décris le problème</label>
+                <textarea id="bug-report-text" placeholder="Ex: Le film ne se lance pas, l'image est noire, le son ne fonctionne pas..."></textarea>
+            </div>
+            <div class="bug-modal-actions">
+                <button class="bug-send-btn" onclick="sendBugReport()">📨 Envoyer</button>
+                <button class="bug-cancel-btn" onclick="document.getElementById('bug-report-modal').classList.remove('active')">Annuler</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        (function () {
+            // Auto-remplir le pseudo quand le modal s'ouvre
+            var _origBugObserver = new MutationObserver(function () {
+                var modal = document.getElementById('bug-report-modal');
+                if (modal && modal.classList.contains('active')) {
+                    var pseudoInput = document.getElementById('bug-report-pseudo');
+                    if (pseudoInput && !pseudoInput.value) {
+                        var user = window.currentUser;
+                        if (user) {
+                            var pseudo = (user.user_metadata && user.user_metadata.username) || user.email.split('@')[0];
+                            pseudoInput.value = pseudo;
+                        }
+                    }
+                }
+            });
+            _origBugObserver.observe(document.getElementById('bug-report-modal'), { attributes: true, attributeFilter: ['class'] });
+
+            window.sendBugReport = function () {
+                var pseudo = document.getElementById('bug-report-pseudo').value.trim();
+                var message = document.getElementById('bug-report-text').value.trim();
+                var item = window._bugReportItem || {};
+
+                if (!message) {
+                    window.toast("❌ Décris le problème avant d'envoyer.", true);
+                    return;
+                }
+                if (!pseudo) {
+                    window.toast("❌ Entre ton pseudo.", true);
+                    return;
+                }
+
+                var webhookUrl = 'https://discord.com/api/webhooks/1516514743614050426/-2mTTzDs6fPs3KPeTg-_6ki21DqLPz3VXSXDHpwUo_-TUGvVKuneMmt6TXYkz_bm6g-r';
+
+                var embed = {
+                    title: '🐛 Bug signalé',
+                    color: 16750848,
+                    fields: [
+                        { name: '👤 Pseudo', value: pseudo, inline: true },
+                        { name: '🎬 Contenu', value: (item.title || 'Inconnu') + ' (' + (item.type || '?') + ')', inline: true },
+                        { name: '📝 Description', value: message }
+                    ],
+                    footer: { text: 'PenguStream Bug Report' },
+                    timestamp: new Date().toISOString()
+                };
+
+                window.toast("📨 Envoi du signalement...");
+
+                fetch(webhookUrl, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        username: 'PenguStream 🐧',
+                        avatar_url: 'https://aaripotere1256.github.io/pengu-stream/penguin.png',
+                        embeds: [embed]
+                    })
+                }).then(function (r) {
+                    if (r.ok || r.status === 204) {
+                        window.toast("✅ Bug signalé ! Merci pour ton retour 🐧");
+                        document.getElementById('bug-report-modal').classList.remove('active');
+                        document.getElementById('bug-report-text').value = '';
+                    } else {
+                        window.toast("❌ Erreur lors de l'envoi (" + r.status + ")", true);
+                    }
+                }).catch(function (err) {
+                    window.toast("❌ Erreur réseau : " + err.message, true);
+                });
+            };
         })();
     </script>
 </body>
