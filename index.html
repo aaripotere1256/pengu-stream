@@ -2653,41 +2653,39 @@
 
         .cat-edit-row input:focus {
             border-color: var(--aurora1);
-        }
-
-        /* ══ SAGA — CATALOGUE ══ */
-        .sagas-grid {
+        }        .saga-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(155px, 1fr));
-            gap: 18px;
-            margin-top: 16px;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 24px;
+            margin-top: 20px;
         }
 
         .saga-card {
             position: relative;
-            border-radius: 16px;
+            border-radius: 14px;
             overflow: hidden;
             cursor: pointer;
-            background: rgba(10, 30, 50, .6);
-            border: 1px solid rgba(184, 224, 247, .1);
-            aspect-ratio: 2/3;
-            transition: transform .3s cubic-bezier(.22, .68, 0, 1.2), box-shadow .3s, border-color .3s;
-            /* Optimisations tactiles */
+            background: linear-gradient(145deg, rgba(30, 40, 55, 0.6), rgba(10, 15, 25, 0.9));
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            aspect-ratio: 16/9;
+            transition: transform 0.4s cubic-bezier(0.2, 0.8, 0.2, 1), box-shadow 0.4s, border-color 0.4s;
             -webkit-tap-highlight-color: transparent;
             touch-action: manipulation;
             user-select: none;
             -webkit-user-select: none;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3);
         }
 
         .saga-card:hover {
-            transform: translateY(-8px) scale(1.02);
-            box-shadow: 0 20px 50px rgba(0, 0, 0, .55);
-            border-color: rgba(184, 224, 247, .3);
+            transform: scale(1.04) translateY(-4px);
+            border-color: rgba(255, 255, 255, 0.3);
+            box-shadow: 0 20px 45px rgba(0, 0, 0, 0.7), 0 0 25px rgba(184, 224, 247, 0.2);
+            z-index: 2;
         }
 
         .saga-card:active {
-            transform: translateY(-5px) scale(1.01);
-            box-shadow: 0 16px 42px rgba(0, 0, 0, .5);
+            transform: scale(1.02);
+            box-shadow: 0 12px 30px rgba(0, 0, 0, 0.5);
         }
 
         .saga-card-bg {
@@ -2696,11 +2694,13 @@
             width: 100%;
             height: 100%;
             object-fit: cover;
-            transition: transform .4s ease;
+            transition: transform 0.5s cubic-bezier(0.25, 0.8, 0.25, 1), opacity 0.5s;
+            opacity: 0.85;
         }
 
         .saga-card:hover .saga-card-bg {
-            transform: scale(1.06);
+            transform: scale(1.1);
+            opacity: 1;
         }
 
         .saga-card-bg-placeholder {
@@ -2709,14 +2709,27 @@
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 3.8rem;
-            background: linear-gradient(160deg, var(--ocean) 0%, var(--deep) 100%);
+            font-size: 4.5rem;
+            background: linear-gradient(135deg, var(--ocean) 0%, var(--deep) 100%);
+            opacity: 0.8;
+            transition: opacity 0.4s, transform 0.4s;
+            filter: drop-shadow(0 4px 10px rgba(0,0,0,0.5));
+        }
+        
+        .saga-card:hover .saga-card-bg-placeholder {
+            opacity: 1;
+            transform: scale(1.05);
         }
 
         .saga-card-overlay {
             position: absolute;
             inset: 0;
-            background: linear-gradient(to top, rgba(5, 15, 28, .95) 0%, rgba(5, 15, 28, .5) 55%, transparent 100%);
+            background: linear-gradient(to top, rgba(10, 15, 25, 1) 0%, rgba(10, 15, 25, 0.5) 50%, rgba(10, 15, 25, 0.1) 100%);
+            transition: opacity 0.4s;
+        }
+
+        .saga-card:hover .saga-card-overlay {
+            background: linear-gradient(to top, rgba(10, 15, 25, 0.9) 0%, rgba(10, 15, 25, 0.3) 60%, transparent 100%);
         }
 
         .saga-card-body {
@@ -2724,63 +2737,93 @@
             bottom: 0;
             left: 0;
             right: 0;
-            padding: 14px 12px;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            text-align: center;
+            transition: transform 0.4s ease;
+        }
+        
+        .saga-card:hover .saga-card-body {
+            transform: translateY(-5px);
         }
 
         .saga-card-emoji {
-            font-size: 1.1rem;
-            display: block;
-            margin-bottom: 4px;
+            font-size: 1.6rem;
+            margin-bottom: 6px;
+            filter: drop-shadow(0 2px 4px rgba(0,0,0,0.6));
+            transition: transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+        }
+        
+        .saga-card:hover .saga-card-emoji {
+            transform: scale(1.25) translateY(-3px);
         }
 
         .saga-card-title {
             font-family: 'Righteous', cursive;
-            font-size: .95rem;
-            color: #fff;
-            line-height: 1.25;
-            margin-bottom: 5px;
-            display: -webkit-box;
-            -webkit-line-clamp: 2;
-            -webkit-box-orient: vertical;
-            overflow: hidden;
+            font-size: 1.4rem;
+            color: #ffffff;
+            line-height: 1.2;
+            margin-bottom: 8px;
+            text-shadow: 0 3px 10px rgba(0, 0, 0, 0.9);
+            letter-spacing: 0.5px;
+            transition: color 0.3s;
+        }
+
+        .saga-card:hover .saga-card-title {
+            color: #b8e0f7;
         }
 
         .saga-card-count {
             display: inline-flex;
             align-items: center;
-            gap: 4px;
-            background: rgba(67, 230, 181, .15);
-            border: 1px solid rgba(67, 230, 181, .25);
+            background: rgba(255, 255, 255, 0.12);
+            backdrop-filter: blur(8px);
+            border: 1px solid rgba(255, 255, 255, 0.25);
             border-radius: 50px;
-            padding: 2px 9px;
-            font-size: .67rem;
+            padding: 4px 14px;
+            font-size: 0.72rem;
             font-weight: 800;
-            color: var(--aurora1);
-            letter-spacing: .3px;
+            color: #fff;
+            text-transform: uppercase;
+            letter-spacing: 1.5px;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.4);
+            transition: background 0.3s, transform 0.3s;
+        }
+
+        .saga-card:hover .saga-card-count {
+            background: rgba(255, 255, 255, 0.2);
+            transform: scale(1.05);
         }
 
         .saga-card-play {
             position: absolute;
-            top: 10px;
-            right: 10px;
-            width: 32px;
-            height: 32px;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%) scale(0.5);
+            width: 55px;
+            height: 55px;
             border-radius: 50%;
-            background: rgba(255, 255, 255, .12);
-            backdrop-filter: blur(6px);
-            border: 1px solid rgba(255, 255, 255, .2);
+            background: rgba(255, 255, 255, 0.15);
+            backdrop-filter: blur(8px);
+            border: 1px solid rgba(255, 255, 255, 0.4);
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: .75rem;
+            font-size: 1.4rem;
             color: #fff;
             opacity: 0;
-            transform: scale(.7);
-            transition: opacity .25s, transform .25s;
+            transition: all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+            box-shadow: 0 10px 25px rgba(0,0,0,0.5);
         }
 
         .saga-card:hover .saga-card-play {
             opacity: 1;
+            transform: translate(-50%, -50%) scale(1);
+            background: rgba(255, 255, 255, 0.25);
+            box-shadow: 0 0 30px rgba(255,255,255,0.4);
+        }ity: 1;
             transform: scale(1);
         }
 
@@ -4667,21 +4710,21 @@
 
             /* Fix sagas grid catalogue */
             .sagas-catalogue-grid {
-                grid-template-columns: repeat(2, 1fr) !important;
-                gap: 12px;
+                grid-template-columns: 1fr !important;
+                gap: 16px;
             }
 
             .saga-card {
-                min-height: 200px;
+                min-height: auto;
             }
 
             .saga-card-title {
-                font-size: 0.85rem;
+                font-size: 1.15rem;
             }
 
             .saga-card-count {
-                font-size: 0.64rem;
-                padding: 2px 7px;
+                font-size: 0.65rem;
+                padding: 4px 10px;
             }
         }
 
@@ -4841,6 +4884,34 @@
                 overflow-y: auto;
                 overflow-x: hidden;
             }
+        }
+        .btn-tmdb {
+            background: linear-gradient(135deg, #0984e3 0%, #00cec9 100%);
+            border: none;
+            border-radius: 9px;
+            color: #fff;
+            padding: 0 16px;
+            cursor: pointer;
+            font-weight: 800;
+            font-size: 0.9rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+            box-shadow: 0 4px 15px rgba(9, 132, 227, 0.3);
+            transition: all 0.2s ease;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        .btn-tmdb:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(9, 132, 227, 0.5);
+            background: linear-gradient(135deg, #74b9ff 0%, #81ecec 100%);
+            color: #1d1d1d;
+        }
+        .btn-tmdb:active {
+            transform: translateY(1px);
+            box-shadow: 0 2px 8px rgba(9, 132, 227, 0.4);
         }
     </style>
 </head>
@@ -5299,7 +5370,8 @@
                             <label>Titre *</label>
                             <div style="display:flex;gap:8px;">
                                 <input type="text" id="film-title" placeholder="Ex: Interstellar" style="flex:1;">
-                                <button onclick="autoFetchTMDB('film')" type="button" style="background:var(--accent);border:none;border-radius:9px;color:#fff;padding:0 15px;cursor:pointer;font-weight:bold;display:flex;align-items:center;justify-content:center;" title="Recherche Auto TMDB">🔍 TMDB</button>
+                                <button onclick="autoFetchTMDB('film')" type="button" class="btn-tmdb" title="Recherche Auto TMDB">✨ TMDB</button>
+                                <div id="film-tmdb-status" style="font-size:0.85rem;font-weight:700;display:flex;align-items:center;margin-left:8px;"></div>
                             </div>
                         </div>
                         <div class="fp-form-group"><label>Catégorie</label><select id="film-cat"></select></div>
@@ -5370,7 +5442,8 @@
                             <label>Titre *</label>
                             <div style="display:flex;gap:8px;">
                                 <input type="text" id="serie-title" placeholder="Ex: Breaking Bad" style="flex:1;">
-                                <button onclick="autoFetchTMDB('serie')" type="button" style="background:var(--accent);border:none;border-radius:9px;color:#fff;padding:0 15px;cursor:pointer;font-weight:bold;display:flex;align-items:center;justify-content:center;" title="Recherche Auto TMDB">🔍 TMDB</button>
+                                <button onclick="autoFetchTMDB('serie')" type="button" class="btn-tmdb" title="Recherche Auto TMDB">✨ TMDB</button>
+                                <div id="serie-tmdb-status" style="font-size:0.85rem;font-weight:700;display:flex;align-items:center;margin-left:8px;"></div>
                             </div>
                         </div>
                         <div class="fp-form-group"><label>Catégorie</label><select id="serie-cat"></select></div>
@@ -5451,7 +5524,11 @@
                     <div class="fp-grid-2" style="margin-bottom:12px;">
                         <div class="fp-form-group">
                             <label>Nom de la saga *</label>
-                            <input type="text" id="saga-title" placeholder="Ex : Marvel, Harry Potter…">
+                            <div style="display:flex;gap:8px;">
+                                <input type="text" id="saga-title" placeholder="Ex : Marvel, Harry Potter…" style="flex:1;">
+                                <button onclick="autoFetchTMDB('saga')" type="button" class="btn-tmdb" title="Recherche Auto TMDB">✨ TMDB</button>
+                                <div id="saga-tmdb-status" style="font-size:0.85rem;font-weight:700;display:flex;align-items:center;margin-left:8px;"></div>
+                            </div>
                         </div>
                         <div class="fp-form-group">
                             <label>Emoji icône</label>
@@ -6277,6 +6354,7 @@
                             var processed = url.startsWith('<')
                                 ? url.replace(/<iframe/gi, '<iframe style="width:100%;height:min(56.25vw,562px);border:none;border-radius:14px;"')
                                 : '<iframe src="' + url + '" style="width:100%;height:min(56.25vw,562px);border:none;border-radius:14px;" allowfullscreen></iframe>';
+                            processed = '<div style="color:rgba(255,255,255,0.7);text-align:center;padding:15px;font-size:0.9rem;background:rgba(255,255,255,0.05);border-radius:10px;margin-bottom:15px;">⏳ Le chargement de la vidéo peut durer plusieurs secondes, voire plusieurs minutes. Merci de patienter...</div>' + processed;
                             document.getElementById('player-embed-container').innerHTML = processed;
                             // Marquer l'épisode actif
                             document.querySelectorAll('.ep-card').forEach(function (c) {
@@ -6308,6 +6386,9 @@
                         } else {
                             processed = '<iframe src="' + eCode + '" style="width:100%;height:min(56.25vw,562px);border:none;border-radius:14px;" allowfullscreen allow="autoplay; fullscreen"></iframe>';
                         }
+                    }
+                    if (processed.indexOf('<iframe') !== -1) {
+                        processed = '<div style="color:rgba(255,255,255,0.7);text-align:center;padding:15px;font-size:0.9rem;background:rgba(255,255,255,0.05);border-radius:10px;margin-bottom:15px;">⏳ Le chargement de la vidéo peut durer plusieurs secondes, voire plusieurs minutes. Merci de patienter...</div>' + processed;
                     }
                     document.getElementById('player-embed-container').innerHTML = processed;
                     // Enregistrer contexte pour sauvegarde progression
@@ -6374,6 +6455,9 @@
                 if (card) card.classList.add('active-ep');
                 document.getElementById('player-title').textContent = '▶ Épisode ' + num + ' — ' + title;
                 var processed = url.startsWith('<') ? url.replace(/<iframe/gi, '<iframe style="width:100%;height:min(56.25vw,562px);border:none;border-radius:14px;"') : '<iframe src="' + url + '" style="width:100%;height:min(56.25vw,562px);border:none;border-radius:14px;" allowfullscreen></iframe>';
+                if (processed.indexOf('<iframe') !== -1) {
+                    processed = '<div style="color:rgba(255,255,255,0.7);text-align:center;padding:15px;font-size:0.9rem;background:rgba(255,255,255,0.05);border-radius:10px;margin-bottom:15px;">⏳ Le chargement de la vidéo peut durer plusieurs secondes, voire plusieurs minutes. Merci de patienter...</div>' + processed;
+                }
                 document.getElementById('player-embed-container').innerHTML = processed;
                 document.getElementById('player-embed-container').scrollIntoView({ behavior: 'smooth', block: 'start' });
             };
@@ -6674,27 +6758,50 @@
                     video_url: document.getElementById('film-embed').value || null
                 };
                 var editId = document.getElementById('film-edit-id').value;
-                setBtn('btn-save-film', true, '💾 Enregistrer le film');
+                setBtn('btn-save-film', true, '🔍 Vérification Wavewatch… (0s)');
 
-                var op = editId
-                    ? sb.from('films').update(data).eq('id', editId).select()
-                    : sb.from('films').insert(Object.assign({}, data, { created_by: currentUser ? currentUser.id : null })).select();
+                // Compteur de secondes pendant la vérification
+                var _filmCheckSec = 0;
+                var _filmCheckTimer = setInterval(function() {
+                    _filmCheckSec++;
+                    var b = document.getElementById('btn-save-film');
+                    if (b) b.textContent = '🔍 Vérification Wavewatch… (' + _filmCheckSec + 's)';
+                }, 1000);
 
-                op.then(function (res) {
+                // ── Vérification Wavewatch avant publication (BLOQUANTE) ──
+                function doSaveFilm() {
+                    clearInterval(_filmCheckTimer);
+                    setBtn('btn-save-film', true, '💾 Enregistrement…');
+                    var op = editId
+                        ? sb.from('films').update(data).eq('id', editId).select()
+                        : sb.from('films').insert(Object.assign({}, data, { created_by: currentUser ? currentUser.id : null })).select();
+
+                    op.then(function (res) {
+                        setBtn('btn-save-film', false, '💾 Enregistrer le film');
+                        if (res.error) { toast('❌ Erreur : ' + res.error.message, true); return; }
+                        toast(editId ? '✅ Film modifié !' : '🎬 Film ajouté au catalogue !');
+                        if (editId) {
+                            var old = document.querySelector('[data-film-id="' + editId + '"]');
+                            if (old) old.remove();
+                        }
+                        var f = res.data[0];
+                        addFilmCard({ id: f.id, title: f.title, cat: f.cat, emoji: f.emoji || '🎬', badge: f.badge || 'new', access: f.access || 'all', embedCode: f.video_url, thumbUrl: f.thumb_url, bannerUrl: f.banner_url, description: f.description });
+                        applyVip(currentRole);
+                        window.hideFilmForm();
+                        loadFilmsList();
+                    });
+                }
+
+                function cancelFilmSave(msg) {
+                    clearInterval(_filmCheckTimer);
                     setBtn('btn-save-film', false, '💾 Enregistrer le film');
-                    if (res.error) { toast('❌ Erreur : ' + res.error.message, true); return; }
-                    toast(editId ? '✅ Film modifié !' : '🎬 Film ajouté au catalogue !');
-                    // Retirer l'ancienne carte et recréer
-                    if (editId) {
-                        var old = document.querySelector('[data-film-id="' + editId + '"]');
-                        if (old) old.remove();
-                    }
-                    var f = res.data[0];
-                    addFilmCard({ id: f.id, title: f.title, cat: f.cat, emoji: f.emoji || '🎬', badge: f.badge || 'new', access: f.access || 'all', embedCode: f.video_url, thumbUrl: f.thumb_url, bannerUrl: f.banner_url, description: f.description });
-                    applyVip(currentRole);
-                    window.hideFilmForm();
-                    loadFilmsList();
-                });
+                    toast(msg, true);
+                }
+
+                // La vérification Wavewatch est désactivée car Wavewatch bloque les proxys (Cloudflare)
+                // Ce qui provoquait un timeout de 15s et bloquait la sauvegarde.
+                clearInterval(_filmCheckTimer);
+                doSaveFilm();
             };
 
             window.deleteFilm = function (id, title) {
@@ -6916,65 +7023,88 @@
                     nb_saisons: nb
                 };
                 var editId = document.getElementById('serie-edit-id').value;
-                setBtn('btn-save-serie', true, '💾 Enregistrement…');
+                setBtn('btn-save-serie', true, '🔍 Vérification Wavewatch… (0s)');
 
-                // ─── LECTURE DIRECTE DU DOM (fix principal) ───
-                // On lit TOUTES les valeurs depuis les inputs au moment du clic,
-                // sans dépendre de onchange (qui ne se déclenche pas si on clique direct).
-                var allEps = [];
-                for (var sn = 1; sn <= nb; sn++) {
-                    var epIdx = 0;
-                    while (true) {
-                        var row = document.getElementById('ep-row-' + sn + '-' + epIdx);
-                        if (!row) break;
-                        var inputs = row.querySelectorAll('input');
-                        var epNum = inputs[0] ? (parseInt(inputs[0].value) || epIdx + 1) : epIdx + 1;
-                        var epTit = inputs[1] ? inputs[1].value.trim() : '';
-                        var epEmb = inputs[2] ? inputs[2].value.trim() : '';
-                        var epDur = inputs[3] ? inputs[3].value.trim() : '';
-                        if (epTit) {
-                            allEps.push({ saison: sn, numero: epNum, title: epTit, video_url: epEmb || null, duration: epDur || null });
-                        }
-                        epIdx++;
-                    }
-                }
+                // Compteur de secondes pendant la vérification
+                var _serieCheckSec = 0;
+                var _serieCheckTimer = setInterval(function() {
+                    _serieCheckSec++;
+                    var b = document.getElementById('btn-save-serie');
+                    if (b) b.textContent = '🔍 Vérification Wavewatch… (' + _serieCheckSec + 's)';
+                }, 1000);
 
-                var op = editId
-                    ? sb.from('series').update(data).eq('id', editId).select()
-                    : sb.from('series').insert(Object.assign({}, data, { created_by: currentUser ? currentUser.id : null })).select();
+                // ── Vérification Wavewatch S1E1 avant publication ──
+                // Chercher le premier épisode dans le DOM pour extraire le TMDB ID
+                var firstEmbedEl = document.querySelector('[id^="ep-row-1-0"] input:nth-child(3)');
+                var firstEmbed = firstEmbedEl ? firstEmbedEl.value.trim() : '';
+                var tvMatch = firstEmbed.match(/type=tv&id=(\d+)/);
 
-                op.then(function (res) {
-                    if (res.error) { setBtn('btn-save-serie', false, '💾 Enregistrer la série'); toast('❌ Erreur : ' + res.error.message, true); return; }
-                    var serieId = res.data[0].id;
+                function proceedSaveSerie() {
+                    clearInterval(_serieCheckTimer);
+                    setBtn('btn-save-serie', true, '💾 Enregistrement…');
 
-                    // Supprimer les anciens épisodes puis réinsérer proprement
-                    var deleteOp = sb.from('episodes').delete().eq('serie_id', serieId);
-                    deleteOp.then(function (delRes) {
-                        if (delRes.error) {
-                            // Ignorer l'erreur de delete si la table est vide pour cette série
-                        }
-                        var insertOp = allEps.length > 0
-                            ? sb.from('episodes').insert(allEps.map(function (e) { return Object.assign({}, e, { serie_id: serieId }); }))
-                            : Promise.resolve({ error: null });
-
-                        insertOp.then(function (epRes) {
-                            setBtn('btn-save-serie', false, '💾 Enregistrer la série');
-                            if (epRes && epRes.error) { toast('⚠️ Série sauvée mais erreur épisodes : ' + epRes.error.message, true); }
-                            else toast(editId ? '✅ Série modifiée avec ' + allEps.length + ' épisode(s) !' : '📺 Série ajoutée au catalogue !');
-                            // Retirer ancienne carte et recréer
-                            if (editId) {
-                                var old = document.querySelector('[data-serie-id="' + editId + '"]');
-                                if (old) old.remove();
+                    // ─── LECTURE DIRECTE DU DOM (fix principal) ───
+                    // On lit TOUTES les valeurs depuis les inputs au moment du clic,
+                    // sans dépendre de onchange (qui ne se déclenche pas si on clique direct).
+                    var allEps = [];
+                    for (var sn = 1; sn <= nb; sn++) {
+                        var epIdx = 0;
+                        while (true) {
+                            var row = document.getElementById('ep-row-' + sn + '-' + epIdx);
+                            if (!row) break;
+                            var inputs = row.querySelectorAll('input');
+                            var epNum = inputs[0] ? (parseInt(inputs[0].value) || epIdx + 1) : epIdx + 1;
+                            var epTit = inputs[1] ? inputs[1].value.trim() : '';
+                            var epEmb = inputs[2] ? inputs[2].value.trim() : '';
+                            var epDur = inputs[3] ? inputs[3].value.trim() : '';
+                            if (epTit) {
+                                allEps.push({ saison: sn, numero: epNum, title: epTit, video_url: epEmb || null, duration: epDur || null });
                             }
-                            var s = res.data[0];
-                            var cardEps = allEps.map(function (e) { return Object.assign({}, e, { serie_id: serieId, embed: e.video_url || '' }); });
-                            addSerieCard({ id: s.id, title: s.title, cat: s.cat, emoji: s.emoji || '📺', badge: s.badge || 'serie', access: s.access || 'all', thumbUrl: s.thumb_url, bannerUrl: s.banner_url, description: s.description, nb_saisons: s.nb_saisons || 1 }, cardEps);
-                            applyVip(currentRole);
-                            window.hideSerieForm();
-                            loadSeriesList();
+                            epIdx++;
+                        }
+                    }
+
+                    var op = editId
+                        ? sb.from('series').update(data).eq('id', editId).select()
+                        : sb.from('series').insert(Object.assign({}, data, { created_by: currentUser ? currentUser.id : null })).select();
+
+                    op.then(function (res) {
+                        if (res.error) { setBtn('btn-save-serie', false, '💾 Enregistrer la série'); toast('❌ Erreur : ' + res.error.message, true); return; }
+                        var serieId = res.data[0].id;
+
+                        // Supprimer les anciens épisodes puis réinsérer proprement
+                        var deleteOp = sb.from('episodes').delete().eq('serie_id', serieId);
+                        deleteOp.then(function (delRes) {
+                            if (delRes.error) {
+                                // Ignorer l'erreur de delete si la table est vide pour cette série
+                            }
+                            var insertOp = allEps.length > 0
+                                ? sb.from('episodes').insert(allEps.map(function (e) { return Object.assign({}, e, { serie_id: serieId }); }))
+                                : Promise.resolve({ error: null });
+
+                            insertOp.then(function (epRes) {
+                                setBtn('btn-save-serie', false, '💾 Enregistrer la série');
+                                if (epRes && epRes.error) { toast('⚠️ Série sauvée mais erreur épisodes : ' + epRes.error.message, true); }
+                                else toast(editId ? '✅ Série modifiée avec ' + allEps.length + ' épisode(s) !' : '📺 Série ajoutée au catalogue !');
+                                // Retirer ancienne carte et recréer
+                                if (editId) {
+                                    var old = document.querySelector('[data-serie-id="' + editId + '"]');
+                                    if (old) old.remove();
+                                }
+                                var s = res.data[0];
+                                var cardEps = allEps.map(function (e) { return Object.assign({}, e, { serie_id: serieId, embed: e.video_url || '' }); });
+                                addSerieCard({ id: s.id, title: s.title, cat: s.cat, emoji: s.emoji || '📺', badge: s.badge || 'serie', access: s.access || 'all', thumbUrl: s.thumb_url, bannerUrl: s.banner_url, description: s.description, nb_saisons: s.nb_saisons || 1 }, cardEps);
+                                applyVip(currentRole);
+                                window.hideSerieForm();
+                                loadSeriesList();
+                            });
                         });
                     });
-                });
+                } // fin proceedSaveSerie
+
+                // La vérification Wavewatch est désactivée car Wavewatch bloque les proxys (Cloudflare)
+                clearInterval(_serieCheckTimer);
+                proceedSaveSerie();
             };
 
             window.deleteSerie = function (id, title) {
@@ -7972,9 +8102,10 @@
                 var eps = item.episodes;
                 var saisons = [];
                 for (var i = 1; i <= (item.nb_saisons || 1); i++) saisons.push(i);
+                window._currentDetailItem = item;
                 var tabsHtml = saisons.length > 1 ? '<div class="detail-saison-tabs" id="detail-saison-tabs">' +
                     saisons.map(function (n) {
-                        return '<button class="detail-saison-tab' + (n === 1 ? ' active' : '') + '" onclick="switchDetailSaison(' + n + ',' + JSON.stringify(eps).replace(/</g, '\\u003c').replace(/>/g, '\\u003e').replace(/&/g, '\\u0026') + ',\'' + item.title.replace(/'/g, "\\'") + '\',\'' + item.cat + '\',\'' + item.access + '\',\'' + item.id + '\',' + (item.nb_saisons || 1) + ')">S' + n + '</button>';
+                        return '<button class="detail-saison-tab' + (n === 1 ? ' active' : '') + '" onclick="switchDetailSaison(' + n + ')">S' + n + '</button>';
                     }).join('') + '</div>' : '';
                 epsWrap.innerHTML = '<h4>📋 Épisodes</h4>' + tabsHtml + '<div class="detail-ep-list" id="detail-ep-list"></div>';
                 renderDetailEpisodes(eps, 1, item);
@@ -7987,11 +8118,13 @@
             document.body.style.overflow = 'hidden';
         };
 
-        window.switchDetailSaison = function (n, eps, title, cat, access, id, nbSaisons) {
+        window.switchDetailSaison = function (n) {
             document.querySelectorAll('.detail-saison-tab').forEach(function (b) {
                 b.classList.toggle('active', parseInt(b.textContent.replace('S', '')) === n);
             });
-            renderDetailEpisodes(eps, n, { title: title, cat: cat, access: access, id: id, nb_saisons: nbSaisons, episodes: eps });
+            if (window._currentDetailItem) {
+                renderDetailEpisodes(window._currentDetailItem.episodes, n, window._currentDetailItem);
+            }
         };
 
         function renderDetailEpisodes(eps, saison, item) {
@@ -8960,8 +9093,9 @@ body.theme-feu_artifice .aurora-bg .a3{background:#f1c40f;}
                     var grid = section.querySelector('#sagas-grid-public');
                     grid.innerHTML = r.data.map(function (saga) {
                         var total = (saga.film_ids || []).length + (saga.serie_ids || []).length;
-                        var bgContent = saga.thumb_url
-                            ? '<img class="saga-card-bg" src="' + saga.thumb_url + '" alt="" onerror="this.style.display=\'none\'">'
+                        var bgUrl = saga.banner_url || saga.thumb_url;
+                        var bgContent = bgUrl
+                            ? '<img class="saga-card-bg" src="' + bgUrl + '" alt="" onerror="this.style.display=\'none\'">'
                             : '<div class="saga-card-bg-placeholder">' + (saga.emoji || '🎭') + '</div>';
                         return '<div class="saga-card" onclick="window.openSagaDetail(\'' + saga.id + '\')">'
                             + bgContent
@@ -9856,7 +9990,7 @@ body.theme-feu_artifice .aurora-bg .a3{background:#f1c40f;}
     <script>
         (function() {
             window.autoFetchTMDB = function(type) {
-                var inputId = type === 'film' ? 'film-title' : 'serie-title';
+                var inputId = type === 'film' ? 'film-title' : (type === 'serie' ? 'serie-title' : 'saga-title');
                 var query = document.getElementById(inputId).value.trim();
                 
                 if (!query) {
@@ -9866,8 +10000,11 @@ body.theme-feu_artifice .aurora-bg .a3{background:#f1c40f;}
 
                 // Utilise la clé API publique TMDB déjà présente dans le projet
                 var key = 'f34c56c945e5e0de8bd72f85371deea0';
-                var tmdbType = type === 'film' ? 'movie' : 'tv';
+                var tmdbType = type === 'film' ? 'movie' : (type === 'serie' ? 'tv' : 'collection');
                 var url = 'https://api.themoviedb.org/3/search/' + tmdbType + '?api_key=' + key + '&language=fr-FR&query=' + encodeURIComponent(query);
+                
+                var stDiv = document.getElementById(type + '-tmdb-status');
+                if (stDiv) stDiv.innerHTML = ''; // Clear previous status
                 
                 window.toast("⏳ Recherche TMDB en cours...");
 
@@ -9886,16 +10023,20 @@ body.theme-feu_artifice .aurora-bg .a3{background:#f1c40f;}
                         var detailUrl = 'https://api.themoviedb.org/3/' + tmdbType + '/' + item.id + '?api_key=' + key + '&language=fr-FR';
                         
                         fetch(detailUrl).then(function(r) { return r.json(); }).then(function(details) {
-                            var prefix = type === 'film' ? 'film' : 'serie';
+                            var prefix = type === 'film' ? 'film' : (type === 'serie' ? 'serie' : 'saga');
                             var title = details.title || details.name;
                             var overview = details.overview || '';
                             var thumb = details.poster_path ? 'https://image.tmdb.org/t/p/w500' + details.poster_path : '';
                             var banner = details.backdrop_path ? 'https://image.tmdb.org/t/p/original' + details.backdrop_path : '';
                             
-                            document.getElementById(prefix + '-title').value = title;
-                            document.getElementById(prefix + '-desc').value = overview;
-                            document.getElementById(prefix + '-thumb').value = thumb;
-                            document.getElementById(prefix + '-banner').value = banner;
+                            var titleField = document.getElementById(prefix + '-title');
+                            if (titleField) titleField.value = title;
+                            var descField = document.getElementById(prefix + '-desc');
+                            if (descField) descField.value = overview;
+                            var thumbField = document.getElementById(prefix + '-thumb');
+                            if (thumbField) thumbField.value = thumb;
+                            var bannerField = document.getElementById(prefix + '-banner');
+                            if (bannerField) bannerField.value = banner;
 
                             // Catégorie et Emoji Automatique
                             if (details.genres && details.genres.length > 0) {
@@ -9911,7 +10052,8 @@ body.theme-feu_artifice .aurora-bg .a3{background:#f1c40f;}
                                 if (!mapped && details.genres.length > 1) mapped = genreMap[details.genres[1].id];
                                 
                                 if (mapped) {
-                                    document.getElementById(prefix + '-cat').value = mapped;
+                                    var catField = document.getElementById(prefix + '-cat');
+                                    if (catField) catField.value = mapped;
                                     var emojiField = document.getElementById(prefix + '-emoji');
                                     if (emojiField) emojiField.value = emojis[mapped] || '🍿';
                                 }
@@ -9920,6 +10062,8 @@ body.theme-feu_artifice .aurora-bg .a3{background:#f1c40f;}
                             if (type === 'film') {
                                 var embed = '<iframe width="640" height="384" src="https://apis.wavewatch.top/zeus.php?type=movie&id=' + item.id + '" frameborder="0" scrolling="no" allowfullscreen></iframe>';
                                 document.getElementById('film-embed').value = embed;
+                                var st = document.getElementById('film-tmdb-status');
+                                if (st) st.innerHTML = '<span style="color:#2ecc71;">✅ ID Rempli</span>';
                                 window.toast("✅ Auto-remplissage TMDB réussi !");
                             } else if (type === 'serie') {
                                 var nbSaisons = details.number_of_seasons || 1;
@@ -9951,11 +10095,17 @@ body.theme-feu_artifice .aurora-bg .a3{background:#f1c40f;}
                                 Promise.all(promises).then(function() {
                                     window.replaceSeasonsData(newSeasonsData);
                                     window.updateSeasonsBuilder();
+                                    var st = document.getElementById('serie-tmdb-status');
+                                    if (st) st.innerHTML = '<span style="color:#2ecc71;">✅ ID Rempli</span>';
                                     window.toast("✅ Série & Épisodes importés avec succès !");
                                 }).catch(function(e) {
                                     window.updateSeasonsBuilder();
                                     window.toast("⚠️ Série remplie, mais erreur lors du scan des épisodes.", true);
                                 });
+                            } else if (type === 'saga') {
+                                var st = document.getElementById('saga-tmdb-status');
+                                if (st) st.innerHTML = '<span style="color:#2ecc71;">✅ ID Rempli</span>';
+                                window.toast("✅ Auto-remplissage Saga TMDB réussi !");
                             }
                         });
                     })
