@@ -7831,9 +7831,9 @@
                 var btn = document.getElementById('pm-confirm-paid').querySelector('button');
                 btn.disabled = true; btn.textContent = '⏳ Vérification Stripe…';
 
-                // Vérifier le paiement réel via la vue Stripe sécurisée
-                window.sb.from('vue_vip_verifiee').select('est_vip').eq('id', uid).single().then(function(vipCheck) {
-                    if (vipCheck.error || !vipCheck.data || !vipCheck.data.est_vip) {
+                // Vérifier le paiement réel via la fonction Stripe sécurisée
+                window.sb.rpc('check_vip_status', { user_id: uid }).then(function(vipCheck) {
+                    if (vipCheck.error || !vipCheck.data) {
                         btn.disabled = false; btn.textContent = '✅ J\'ai payé — Activer mon VIP';
                         window.toast('❌ Paiement non détecté sur Stripe. Attends quelques secondes et réessaie, ou contacte le support.', true);
                         return;
@@ -7900,17 +7900,30 @@
                 }
             })();
 
-            // Vérification expiration VIP au démarrage
+            // Vérification VIP au démarrage via Stripe
             window.checkVipExpiry = function (uid) {
                 window.sb.from('profiles').select('role,vip_expires_at').eq('id', uid).single().then(function (r) {
                     if (!r.data) return;
-                    if (r.data.role === 'vip' && r.data.vip_expires_at) {
-                        var exp = new Date(r.data.vip_expires_at);
-                        if (exp < new Date()) {
-                            window.sb.from('profiles').update({ role: 'user', vip_expires_at: null, vip_plan: null }).eq('id', uid).then(function () {
-                                window.toast('⏰ Ton abonnement VIP a expiré. Renouvelle pour continuer !');
-                            });
-                        }
+                    if (r.data.role === 'vip') {
+                        window.sb.rpc('check_vip_status', { user_id: uid }).then(function (stripeCheck) {
+                            var stripeActive = !stripeCheck.error && stripeCheck.data === true;
+
+                            if (!stripeActive) {
+                                // Stripe dit FALSE → on retire le VIP immédiatement
+                                window.sb.from('profiles').update({ role: 'user', vip_expires_at: null, vip_plan: null }).eq('id', uid).then(function () {
+                                    window.currentRole = 'user';
+                                    if (window.updateNavbar) window.updateNavbar(window.currentUser, 'user');
+                                    window.toast('⏰ Ton abonnement VIP n\'est plus actif sur Stripe. Renouvelle pour continuer !');
+                                });
+                            } else if (stripeActive && r.data.vip_expires_at && new Date(r.data.vip_expires_at) < new Date()) {
+                                // Stripe actif mais date locale expirée → renouveler
+                                var newExpiry = new Date();
+                                newExpiry.setMonth(newExpiry.getMonth() + 1);
+                                window.sb.from('profiles').update({ vip_expires_at: newExpiry.toISOString() }).eq('id', uid).then(function () {
+                                    window.toast('👑 Abonnement Stripe actif — VIP renouvelé automatiquement !');
+                                });
+                            }
+                        });
                     }
                 });
             };
