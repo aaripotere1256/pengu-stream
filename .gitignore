@@ -1,0 +1,49 @@
+# ══ ENVIRONMENT VARIABLES ══
+.env
+.env.local
+.env.*.local
+
+# ══ NODE ══
+node_modules/
+npm-debug.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+package-lock.json
+yarn.lock
+
+# ══ IDE ══
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+.sublime-project
+.sublime-workspace
+
+# ══ OS ══
+Thumbs.db
+.AppleDouble
+.LSOverride
+
+# ══ DATABASE ══
+*.mongodb
+*.db
+
+# ══ LOGS ══
+logs/
+*.log
+
+# ══ BUILD ══
+dist/
+build/
+
+# ══ TESTING ══
+coverage/
+.nyc_output/
+
+# ══ MISC ══
+.cache/
+temp/
+tmp/
