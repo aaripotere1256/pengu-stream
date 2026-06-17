@@ -6237,11 +6237,14 @@
             /* ═══════════════════════════════════
                SUPABASE + CONFIG
             ═══════════════════════════════════ */
+            var SUPABASE_ANON_KEY = 'sb_publishable_lpVV-T5-o6HQC2_0OnrqDA_XPzt5lIz';
             var sb = window.supabase.createClient(
                 'https://fukbpkitugcanbzyyrwk.supabase.co',
-                'sb_publishable_lpVV-T5-o6HQC2_0OnrqDA_XPzt5lIz'
+                SUPABASE_ANON_KEY
             );
             window.sb = sb;
+            window.SUPABASE_ANON_KEY = SUPABASE_ANON_KEY;
+            window.RESET_LINK_BASE = 'https://aaripotere1256.github.io/pengu-stream';
 
             var ROLES = window.ROLES = {
                 user: { label: '🐧 Membre', css: 'role-user', level: 0 },
@@ -10791,23 +10794,28 @@ body.theme-feu_artifice .aurora-bg .a3{background:#f1c40f;}
                 }
 
                 // Envoyer l'email via Brevo via une Edge Function
-                fetch(
-                    'https://fukbpkitugcanbzyyrwk.supabase.co/functions/v1/send-reset-email',
-                    {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json'
-                        },
-                        body: JSON.stringify({
-                            email: email,
-                            token: token,
-                            resetLink: window.location.origin + window.location.pathname + '#/reset-password?token=' + token
-                        })
-                    }
-                ).then(r => r.json()).then(function (data) {
+                fetch('https://fukbpkitugcanbzyyrwk.supabase.co/functions/v1/send-reset-email', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'apikey': window.SUPABASE_ANON_KEY,
+                        'Authorization': 'Bearer ' + window.SUPABASE_ANON_KEY
+                    },
+                    body: JSON.stringify({
+                        email: email,
+                        token: token,
+                        resetLink: window.RESET_LINK_BASE + '/#/reset-password?token=' + token
+                    })
+                }).then(function (r) {
                     btn.disabled = false;
                     btn.textContent = '📧 Envoyer le lien';
-
+                    if (!r.ok) {
+                        return r.text().then(function (text) {
+                            throw new Error(text || 'Erreur serveur');
+                        });
+                    }
+                    return r.json();
+                }).then(function (data) {
                     if (data.error) {
                         console.error('Brevo error:', data.error);
                         window.toast('❌ Erreur lors de l\'envoi de l\'email', true);
@@ -10823,7 +10831,7 @@ body.theme-feu_artifice .aurora-bg .a3{background:#f1c40f;}
                     btn.disabled = false;
                     btn.textContent = '📧 Envoyer le lien';
                     console.error('Network error:', err);
-                    window.toast('🌐 Erreur réseau lors de l\'envoi', true);
+                    window.toast('🌐 Erreur réseau lors de l\'envoi : ' + err.message, true);
                 });
             }).catch(function (err) {
                 btn.disabled = false;
@@ -10903,14 +10911,18 @@ body.theme-feu_artifice .aurora-bg .a3{background:#f1c40f;}
                     fetch('https://fukbpkitugcanbzyyrwk.supabase.co/functions/v1/reset-password', {
                         method: 'POST',
                         headers: {
-                            'Content-Type': 'application/json'
+                            'Content-Type': 'application/json',
+                            'apikey': window.SUPABASE_ANON_KEY,
+                            'Authorization': 'Bearer ' + window.SUPABASE_ANON_KEY
                         },
                         body: JSON.stringify({
                             token: token,
                             email: resetData.user_email,
                             newPassword: newPass
                         })
-                    }).then(r => r.json()).then(function (data) {
+                    }).then(function (r) {
+                        return r.json();
+                    }).then(function (data) {
                         if (data.error) {
                             showResetError(data.error);
                             btn.disabled = false;
