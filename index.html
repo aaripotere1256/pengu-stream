@@ -5023,6 +5023,284 @@
             transform: translateY(1px);
             box-shadow: 0 2px 8px rgba(9, 132, 227, 0.4);
         }
+
+        /* ══ MODAL RÉINITIALISATION PASSWORD ══ */
+        #forgot-password-modal {
+            position: fixed;
+            inset: 0;
+            z-index: 999;
+            background: rgba(0,0,0,.7);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            backdrop-filter: blur(8px);
+        }
+
+        #forgot-password-modal.active {
+            display: flex;
+        }
+
+        .forgot-modal-box {
+            background: linear-gradient(135deg, rgba(10,30,48,.95), rgba(5,30,48,.98));
+            border: 1px solid rgba(184,224,247,.15);
+            border-radius: 20px;
+            padding: 40px;
+            max-width: 420px;
+            width: 90%;
+            box-shadow: 0 20px 60px rgba(0,0,0,.5);
+            animation: modalPop .3s ease-out;
+        }
+
+        .forgot-modal-close {
+            position: absolute;
+            top: 16px;
+            right: 16px;
+            background: none;
+            border: none;
+            color: rgba(255,255,255,.5);
+            font-size: 1.6rem;
+            cursor: pointer;
+            transition: color .2s;
+        }
+
+        .forgot-modal-close:hover {
+            color: #fff;
+        }
+
+        .forgot-modal-title {
+            font-family: 'Righteous', cursive;
+            font-size: 1.4rem;
+            color: #fff;
+            margin-bottom: 8px;
+            text-align: center;
+        }
+
+        .forgot-modal-sub {
+            color: rgba(255,255,255,.6);
+            font-size: .9rem;
+            text-align: center;
+            margin-bottom: 22px;
+        }
+
+        .forgot-form-group {
+            margin-bottom: 16px;
+        }
+
+        .forgot-form-group label {
+            display: block;
+            color: var(--text-accent);
+            font-weight: 700;
+            font-size: .85rem;
+            margin-bottom: 8px;
+            letter-spacing: .3px;
+        }
+
+        .forgot-form-group input {
+            width: 100%;
+            padding: 12px 16px;
+            background: rgba(184,224,247,.08);
+            border: 1.5px solid rgba(184,224,247,.2);
+            border-radius: 10px;
+            color: #fff;
+            font-family: 'Nunito', sans-serif;
+            font-size: .95rem;
+            outline: none;
+            transition: border-color .2s;
+            box-sizing: border-box;
+        }
+
+        .forgot-form-group input::placeholder {
+            color: rgba(255,255,255,.35);
+        }
+
+        .forgot-form-group input:focus {
+            border-color: var(--teal);
+            background: rgba(184,224,247,.12);
+        }
+
+        .forgot-btn-send {
+            width: 100%;
+            background: linear-gradient(135deg, var(--teal), var(--aurora2));
+            color: #fff;
+            padding: 12px;
+            border: none;
+            border-radius: 10px;
+            font-weight: 800;
+            font-size: .95rem;
+            cursor: pointer;
+            transition: transform .2s, box-shadow .2s;
+        }
+
+        .forgot-btn-send:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 24px rgba(23,165,137,.3);
+        }
+
+        .forgot-btn-send:disabled {
+            opacity: .6;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .forgot-success-msg {
+            background: rgba(46,204,113,.1);
+            border: 1px solid rgba(46,204,113,.3);
+            color: #2ecc71;
+            padding: 12px 14px;
+            border-radius: 10px;
+            font-size: .85rem;
+            margin-top: 16px;
+            text-align: center;
+            display: none;
+        }
+
+        .forgot-success-msg.show {
+            display: block;
+        }
+
+        #reset-password-modal {
+            position: fixed;
+            inset: 0;
+            z-index: 999;
+            background: rgba(0,0,0,.7);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            backdrop-filter: blur(8px);
+        }
+
+        #reset-password-modal.active {
+            display: flex;
+        }
+
+        .reset-modal-box {
+            background: linear-gradient(135deg, rgba(10,30,48,.95), rgba(5,30,48,.98));
+            border: 1px solid rgba(184,224,247,.15);
+            border-radius: 20px;
+            padding: 40px;
+            max-width: 420px;
+            width: 90%;
+            box-shadow: 0 20px 60px rgba(0,0,0,.5);
+            animation: modalPop .3s ease-out;
+        }
+
+        .reset-modal-close {
+            position: absolute;
+            top: 16px;
+            right: 16px;
+            background: none;
+            border: none;
+            color: rgba(255,255,255,.5);
+            font-size: 1.6rem;
+            cursor: pointer;
+            transition: color .2s;
+        }
+
+        .reset-modal-close:hover {
+            color: #fff;
+        }
+
+        .reset-modal-title {
+            font-family: 'Righteous', cursive;
+            font-size: 1.4rem;
+            color: #fff;
+            margin-bottom: 8px;
+            text-align: center;
+        }
+
+        .reset-modal-sub {
+            color: rgba(255,255,255,.6);
+            font-size: .9rem;
+            text-align: center;
+            margin-bottom: 22px;
+        }
+
+        .reset-form-group {
+            margin-bottom: 16px;
+        }
+
+        .reset-form-group label {
+            display: block;
+            color: var(--text-accent);
+            font-weight: 700;
+            font-size: .85rem;
+            margin-bottom: 8px;
+            letter-spacing: .3px;
+        }
+
+        .reset-form-group input {
+            width: 100%;
+            padding: 12px 16px;
+            background: rgba(184,224,247,.08);
+            border: 1.5px solid rgba(184,224,247,.2);
+            border-radius: 10px;
+            color: #fff;
+            font-family: 'Nunito', sans-serif;
+            font-size: .95rem;
+            outline: none;
+            transition: border-color .2s;
+            box-sizing: border-box;
+        }
+
+        .reset-form-group input::placeholder {
+            color: rgba(255,255,255,.35);
+        }
+
+        .reset-form-group input:focus {
+            border-color: var(--teal);
+            background: rgba(184,224,247,.12);
+        }
+
+        .reset-btn-confirm {
+            width: 100%;
+            background: linear-gradient(135deg, var(--aurora1), var(--teal));
+            color: #fff;
+            padding: 12px;
+            border: none;
+            border-radius: 10px;
+            font-weight: 800;
+            font-size: .95rem;
+            cursor: pointer;
+            transition: transform .2s, box-shadow .2s;
+        }
+
+        .reset-btn-confirm:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 24px rgba(67,230,181,.3);
+        }
+
+        .reset-btn-confirm:disabled {
+            opacity: .6;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .reset-error-msg {
+            background: rgba(231,76,60,.1);
+            border: 1px solid rgba(231,76,60,.3);
+            color: #e74c3c;
+            padding: 12px 14px;
+            border-radius: 10px;
+            font-size: .85rem;
+            margin-bottom: 16px;
+            text-align: center;
+            display: none;
+        }
+
+        .reset-error-msg.show {
+            display: block;
+        }
+
+        @keyframes modalPop {
+            from {
+                opacity: 0;
+                transform: scale(.95);
+            }
+            to {
+                opacity: 1;
+                transform: scale(1);
+            }
+        }
     </style>
 </head>
 
@@ -5915,8 +6193,8 @@
                         placeholder="pingouin@arctique.fr"></div>
                 <div class="form-group"><label>Mot de passe</label><input type="password" id="login-pass"
                         placeholder="••••••••"></div>
-                <div style="text-align:right;margin-bottom:15px;margin-top:-7px;"><a href="#"
-                        style="color:var(--aurora1);font-size:.8rem;font-weight:700;">Mot de passe oublié ?</a></div>
+                <div style="text-align:right;margin-bottom:15px;margin-top:-7px;"><a href="#" onclick="event.preventDefault(); openForgotModal()"
+                        style="color:var(--aurora1);font-size:.8rem;font-weight:700;cursor:pointer;">Mot de passe oublié ?</a></div>
                 <button class="btn-submit" id="btn-login" onclick="handleLogin()">🐧 Se connecter</button>
                 <div class="divider">ou continuer avec</div>
                 <div class="social-btns">
@@ -10383,6 +10661,315 @@ body.theme-feu_artifice .aurora-bg .a3{background:#f1c40f;}
                 });
             };
         })();
+    </script>
+
+    <!-- MODAL FORGOT PASSWORD -->
+    <div id="forgot-password-modal">
+        <div class="forgot-modal-box" style="position:relative;">
+            <button class="forgot-modal-close" onclick="closeForgotModal()">✕</button>
+            <h2 class="forgot-modal-title">Mot de passe oublié ? 🐧</h2>
+            <p class="forgot-modal-sub">Entre ton email pour recevoir un lien de réinitialisation</p>
+            
+            <div class="forgot-form-group">
+                <label>Adresse email</label>
+                <input type="email" id="forgot-email" placeholder="pingouin@arctique.fr" />
+            </div>
+            
+            <button class="forgot-btn-send" id="btn-forgot-send" onclick="handleForgotPassword()">
+                📧 Envoyer le lien
+            </button>
+            
+            <div class="forgot-success-msg" id="forgot-success-msg">
+                ✅ Lien envoyé ! Vérifie ton email (et les spams)
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL RESET PASSWORD -->
+    <div id="reset-password-modal">
+        <div class="reset-modal-box" style="position:relative;">
+            <button class="reset-modal-close" onclick="closeResetModal()">✕</button>
+            <h2 class="reset-modal-title">Nouveau mot de passe 🔒</h2>
+            <p class="reset-modal-sub">Choisis un mot de passe sécurisé</p>
+            
+            <div class="reset-error-msg" id="reset-error-msg"></div>
+            
+            <div class="reset-form-group">
+                <label>Nouveau mot de passe</label>
+                <input type="password" id="reset-pass" placeholder="••••••••" />
+            </div>
+            
+            <div class="reset-form-group">
+                <label>Confirmer</label>
+                <input type="password" id="reset-pass-confirm" placeholder="••••••••" />
+            </div>
+            
+            <button class="reset-btn-confirm" id="btn-reset-confirm" onclick="handleResetPassword()">
+                🐧 Réinitialiser
+            </button>
+        </div>
+    </div>
+
+    <script>
+    /* ═══════════════════════════════════════════════════
+       SYSTÈME RÉINITIALISATION PASSWORD
+    ═══════════════════════════════════════════════════ */
+    (function () {
+        // ── Modals ──
+        window.openForgotModal = function () {
+            document.getElementById('authModal').classList.remove('active');
+            document.getElementById('forgot-password-modal').classList.add('active');
+            document.getElementById('forgot-email').value = '';
+            document.getElementById('forgot-success-msg').classList.remove('show');
+        };
+
+        window.closeForgotModal = function () {
+            document.getElementById('forgot-password-modal').classList.remove('active');
+        };
+
+        window.openResetModal = function () {
+            document.getElementById('reset-password-modal').classList.add('active');
+            document.getElementById('reset-pass').value = '';
+            document.getElementById('reset-pass-confirm').value = '';
+            document.getElementById('reset-error-msg').classList.remove('show');
+        };
+
+        window.closeResetModal = function () {
+            document.getElementById('reset-password-modal').classList.remove('active');
+        };
+
+        // Fermer en cliquant sur overlay
+        document.getElementById('forgot-password-modal')?.addEventListener('click', function (e) {
+            if (e.target === this) closeForgotModal();
+        });
+
+        document.getElementById('reset-password-modal')?.addEventListener('click', function (e) {
+            if (e.target === this) closeResetModal();
+        });
+
+        // ── ÉTAPE 1: Demander le reset ──
+        window.handleForgotPassword = function () {
+            var email = document.getElementById('forgot-email').value.trim();
+
+            if (!email) {
+                window.toast('📧 Remplis ton email !', true);
+                return;
+            }
+
+            var emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+            if (!emailRegex.test(email)) {
+                window.toast('📧 Format d\'email invalide !', true);
+                return;
+            }
+
+            var btn = document.getElementById('btn-forgot-send');
+            btn.disabled = true;
+            btn.textContent = '⏳ Envoi en cours...';
+
+            // Générer un token sécurisé (32 caractères aléatoires)
+            var token = Array.from(crypto.getRandomValues(new Uint8Array(24)))
+                .map(b => b.toString(16).padStart(2, '0'))
+                .join('');
+
+            // Créer l'entrée dans password_reset_tokens
+            var expiresAt = new Date();
+            expiresAt.setMinutes(expiresAt.getMinutes() + 15); // 15 min d'expiration
+
+            sb.from('password_reset_tokens').insert({
+                token: token,
+                user_email: email,
+                created_at: new Date().toISOString(),
+                expires_at: expiresAt.toISOString(),
+                used: false
+            }).then(function (res) {
+                if (res.error) {
+                    console.error('Error creating reset token:', res.error);
+                    window.toast('❌ Erreur lors de la création du token', true);
+                    btn.disabled = false;
+                    btn.textContent = '📧 Envoyer le lien';
+                    return;
+                }
+
+                // Envoyer l'email via Brevo via une Edge Function
+                fetch(
+                    'https://YOUR_SUPABASE_URL/functions/v1/send-reset-email',
+                    {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({
+                            email: email,
+                            token: token,
+                            resetLink: window.location.origin + window.location.pathname + '#/reset-password?token=' + token
+                        })
+                    }
+                ).then(r => r.json()).then(function (data) {
+                    btn.disabled = false;
+                    btn.textContent = '📧 Envoyer le lien';
+
+                    if (data.error) {
+                        console.error('Brevo error:', data.error);
+                        window.toast('❌ Erreur lors de l\'envoi de l\'email', true);
+                        return;
+                    }
+
+                    document.getElementById('forgot-success-msg').classList.add('show');
+                    setTimeout(() => {
+                        closeForgotModal();
+                        window.toast('✅ Lien envoyé ! Vérifie ton email', false);
+                    }, 2000);
+                }).catch(function (err) {
+                    btn.disabled = false;
+                    btn.textContent = '📧 Envoyer le lien';
+                    console.error('Network error:', err);
+                    window.toast('🌐 Erreur réseau lors de l\'envoi', true);
+                });
+            }).catch(function (err) {
+                btn.disabled = false;
+                btn.textContent = '📧 Envoyer le lien';
+                console.error('DB error:', err);
+                window.toast('❌ Erreur serveur', true);
+            });
+        };
+
+        // ── ÉTAPE 2: Valider le token et réinitialiser ──
+        window.handleResetPassword = function () {
+            var newPass = document.getElementById('reset-pass').value;
+            var confirmPass = document.getElementById('reset-pass-confirm').value;
+
+            if (!newPass || !confirmPass) {
+                showResetError('Remplis tous les champs !');
+                return;
+            }
+
+            if (newPass !== confirmPass) {
+                showResetError('Les mots de passe ne correspondent pas !');
+                return;
+            }
+
+            if (newPass.length < 6) {
+                showResetError('Mot de passe trop court (6 caractères min)');
+                return;
+            }
+
+            var btn = document.getElementById('btn-reset-confirm');
+            btn.disabled = true;
+            btn.textContent = '⏳ Réinitialisation...';
+
+            // Récupérer le token depuis l'URL
+            var urlParams = new URLSearchParams(window.location.hash.split('?')[1] || '');
+            var token = urlParams.get('token');
+
+            if (!token) {
+                showResetError('Token invalide ou expiré');
+                btn.disabled = false;
+                btn.textContent = '🐧 Réinitialiser';
+                return;
+            }
+
+            // Chercher le token dans la DB
+            sb.from('password_reset_tokens')
+                .select('*')
+                .eq('token', token)
+                .single()
+                .then(function (res) {
+                    if (res.error || !res.data) {
+                        showResetError('Token invalide');
+                        btn.disabled = false;
+                        btn.textContent = '🐧 Réinitialiser';
+                        return;
+                    }
+
+                    var resetData = res.data;
+
+                    // Vérifier l'expiration
+                    if (new Date(resetData.expires_at) < new Date()) {
+                        showResetError('Le lien a expiré. Demande un nouveau lien.');
+                        btn.disabled = false;
+                        btn.textContent = '🐧 Réinitialiser';
+                        return;
+                    }
+
+                    // Vérifier si déjà utilisé
+                    if (resetData.used) {
+                        showResetError('Ce lien a déjà été utilisé');
+                        btn.disabled = false;
+                        btn.textContent = '🐧 Réinitialiser';
+                        return;
+                    }
+
+                    // Appeler la fonction Edge Function pour réinitialiser
+                    fetch('https://YOUR_SUPABASE_URL/functions/v1/reset-password', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({
+                            token: token,
+                            email: resetData.user_email,
+                            newPassword: newPass
+                        })
+                    }).then(r => r.json()).then(function (data) {
+                        if (data.error) {
+                            showResetError(data.error);
+                            btn.disabled = false;
+                            btn.textContent = '🐧 Réinitialiser';
+                            return;
+                        }
+
+                        btn.disabled = false;
+                        btn.textContent = '🐧 Réinitialiser';
+                        closeResetModal();
+                        window.toast('✅ Mot de passe réinitialisé ! Tu peux maintenant te connecter', false);
+                        setTimeout(() => {
+                            window.location.hash = '';
+                            window.openAuthModal();
+                        }, 1000);
+                    }).catch(function (err) {
+                        console.error('Error:', err);
+                        showResetError('Erreur lors de la réinitialisation');
+                        btn.disabled = false;
+                        btn.textContent = '🐧 Réinitialiser';
+                    });
+                }).catch(function (err) {
+                    console.error('DB Error:', err);
+                    showResetError('Erreur serveur');
+                    btn.disabled = false;
+                    btn.textContent = '🐧 Réinitialiser';
+                });
+        };
+
+        function showResetError(msg) {
+            var errorEl = document.getElementById('reset-error-msg');
+            errorEl.textContent = '❌ ' + msg;
+            errorEl.classList.add('show');
+        }
+
+        // ── Détecter et afficher le modal reset si token dans l'URL ──
+        setTimeout(function () {
+            var urlParams = new URLSearchParams(window.location.hash.split('?')[1] || '');
+            var resetToken = urlParams.get('token');
+
+            if (resetToken) {
+                // Valider que le token existe
+                sb.from('password_reset_tokens')
+                    .select('*')
+                    .eq('token', resetToken)
+                    .single()
+                    .then(function (res) {
+                        if (!res.error && res.data) {
+                            if (new Date(res.data.expires_at) >= new Date() && !res.data.used) {
+                                openResetModal();
+                            } else {
+                                window.toast('❌ Lien expiré ou invalide', true);
+                            }
+                        }
+                    });
+            }
+        }, 500);
+
+    })();
     </script>
 </body>
 
