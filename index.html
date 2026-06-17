@@ -974,6 +974,320 @@
             margin-top: 6px;
         }
 
+        /* ===== SAGAS SECTION (ORIGINAL DESIGN) ===== */
+        .sagas-section {
+            position: relative;
+            z-index: 1;
+            padding: 60px 40px;
+            max-width: 100%;
+            margin: 60px 0;
+        }
+
+        .sagas-showcase {
+            background: linear-gradient(135deg, rgba(5, 30, 48, 0.9) 0%, rgba(10, 61, 98, 0.85) 100%);
+            border: 1px solid rgba(184, 224, 247, 0.15);
+            border-radius: 20px;
+            padding: 80px 100px;
+            display: grid;
+            grid-template-columns: 1fr 2fr;
+            gap: 100px;
+            align-items: center;
+            min-height: 550px;
+            margin: 0 auto;
+            max-width: 1500px;
+        }
+
+        .sagas-left {
+            display: flex;
+            flex-direction: column;
+            gap: 30px;
+        }
+
+        .sagas-title {
+            font-family: 'Righteous', sans-serif;
+            font-size: 52px;
+            font-weight: 900;
+            color: #fff;
+            line-height: 1.2;
+        }
+
+        .sagas-title span {
+            background: linear-gradient(135deg, #b8e0f7 0%, #43e6b5 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .sagas-desc {
+            font-size: 18px;
+            color: rgba(255, 255, 255, 0.7);
+            line-height: 1.6;
+        }
+
+        .sagas-btn-all {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            background: linear-gradient(135deg, #17a589 0%, #43e6b5 100%);
+            color: #fff;
+            border: none;
+            padding: 16px 36px;
+            border-radius: 50px;
+            font-weight: 700;
+            font-size: 16px;
+            cursor: pointer;
+            transition: all 0.3s;
+            width: fit-content;
+            box-shadow: 0 4px 15px rgba(23, 165, 137, 0.3);
+        }
+
+        .sagas-btn-all:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(67, 230, 181, 0.4);
+            background: linear-gradient(135deg, #43e6b5 0%, #17a589 100%);
+        }
+
+        .sagas-right {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 24px;
+            row-gap: 70px;
+        }
+
+        .saga-card-wrapper {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .saga-card-item {
+            position: relative;
+            border-radius: 14px;
+            overflow: visible;
+            cursor: pointer;
+            transition: transform 0.3s, filter 0.3s, box-shadow 0.3s;
+            aspect-ratio: 16 / 10;
+            background: linear-gradient(135deg, rgba(23, 165, 137, 0.4) 0%, rgba(67, 230, 181, 0.2) 100%);
+            border: 1px solid rgba(184, 224, 247, 0.2);
+            box-shadow: 0 0 30px rgba(67, 230, 181, 0.3);
+        }
+
+        .saga-card-item:hover {
+            transform: scale(1.05);
+            filter: drop-shadow(0 0 20px rgba(67, 230, 181, 0.6));
+        }
+
+        .saga-card-overlay {
+            position: absolute;
+            inset: 0;
+            background: linear-gradient(180deg, rgba(0, 0, 0, 0.2) 0%, rgba(0, 0, 0, 0.85) 100%);
+            z-index: 2;
+            border-radius: 14px;
+        }
+
+        .saga-card-content {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            padding: 20px;
+            z-index: 3;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            color: #fff;
+            height: auto;
+        }
+
+        .saga-card-emoji {
+            font-size: 36px;
+            flex-shrink: 0;
+        }
+
+        .saga-card-title {
+            font-family: 'Righteous', sans-serif;
+            font-weight: 700;
+            font-size: 13px;
+            color: rgba(255, 255, 255, 0.9);
+            text-align: center;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            margin-top: 0;
+        }
+
+        /* SAGAS PAGE */
+        .sagas-page {
+            position: fixed;
+            inset: 0;
+            background: linear-gradient(135deg, #051e30 0%, #0a3d62 100%);
+            overflow-y: auto;
+            z-index: 1000;
+            display: none;
+        }
+
+        .sagas-page.active {
+            display: block;
+        }
+
+        .sagas-page-header {
+            padding: 40px;
+            border-bottom: 1px solid rgba(184, 224, 247, 0.1);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            max-width: 1200px;
+            margin: 0 auto;
+            width: 100%;
+        }
+
+        .sagas-page-title {
+            font-family: 'Righteous', sans-serif;
+            font-size: 32px;
+            color: #fff;
+        }
+
+        .sagas-page-close {
+            background: none;
+            border: none;
+            color: #b8e0f7;
+            font-size: 24px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .sagas-page-close:hover {
+            color: #43e6b5;
+            transform: scale(1.2);
+        }
+
+        .sagas-page-controls {
+            padding: 30px 40px;
+            max-width: 1200px;
+            margin: 0 auto;
+            width: 100%;
+            border-bottom: 1px solid rgba(184, 224, 247, 0.1);
+        }
+
+        .sagas-search-bar {
+            display: flex;
+            gap: 16px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
+
+        .sagas-search-input {
+            flex: 1;
+            min-width: 250px;
+            padding: 12px 16px;
+            background: rgba(5, 30, 48, 0.6);
+            border: 1px solid rgba(184, 224, 247, 0.3);
+            border-radius: 8px;
+            color: #b8e0f7;
+            font-family: 'Nunito', sans-serif;
+            font-size: 14px;
+            transition: all 0.3s;
+        }
+
+        .sagas-search-input::placeholder {
+            color: rgba(184, 224, 247, 0.5);
+        }
+
+        .sagas-search-input:focus {
+            outline: none;
+            border-color: #43e6b5;
+            background: rgba(5, 30, 48, 0.9);
+            box-shadow: 0 0 15px rgba(67, 230, 181, 0.2);
+        }
+
+        .sagas-filters {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        .saga-filter-btn {
+            padding: 8px 16px;
+            background: rgba(23, 165, 137, 0.2);
+            border: 1px solid rgba(67, 230, 181, 0.4);
+            border-radius: 20px;
+            color: #b8e0f7;
+            font-family: 'Nunito', sans-serif;
+            font-size: 12px;
+            cursor: pointer;
+            transition: all 0.3s;
+            white-space: nowrap;
+        }
+
+        .saga-filter-btn:hover {
+            background: rgba(23, 165, 137, 0.4);
+            border-color: #43e6b5;
+            color: #43e6b5;
+        }
+
+        .saga-filter-btn.active {
+            background: rgba(67, 230, 181, 0.5);
+            border-color: #43e6b5;
+            color: #fff;
+        }
+
+        .sagas-page-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            gap: 20px;
+            padding: 40px;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .saga-page-card {
+            position: relative;
+            border-radius: 14px;
+            overflow: hidden;
+            cursor: pointer;
+            transition: transform 0.3s, filter 0.3s;
+            aspect-ratio: 2 / 1.5;
+            background: rgba(10, 61, 98, 0.6);
+            border: 1px solid rgba(184, 224, 247, 0.2);
+        }
+
+        .saga-page-card:hover {
+            transform: scale(1.05);
+            filter: drop-shadow(0 0 20px rgba(67, 230, 181, 0.5));
+        }
+
+        /* RESPONSIVE */
+        @media (max-width: 1024px) {
+            .sagas-showcase {
+                grid-template-columns: 1fr;
+                gap: 30px;
+            }
+
+            .sagas-right {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+
+        @media (max-width: 768px) {
+            .sagas-section {
+                padding: 30px 20px;
+                margin: 30px auto;
+            }
+
+            .sagas-showcase {
+                padding: 30px 20px;
+            }
+
+            .sagas-title {
+                font-size: 28px;
+            }
+
+            .sagas-right {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+
         /* FEATURES */
         .features {
             position: relative;
@@ -5314,7 +5628,175 @@
                 transform: scale(1);
             }
         }
+
+        /* ══ CATÉGORIES - NETFLIX STYLE ══ */
+        #categories-section {
+            position: relative;
+            z-index: 1;
+            padding: 80px 40px;
+            background: var(--deep);
+        }
+
+        .categories-container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        .category-row {
+            margin-bottom: 50px;
+        }
+
+        .category-title {
+            font-family: 'Righteous', cursive;
+            font-size: 1.6rem;
+            font-weight: 900;
+            margin-bottom: 18px;
+            letter-spacing: 0.5px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .category-slider {
+            display: flex;
+            gap: 14px;
+            overflow-x: auto;
+            scroll-behavior: smooth;
+            padding-bottom: 10px;
+            scrollbar-width: none;
+            -ms-overflow-style: none;
+            position: relative;
+        }
+
+        .category-slider::-webkit-scrollbar {
+            display: none;
+        }
+
+        .category-film-card {
+            flex: 0 0 calc(100% / 5);
+            min-width: 160px;
+            aspect-ratio: 2/3;
+            border-radius: 12px;
+            overflow: hidden;
+            cursor: pointer;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+            position: relative;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 3rem;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+        }
+
+        .category-film-card:hover {
+            transform: scale(1.08) translateY(-8px);
+            box-shadow: 0 12px 30px rgba(0, 0, 0, 0.5);
+            border-color: rgba(255, 255, 255, 0.3);
+        }
+
+        .category-film-card img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            display: block;
+        }
+
+        .category-film-overlay {
+            position: absolute;
+            inset: 0;
+            background: linear-gradient(to top, rgba(0, 0, 0, 0.8) 0%, transparent 60%);
+            opacity: 0;
+            transition: opacity 0.3s;
+            display: flex;
+            align-items: flex-end;
+            padding: 14px;
+            z-index: 2;
+        }
+
+        .category-film-card:hover .category-film-overlay {
+            opacity: 1;
+        }
+
+        .category-film-title {
+            font-family: 'Righteous', cursive;
+            font-size: 0.8rem;
+            font-weight: 800;
+            color: #fff;
+            line-height: 1.2;
+            word-break: break-word;
+        }
+
+        .slider-nav {
+            position: absolute;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 40px;
+            height: 40px;
+            background: rgba(0, 0, 0, 0.6);
+            border: none;
+            color: #fff;
+            font-size: 1.2rem;
+            cursor: pointer;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.3s;
+            z-index: 10;
+            backdrop-filter: blur(8px);
+        }
+
+        .slider-nav:hover {
+            background: rgba(0, 0, 0, 0.9);
+            transform: translateY(-50%) scale(1.1);
+        }
+
+        .slider-prev {
+            left: -50px;
+        }
+
+        .slider-next {
+            right: -50px;
+        }
+
+        @media (max-width: 1024px) {
+            .category-film-card {
+                flex: 0 0 calc(100% / 4);
+            }
+            .slider-prev { left: 0; }
+            .slider-next { right: 0; }
+        }
+
+        @media (max-width: 768px) {
+            #categories-section {
+                padding: 40px 16px;
+            }
+            .category-title {
+                font-size: 1.2rem;
+                margin-bottom: 12px;
+            }
+            .category-film-card {
+                flex: 0 0 calc(100% / 3);
+            }
+            .category-slider {
+                gap: 10px;
+            }
+            .slider-nav {
+                width: 32px;
+                height: 32px;
+                font-size: 1rem;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .category-film-card {
+                flex: 0 0 calc(100% / 2);
+            }
+        }
     </style>
+    <script src="https://jariz.github.io/vibrant.js/dist/vibrant.js"></script>
 </head>
 
 <body>
@@ -5429,6 +5911,36 @@
         </div>
     </div>
 
+    <!-- SAGAS SECTION (Dynamique) -->
+    <section class="sagas-section reveal" id="sagas-section" style="display:none;">
+        <div class="sagas-showcase">
+            <div class="sagas-left">
+                <h2 class="sagas-title">
+                    Explore nos
+                    <br><span>Sagas</span>
+                </h2>
+                <p class="sagas-desc">Découvre les franchises complètes avec tous les films et séries de chaque univers</p>
+                <button class="sagas-btn-all" onclick="window.renderSagasPage();">🎫 Voir toutes les sagas →</button>
+            </div>
+            <div class="sagas-right" id="sagas-grid-container"></div>
+        </div>
+    </section>
+
+    <!-- SAGAS PAGE -->
+    <div class="sagas-page" id="sagas-page">
+        <div class="sagas-page-header">
+            <h1 class="sagas-page-title">🎭 Toutes les Sagas</h1>
+            <button class="sagas-page-close" onclick="window.closeSagasPage();">✕</button>
+        </div>
+        <div class="sagas-page-controls">
+            <div class="sagas-search-bar">
+                <input type="text" class="sagas-search-input" id="sagas-search-input" placeholder="Rechercher une saga..." oninput="window.filterSagas();">
+            </div>
+            <div class="sagas-filters" id="sagas-filters-container"></div>
+        </div>
+        <div class="sagas-page-grid" id="sagas-page-grid"></div>
+    </div>
+
     <!-- CATALOGUE -->
     <section class="catalogue reveal" id="catalogue">
         <h2 class="section-title">🎬 Catalogue Glacial</h2>
@@ -5474,7 +5986,7 @@
         </div>
     </section>
 
-    <!-- FEATURES -->
+    <!-- SAGAS CULTES -->
     <section class="features reveal" id="features">
         <div style="text-align:center;margin-bottom:10px;">
             <h2 class="section-title">🐧 Pourquoi PenguStream ?</h2>
@@ -9491,6 +10003,7 @@ body.theme-feu_artifice .aurora-bg .a3{background:#f1c40f;}
                     window.hideSagaForm();
                     window.loadSagasList();
                     window.renderSagasCatalogue();
+                    window.renderSagasSection();
                 }).catch(function (err) {
                     if (btn) { btn.disabled = false; btn.textContent = '💾 Enregistrer la saga'; btn.style.opacity = '1'; }
                     window.toast('❌ ' + (err.message || err), true);
@@ -9521,42 +10034,263 @@ body.theme-feu_artifice .aurora-bg .a3{background:#f1c40f;}
                     loadSagasCache();
                     window.loadSagasList();
                     window.renderSagasCatalogue();
+                    window.renderSagasSection();
                 });
             };
 
             window.renderSagasCatalogue = function () {
-                var existing = document.getElementById('sagas-catalogue-section');
-                if (existing) existing.remove();
-                window.sb.from('sagas').select('id,title,emoji,description,thumb_url,banner_url,color1,color2,film_ids,serie_ids').order('created_at', { ascending: true }).then(function (r) {
-                    if (r.error || !r.data || !r.data.length) return;
-                    var section = document.createElement('div');
-                    section.id = 'sagas-catalogue-section';
-                    section.style.cssText = 'position:relative;z-index:1;padding:0 40px 60px;max-width:1200px;margin:0 auto;';
-                    section.innerHTML = '<h2 class="section-title" style="margin-bottom:6px;">🎭 Sagas & Franchises</h2>'
-                        + '<p class="section-sub" style="margin-bottom:20px;">Collections et univers cinématographiques</p>'
-                        + '<div class="sagas-grid" id="sagas-grid-public"></div>';
-                    var catalogue = document.getElementById('catalogue');
-                    catalogue.parentNode.insertBefore(section, catalogue);
-                    var grid = section.querySelector('#sagas-grid-public');
-                    grid.innerHTML = r.data.map(function (saga) {
-                        var total = (saga.film_ids || []).length + (saga.serie_ids || []).length;
-                        var bgUrl = saga.banner_url || saga.thumb_url;
-                        var bgContent = bgUrl
-                            ? '<img class="saga-card-bg" src="' + bgUrl + '" alt="" onerror="this.style.display=\'none\'">'
-                            : '<div class="saga-card-bg-placeholder">' + (saga.emoji || '🎭') + '</div>';
-                        return '<div class="saga-card" onclick="window.openSagaDetail(\'' + saga.id + '\')">'
-                            + bgContent
-                            + '<div class="saga-card-overlay"></div>'
-                            + '<div class="saga-card-play">▶</div>'
-                            + '<div class="saga-card-body">'
-                            + '<span class="saga-card-emoji">' + (saga.emoji || '🎭') + '</span>'
-                            + '<div class="saga-card-title">' + saga.title + '</div>'
-                            + '<span class="saga-card-count">' + total + ' contenu' + (total !== 1 ? 's' : '') + '</span>'
-                            + '</div>'
-                            + '</div>';
-                    }).join('');
+                // Désactivé : les sagas s'affichent maintenant dans la section "sagas-section" en haut
+            };
+
+            window.renderSagasSection = function () {
+                if (!window.sb) return;
+                window.sb.from('sagas')
+                    .select('id,title,emoji,banner_url,film_ids,serie_ids')
+                    .order('created_at', { ascending: true })
+                    .limit(6)
+                    .then(function (r) {
+                        if (r.error || !r.data || !r.data.length) {
+                            document.getElementById('sagas-section').style.display = 'none';
+                            return;
+                        }
+                        
+                        var container = document.getElementById('sagas-grid-container');
+                        container.innerHTML = r.data.map(function (saga, idx) {
+                            var bannerUrl = saga.banner_url || '';
+                            var bgStyle = bannerUrl ? 'background-image: url(\'' + bannerUrl + '\'); background-size: cover; background-position: center;' : '';
+                            return '<div class="saga-card-wrapper" data-saga-id="saga-' + idx + '">'
+                                + '<div class="saga-card-item" id="saga-' + idx + '" onclick="window.openSagaDetail(\'' + saga.id + '\')" style="' + bgStyle + '">'
+                                + '<div class="saga-card-overlay"></div>'
+                                + '<div class="saga-card-content"></div>'
+                                + '</div>'
+                                + '<span class="saga-card-title">' + saga.title + '</span>'
+                                + '</div>';
+                        }).join('');
+                        
+                        document.getElementById('sagas-section').style.display = 'block';
+                        
+                        // Réinitialiser catégories quand sagas change
+                        window.initCategories();
+                        
+                        // Extraire les couleurs dominantes des bannières
+                        r.data.forEach(function (saga, idx) {
+                            if (saga.banner_url && window.Vibrant) {
+                                var img = new Image();
+                                img.crossOrigin = 'Anonymous';
+                                img.onload = function () {
+                                    try {
+                                        window.Vibrant.from(img).getPalette(function (err, palette) {
+                                            if (err || !palette) return;
+                                            var vibrant = palette.Vibrant || palette.DarkVibrant || palette.LightVibrant;
+                                            if (vibrant) {
+                                                var color = vibrant.getHex();
+                                                var cardEl = document.getElementById('saga-' + idx);
+                                                if (cardEl) {
+                                                    cardEl.style.boxShadow = '0 0 30px rgba(' + hexToRgb(color) + ', 0.5), 0 0 60px rgba(' + hexToRgb(color) + ', 0.3)';
+                                                    cardEl.dataset.color = color;
+                                                    cardEl.onmouseenter = function () {
+                                                        this.style.boxShadow = '0 0 50px rgba(' + hexToRgb(color) + ', 0.8), 0 0 80px rgba(' + hexToRgb(color) + ', 0.5)';
+                                                    };
+                                                    cardEl.onmouseleave = function () {
+                                                        this.style.boxShadow = '0 0 30px rgba(' + hexToRgb(color) + ', 0.5), 0 0 60px rgba(' + hexToRgb(color) + ', 0.3)';
+                                                    };
+                                                }
+                                            }
+                                        });
+                                    } catch (e) {}
+                                };
+                                img.src = saga.banner_url;
+                            }
+                        });
+                    });
+            };
+
+            function hexToRgb(hex) {
+                var result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
+                return result ? parseInt(result[1], 16) + ', ' + parseInt(result[2], 16) + ', ' + parseInt(result[3], 16) : '67, 230, 181';
+            }
+
+            window.allSagasData = [];
+
+            window.renderSagasPage = function () {
+                if (!window.sb) return;
+                var pageDiv = document.getElementById('sagas-page');
+                var gridDiv = document.getElementById('sagas-page-grid');
+                
+                window.sb.from('sagas')
+                    .select('id,title,emoji,thumb_url,banner_url')
+                    .order('created_at', { ascending: true })
+                    .then(function (r) {
+                        if (r.error || !r.data || !r.data.length) {
+                            gridDiv.innerHTML = '<div style="text-align:center;padding:40px;color:#b8e0f7;grid-column:1/-1;">Aucune saga créée</div>';
+                            window.allSagasData = [];
+                        } else {
+                            window.allSagasData = r.data;
+                            window.displaySagasInPage(r.data);
+                            window.buildSagasFilters();
+                        }
+                        pageDiv.classList.add('active');
+                        document.body.style.overflow = 'hidden';
+                        document.getElementById('sagas-search-input').value = '';
+                    });
+            };
+
+            window.displaySagasInPage = function (sagasToDisplay) {
+                var gridDiv = document.getElementById('sagas-page-grid');
+                if (!sagasToDisplay || sagasToDisplay.length === 0) {
+                    gridDiv.innerHTML = '<div style="text-align:center;padding:40px;color:#b8e0f7;grid-column:1/-1;">Aucune saga trouvée</div>';
+                    return;
+                }
+                gridDiv.innerHTML = sagasToDisplay.map(function (saga) {
+                    var posterUrl = saga.thumb_url || saga.banner_url;
+                    return '<div class="saga-page-card" onclick="window.openSagaDetail(\'' + saga.id + '\'); window.closeSagasPage();">'
+                        + (posterUrl ? '<img src="' + posterUrl + '" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;opacity:0.6;" onerror="this.style.display=\'none\'">' : '')
+                        + '<div style="position:absolute;inset:0;background:linear-gradient(180deg, transparent 0%, rgba(0,0,0,0.8) 100%);z-index:2;"></div>'
+                        + '<div style="position:absolute;bottom:0;left:0;right:0;padding:16px;z-index:3;display:flex;align-items:center;gap:10px;color:#fff;">'
+                        + '<span style="font-size:24px;">' + (saga.emoji || '🎭') + '</span>'
+                        + '<span style="font-family:\'Righteous\',sans-serif;font-weight:700;">' + saga.title + '</span>'
+                        + '</div>'
+                        + '</div>';
+                }).join('');
+            };
+
+            window.buildSagasFilters = function () {
+                var container = document.getElementById('sagas-filters-container');
+                container.innerHTML = '';
+                if (!window.allSagasData || window.allSagasData.length === 0) return;
+                
+                var emojis = {};
+                window.allSagasData.forEach(function (saga) {
+                    var emoji = saga.emoji || '🎭';
+                    if (!emojis[emoji]) emojis[emoji] = 0;
+                    emojis[emoji]++;
+                });
+                
+                Object.keys(emojis).forEach(function (emoji) {
+                    var btn = document.createElement('button');
+                    btn.className = 'saga-filter-btn';
+                    btn.textContent = emoji + ' (' + emojis[emoji] + ')';
+                    btn.onclick = function () {
+                        this.classList.toggle('active');
+                        window.filterSagas();
+                    };
+                    container.appendChild(btn);
                 });
             };
+
+            window.filterSagas = function () {
+                var searchTerm = document.getElementById('sagas-search-input').value.toLowerCase();
+                var selectedFilters = Array.from(document.querySelectorAll('.saga-filter-btn.active')).map(function (btn) {
+                    return btn.textContent.split(' ')[0];
+                });
+                
+                var filtered = window.allSagasData.filter(function (saga) {
+                    var matchesSearch = saga.title.toLowerCase().includes(searchTerm);
+                    var matchesFilter = selectedFilters.length === 0 || selectedFilters.includes(saga.emoji || '🎭');
+                    return matchesSearch && matchesFilter;
+                });
+                
+                window.displaySagasInPage(filtered);
+            };
+
+            window.closeSagasPage = function () {
+                document.getElementById('sagas-page').classList.remove('active');
+                document.body.style.overflow = '';
+            };
+
+            // ══ CATÉGORIES NETFLIX-STYLE ══
+            const categoryColors = {
+                'Action': '#FF6B6B',
+                'Drame': '#9D84B7',
+                'Comédie': '#FFD93D',
+                'Science-Fiction': '#00A8E8',
+                'Horreur': '#8B0000',
+                'Romance': '#FF69B4',
+                'Thriller': '#2C3E50',
+                'Animation': '#FF8C42',
+                'Documentaire': '#6C757D',
+                'Fantasy': '#A569BD'
+            };
+
+            window.initCategories = function () {
+                if (!window.sb) return;
+                
+                window.sb.from('films')
+                    .select('id,title,poster_url,genre,created_at')
+                    .order('created_at', { ascending: false })
+                    .then(function (r) {
+                        if (r.error || !r.data) return;
+                        
+                        var allFilms = r.data || [];
+                        var now = new Date();
+                        var oneDayAgo = new Date(now - 24 * 60 * 60 * 1000);
+                        
+                        // Films des 24 dernières heures
+                        var newFilms = allFilms.filter(function (f) {
+                            return new Date(f.created_at) > oneDayAgo;
+                        });
+                        
+                        // Afficher les nouveautés
+                        if (newFilms.length > 0) {
+                            var sliderNew = document.getElementById('slider-new');
+                            sliderNew.innerHTML = newFilms.slice(0, 20).map(function (film) {
+                                return '<div class="category-film-card" onclick="window.openDetail(\'' + film.id + '\')">'
+                                    + (film.poster_url ? '<img src="' + film.poster_url + '" alt="' + film.title + '">' : '<div style="font-size:2rem;">🎬</div>')
+                                    + '<div class="category-film-overlay"><span class="category-film-title">' + film.title + '</span></div>'
+                                    + '</div>';
+                            }).join('');
+                        }
+                        
+                        // Grouper par genre
+                        var genreMap = {};
+                        allFilms.forEach(function (film) {
+                            var genres = (film.genre || 'Autres').split(',').map(function (g) { return g.trim(); });
+                            genres.forEach(function (genre) {
+                                if (!genreMap[genre]) genreMap[genre] = [];
+                                if (genreMap[genre].length < 20) genreMap[genre].push(film);
+                            });
+                        });
+                        
+                        // Afficher catégories
+                        var categoriesHtml = Object.keys(genreMap).map(function (genre) {
+                            var color = categoryColors[genre] || '#B8E0F7';
+                            return '<div class="category-row">'
+                                + '<h2 class="category-title" style="color: ' + color + ';">' + genre + '</h2>'
+                                + '<div class="category-slider" data-genre="' + genre + '" style="position:relative;">'
+                                + genreMap[genre].map(function (film) {
+                                    return '<div class="category-film-card" onclick="window.openDetail(\'' + film.id + '\')">'
+                                        + (film.poster_url ? '<img src="' + film.poster_url + '" alt="' + film.title + '">' : '<div style="font-size:2rem;">🎬</div>')
+                                        + '<div class="category-film-overlay"><span class="category-film-title">' + film.title + '</span></div>'
+                                        + '</div>';
+                                }).join('')
+                                + '</div>'
+                                + '</div>';
+                        }).join('');
+                        
+                        document.getElementById('categories-list').innerHTML = categoriesHtml;
+                        
+                        // Ajouter navigation sliders
+                        document.querySelectorAll('.category-slider').forEach(function (slider) {
+                            var prevBtn = document.createElement('button');
+                            prevBtn.className = 'slider-nav slider-prev';
+                            prevBtn.textContent = '❮';
+                            prevBtn.onclick = function (e) { e.stopPropagation(); slider.scrollBy({ left: -300, behavior: 'smooth' }); };
+                            
+                            var nextBtn = document.createElement('button');
+                            nextBtn.className = 'slider-nav slider-next';
+                            nextBtn.textContent = '❯';
+                            nextBtn.onclick = function (e) { e.stopPropagation(); slider.scrollBy({ left: 300, behavior: 'smooth' }); };
+                            
+                            slider.parentElement.appendChild(prevBtn);
+                            slider.parentElement.appendChild(nextBtn);
+                        });
+                    });
+            };
+
+            // Initialiser catégories au chargement
+            setTimeout(function () {
+                window.initCategories();
+            }, 1000);
 
             window.openSagaDetail = function (sagaId) {
                 if (!window.sb) return;
@@ -9682,7 +10416,7 @@ body.theme-feu_artifice .aurora-bg .a3{background:#f1c40f;}
                 if (name === 'sagas') window.loadSagasList();
             };
 
-            setTimeout(function () { loadSagasCache(); window.renderSagasCatalogue(); }, 1800);
+            setTimeout(function () { loadSagasCache(); window.renderSagasCatalogue(); window.renderSagasSection(); }, 1800);
             setTimeout(function () {
                 if (!window.sb) return;
                 window.sb.channel('sagas-changes')
@@ -9690,6 +10424,7 @@ body.theme-feu_artifice .aurora-bg .a3{background:#f1c40f;}
                         sagasCache = {};
                         loadSagasCache();
                         window.renderSagasCatalogue();
+                        window.renderSagasSection();
                     }).subscribe();
             }, 3000);
 
@@ -10985,87 +11720,8 @@ body.theme-feu_artifice .aurora-bg .a3{background:#f1c40f;}
             }
         };
 
-    })();
-    </script>
-                        btn.textContent = '🐧 Réinitialiser';
-                        return;
-                    }
+    })(); 
 
-                    // Appeler la fonction Edge Function pour réinitialiser
-                    fetch('https://fukbpkitugcanbzyyrwk.supabase.co/functions/v1/reset-password', {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json',
-                            'apikey': window.SUPABASE_ANON_KEY,
-                            'Authorization': 'Bearer ' + window.SUPABASE_ANON_KEY
-                        },
-                        body: JSON.stringify({
-                            token: token,
-                            email: resetData.user_email,
-                            newPassword: newPass
-                        })
-                    }).then(function (r) {
-                        return r.json();
-                    }).then(function (data) {
-                        if (data.error) {
-                            showResetError(data.error);
-                            btn.disabled = false;
-                            btn.textContent = '🐧 Réinitialiser';
-                            return;
-                        }
-
-                        btn.disabled = false;
-                        btn.textContent = '🐧 Réinitialiser';
-                        closeResetModal();
-                        window.toast('✅ Mot de passe réinitialisé ! Tu peux maintenant te connecter', false);
-                        setTimeout(() => {
-                            window.location.hash = '';
-                            window.openAuthModal();
-                        }, 1000);
-                    }).catch(function (err) {
-                        console.error('Error:', err);
-                        showResetError('Erreur lors de la réinitialisation');
-                        btn.disabled = false;
-                        btn.textContent = '🐧 Réinitialiser';
-                    });
-                }).catch(function (err) {
-                    console.error('DB Error:', err);
-                    showResetError('Erreur serveur');
-                    btn.disabled = false;
-                    btn.textContent = '🐧 Réinitialiser';
-                });
-        };
-
-        function showResetError(msg) {
-            var errorEl = document.getElementById('reset-error-msg');
-            errorEl.textContent = '❌ ' + msg;
-            errorEl.classList.add('show');
-        }
-
-        // ── Détecter et afficher le modal reset si token dans l'URL ──
-        setTimeout(function () {
-            var urlParams = new URLSearchParams(window.location.hash.split('?')[1] || '');
-            var resetToken = urlParams.get('token');
-
-            if (resetToken) {
-                // Valider que le token existe
-                sb.from('password_reset_tokens')
-                    .select('*')
-                    .eq('token', resetToken)
-                    .single()
-                    .then(function (res) {
-                        if (!res.error && res.data) {
-                            if (new Date(res.data.expires_at) >= new Date() && !res.data.used) {
-                                openResetModal();
-                            } else {
-                                window.toast('❌ Lien expiré ou invalide', true);
-                            }
-                        }
-                    });
-            }
-        }, 500);
-
-    })();
     </script>
 </body>
 
