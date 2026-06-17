@@ -6206,7 +6206,7 @@
                         placeholder="pingouin@arctique.fr"></div>
                 <div class="form-group"><label>Mot de passe</label><input type="password" id="login-pass"
                         placeholder="••••••••"></div>
-                <div style="text-align:right;margin-bottom:15px;margin-top:-7px;"><a href="#" onclick="event.preventDefault(); openForgotModal()"
+                <div style="text-align:right;margin-bottom:15px;margin-top:-7px;"><a href="#" onclick="event.preventDefault(); closeModal(); openPasswordReset();"
                         style="color:var(--aurora1);font-size:.8rem;font-weight:700;cursor:pointer;">Mot de passe oublié ?</a></div>
                 <button class="btn-submit" id="btn-login" onclick="handleLogin()">🐧 Se connecter</button>
                 <div class="divider">ou continuer avec</div>
@@ -10710,294 +10710,283 @@ body.theme-feu_artifice .aurora-bg .a3{background:#f1c40f;}
         })();
     </script>
 
-    <!-- MODAL FORGOT PASSWORD -->
-    <div id="forgot-password-modal">
-        <div class="forgot-modal-box" style="position:relative;">
-            <button class="forgot-modal-close" onclick="closeForgotModal()">✕</button>
-            <h2 class="forgot-modal-title">Mot de passe oublié ? 🐧</h2>
-            <p class="forgot-modal-sub">Entre ton email pour recevoir un lien de réinitialisation</p>
-            
-            <div class="forgot-form-group">
-                <label>Adresse email</label>
-                <input type="email" id="forgot-email" placeholder="pingouin@arctique.fr" />
-            </div>
-            
-            <button class="forgot-btn-send" id="btn-forgot-send" onclick="handleForgotPassword()">
-                📧 Envoyer le lien
-            </button>
-            
-            <div class="forgot-success-msg" id="forgot-success-msg">
-                ✅ Lien envoyé ! Vérifie ton email (et les spams)
-            </div>
-            <div class="forgot-debug-msg" id="forgot-debug-msg">
-                <!-- Debug info will appear ici -->
-            </div>
-        </div>
-    </div>
+    <!-- MODAL PASSWORD RESET STYLISÉ V76 -->
+    <div id="password-reset-modal" class="modal-overlay">
+        <div class="modal">
+            <button class="modal-close" onclick="closePasswordReset()">✕</button>
+            <svg class="modal-penguin" viewBox="0 0 80 80" fill="none">
+                <ellipse cx="40" cy="48" rx="24" ry="26" fill="#1a1a2e" />
+                <ellipse cx="40" cy="52" rx="14" ry="17" fill="#f0faff" />
+                <ellipse cx="28" cy="36" rx="9" ry="11" fill="#1a1a2e" />
+                <ellipse cx="52" cy="36" rx="9" ry="11" fill="#1a1a2e" />
+                <circle cx="28" cy="34" r="4" fill="white" />
+                <circle cx="52" cy="34" r="4" fill="white" />
+                <circle cx="29.5" cy="34.5" r="2" fill="#0d0d0d" />
+                <circle cx="53.5" cy="34.5" r="2" fill="#0d0d0d" />
+                <ellipse cx="40" cy="41" rx="7" ry="4" fill="#e67e22" />
+                <ellipse cx="27" cy="73" rx="9" ry="4" fill="#e67e22" />
+                <ellipse cx="53" cy="73" rx="9" ry="4" fill="#e67e22" />
+            </svg>
+            <h2 class="modal-title">🔒 Réinitialiser le mot de passe</h2>
+            <div id="reset-alert" style="padding: 12px; border-radius: 8px; margin-bottom: 16px; font-size: 14px; display: none;"></div>
 
-    <!-- MODAL RESET PASSWORD -->
-    <div id="reset-password-modal">
-        <div class="reset-modal-box" style="position:relative;">
-            <button class="reset-modal-close" onclick="closeResetModal()">✕</button>
-            <h2 class="reset-modal-title">Nouveau mot de passe 🔒</h2>
-            <p class="reset-modal-sub">Choisis un mot de passe sécurisé</p>
-            
-            <div class="reset-error-msg" id="reset-error-msg"></div>
-            
-            <div class="reset-form-group">
-                <label>Nouveau mot de passe</label>
-                <input type="password" id="reset-pass" placeholder="••••••••" />
+            <!-- ÉTAPE 1: Email -->
+            <div id="reset-step1" class="reset-section show">
+                <p class="modal-switch" style="margin-bottom:12px;font-size:0.88rem;color:rgba(255,255,255,.5);">Tape ton email pour recevoir un code</p>
+                <div class="form-group"><label>Email</label><input type="email" id="reset-email" placeholder="pingouin@arctique.fr"></div>
+                <button class="btn-submit" id="btn-send-reset" onclick="sendResetCode()">📧 Envoyer le code</button>
+                <div style="text-align:center;margin-top:12px;"><a href="#" onclick="event.preventDefault();closePasswordReset()" style="color:var(--aurora1);font-size:.8rem;font-weight:700;cursor:pointer;">← Retour</a></div>
             </div>
-            
-            <div class="reset-form-group">
-                <label>Confirmer</label>
-                <input type="password" id="reset-pass-confirm" placeholder="••••••••" />
+
+            <!-- ÉTAPE 2: Code -->
+            <div id="reset-step2" class="reset-section" style="display:none">
+                <p class="modal-switch" style="margin-bottom:12px;font-size:0.88rem;color:rgba(255,255,255,.5);">Tape le code à 6 caractères envoyé à <strong id="reset-email-display"></strong><br><small style="opacity:.7;margin-top:4px;display:block;">💡 Tu peux coller le code directement</small></p>
+                <div style="display:flex;gap:6px;justify-content:center;margin-bottom:14px;" id="code-paste-zone">
+                    <input type="text" class="reset-code-input" maxlength="1" inputmode="text" style="width:44px;height:44px;font-size:18px;text-align:center;background:rgba(184,224,247,.08);border:1.5px solid rgba(184,224,247,.2);border-radius:8px;color:#fff;font-weight:600;">
+                    <input type="text" class="reset-code-input" maxlength="1" inputmode="text" style="width:44px;height:44px;font-size:18px;text-align:center;background:rgba(184,224,247,.08);border:1.5px solid rgba(184,224,247,.2);border-radius:8px;color:#fff;font-weight:600;">
+                    <input type="text" class="reset-code-input" maxlength="1" inputmode="text" style="width:44px;height:44px;font-size:18px;text-align:center;background:rgba(184,224,247,.08);border:1.5px solid rgba(184,224,247,.2);border-radius:8px;color:#fff;font-weight:600;">
+                    <input type="text" class="reset-code-input" maxlength="1" inputmode="text" style="width:44px;height:44px;font-size:18px;text-align:center;background:rgba(184,224,247,.08);border:1.5px solid rgba(184,224,247,.2);border-radius:8px;color:#fff;font-weight:600;">
+                    <input type="text" class="reset-code-input" maxlength="1" inputmode="text" style="width:44px;height:44px;font-size:18px;text-align:center;background:rgba(184,224,247,.08);border:1.5px solid rgba(184,224,247,.2);border-radius:8px;color:#fff;font-weight:600;">
+                    <input type="text" class="reset-code-input" maxlength="1" inputmode="text" style="width:44px;height:44px;font-size:18px;text-align:center;background:rgba(184,224,247,.08);border:1.5px solid rgba(184,224,247,.2);border-radius:8px;color:#fff;font-weight:600;">
+                </div>
+                <button class="btn-submit" id="btn-verify-reset" onclick="verifyResetCode()" style="display:none;">✓ Vérifier</button>
+                <button class="btn-submit" id="btn-resend-reset" onclick="sendResetCode()" style="background:rgba(255,255,255,.08);border:1px solid rgba(184,224,247,.15);margin-top:8px;">↻ Renvoyer</button>
+                <div style="text-align:center;margin-top:12px;"><a href="#" id="btn-back-reset-email" onclick="event.preventDefault();goResetStep(1)" style="color:var(--aurora1);font-size:.8rem;font-weight:700;cursor:pointer;">← Changer d'email</a></div>
             </div>
-            
-            <button class="reset-btn-confirm" id="btn-reset-confirm" onclick="handleResetPassword()">
-                🐧 Réinitialiser
-            </button>
+
+            <!-- ÉTAPE 3: Nouveau mot de passe -->
+            <div id="reset-step3" class="reset-section" style="display:none">
+                <div class="form-group"><label>Nouveau mot de passe</label><input type="password" id="reset-pass" placeholder="••••••••" autocomplete="new-password"></div>
+                <div class="form-group"><label>Confirmer</label><input type="password" id="reset-pass-confirm" placeholder="••••••••" autocomplete="new-password"></div>
+                <button class="btn-submit" id="btn-update-pass" onclick="updateResetPassword()">🐧 Réinitialiser</button>
+                <div style="text-align:center;margin-top:12px;"><a href="#" onclick="event.preventDefault();closePasswordReset()" style="color:var(--aurora1);font-size:.8rem;font-weight:700;cursor:pointer;">← Retour</a></div>
+            </div>
         </div>
     </div>
 
     <script>
     /* ═══════════════════════════════════════════════════
-       SYSTÈME RÉINITIALISATION PASSWORD
+       PASSWORD RESET SYSTEM (V76 STYLE)
     ═══════════════════════════════════════════════════ */
     (function () {
-        // ── Modals ──
-        window.openForgotModal = function () {
-            document.getElementById('authModal').classList.remove('active');
-            document.getElementById('forgot-password-modal').classList.add('active');
-            document.getElementById('forgot-email').value = '';
-            document.getElementById('forgot-success-msg').classList.remove('show');
+        // Config
+        var SUPABASE_URL = 'https://fukbpkitugcanbzyyrwk.supabase.co';
+        var SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZ1a2Jwa2l0dWdjYW5ienl5cndrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzU1NjQ5NTIsImV4cCI6MjA5MTE0MDk1Mn0.OAoELEaURpfWdM8p-iw7U_KQ76wsgh_W5z9Z7eDn_iw';
+
+        // État
+        var currentStep = 1;
+        var userEmail = '';
+        var resetCode = '';
+
+        // Elements
+        var alertEl = document.getElementById('reset-alert');
+        var emailInput = document.getElementById('reset-email');
+        var codeInputs = document.querySelectorAll('.reset-code-input');
+
+        // ===== FONCTIONS PUBLIQUES =====
+        window.openPasswordReset = function () {
+            document.getElementById('password-reset-modal').classList.add('active');
+            emailInput.focus();
         };
 
-        window.closeForgotModal = function () {
-            document.getElementById('forgot-password-modal').classList.remove('active');
+        window.closePasswordReset = function () {
+            document.getElementById('password-reset-modal').classList.remove('active');
+            goResetStep(1);
         };
 
-        window.openResetModal = function () {
-            document.getElementById('reset-password-modal').classList.add('active');
-            document.getElementById('reset-pass').value = '';
-            document.getElementById('reset-pass-confirm').value = '';
-            document.getElementById('reset-error-msg').classList.remove('show');
+        window.goResetStep = function (step) {
+            currentStep = step;
+            document.querySelectorAll('.reset-section').forEach(function (s) { s.classList.remove('show'); s.style.display = 'none'; });
+            document.getElementById('reset-step' + step).classList.add('show');
+            document.getElementById('reset-step' + step).style.display = 'block';
         };
 
-        window.closeResetModal = function () {
-            document.getElementById('reset-password-modal').classList.remove('active');
-        };
-
-        // Fermer en cliquant sur overlay
-        document.getElementById('forgot-password-modal')?.addEventListener('click', function (e) {
-            if (e.target === this) closeForgotModal();
-        });
-
-        // ── Détection automatique du token au chargement ──
-        function checkForResetToken() {
-            console.log('checkForResetToken called, hash:', window.location.hash);
-            var urlParams = new URLSearchParams(window.location.hash.split('?')[1] || '');
-            var token = urlParams.get('token');
-            console.log('checkForResetToken token:', token);
-            
-            if (token) {
-                console.log('Reset token detected in URL, opening reset modal');
-                // Attendre que les éléments DOM soient prêts
-                setTimeout(function() {
-                    document.getElementById('authModal').classList.remove('active');
-                    document.getElementById('forgot-password-modal').classList.remove('active');
-                    document.getElementById('reset-password-modal').classList.add('active');
-                }, 100);
-            }
+        function showAlert(msg, type) {
+            alertEl.textContent = msg;
+            alertEl.className = 'alert-' + type;
+            alertEl.style.display = 'block';
+            if (type === 'success') alertEl.style.background = 'rgba(46,204,113,.1)', alertEl.style.color = '#2ecc71', alertEl.style.border = '1px solid rgba(46,204,113,.3)';
+            else alertEl.style.background = 'rgba(231,76,60,.1)', alertEl.style.color = '#e74c3c', alertEl.style.border = '1px solid rgba(231,76,60,.3)';
         }
-        
-        // Vérifier au chargement initial
-        checkForResetToken();
-        
-        // Écouter les changements de hash
-        window.addEventListener('hashchange', checkForResetToken);
 
-        // ── ÉTAPE 1: Demander le reset ──
-        window.handleForgotPassword = async function () {
-            console.log('handleForgotPassword invoked');
-            var email = document.getElementById('forgot-email').value.trim();
-            var btn = document.getElementById('btn-forgot-send');
-            var debugEl = document.getElementById('forgot-debug-msg');
-
-            console.log('handleForgotPassword email:', email);
-
-            if (!email) {
-                console.log('handleForgotPassword abort: no email');
-                window.toast('📧 Remplis ton email !', true);
-                return;
+        // ===== RATE LIMITING (LocalStorage) =====
+        function checkRateLimit(email) {
+            var key = 'reset-code-' + email;
+            var attempts = JSON.parse(localStorage.getItem(key) || '[]');
+            var now = Date.now();
+            var oneHourAgo = now - (60 * 60 * 1000);
+            
+            // Supprimer les tentatives > 1h
+            attempts = attempts.filter(function(t) { return t > oneHourAgo; });
+            
+            if (attempts.length >= 3) {
+                var oldestAttempt = Math.min.apply(null, attempts);
+                var timeUntilReset = Math.ceil((oldestAttempt + 3600000 - now) / 1000 / 60);
+                throw new Error('⏱️ Trop de tentatives. Réessaie dans ' + timeUntilReset + ' min');
             }
+            
+            // Ajouter la tentative actuelle
+            attempts.push(now);
+            localStorage.setItem(key, JSON.stringify(attempts));
+        }
 
+        // ===== ÉTAPE 1: Envoyer code =====
+        window.sendResetCode = async function () {
+            var email = emailInput.value.trim();
+            if (!email) { showAlert('📧 Entre ton email !', 'error'); return; }
             var emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-            if (!emailRegex.test(email)) {
-                console.log('handleForgotPassword abort: invalid email format');
-                window.toast('📧 Format d\'email invalide !', true);
-                return;
-            }
-
-            btn.disabled = true;
-            btn.textContent = '⏳ Envoi en cours...';
+            if (!emailRegex.test(email)) { showAlert('📧 Email invalide !', 'error'); return; }
 
             try {
-                // Générer un token sécurisé (32 caractères aléatoires)
-                var token = Array.from(crypto.getRandomValues(new Uint8Array(24)))
-                    .map(b => b.toString(16).padStart(2, '0'))
-                    .join('');
-                console.log('handleForgotPassword token generated');
+                checkRateLimit(email);
+            } catch (error) {
+                showAlert(error.message, 'error');
+                return;
+            }
 
-                // Créer l'entrée dans password_reset_tokens
-                var expiresAt = new Date();
-                expiresAt.setMinutes(expiresAt.getMinutes() + 15); // 15 min d'expiration
-                console.log('handleForgotPassword inserting token into DB');
+            userEmail = email;
+            var btn = document.getElementById('btn-send-reset');
+            btn.disabled = true; btn.textContent = '⏳ Envoi...';
 
-                var res = await sb.from('password_reset_tokens').insert({
-                    token: token,
-                    user_email: email,
-                    created_at: new Date().toISOString(),
-                    expires_at: expiresAt.toISOString(),
-                    used: false
-                });
-                console.log('handleForgotPassword insert result:', res);
-
-                if (res.error) {
-                    console.error('Error creating reset token:', res.error);
-                    window.toast('❌ Erreur lors de la création du token', true);
-                    btn.disabled = false;
-                    btn.textContent = '📧 Envoyer le lien';
-                    return;
-                }
-
-                debugEl.textContent = 'Token créé, envoi du mail en cours...';
-                var payload = JSON.stringify({
-                    email: email,
-                    token: token,
-                    resetLink: window.location.origin + window.location.pathname + '#/reset-password?token=' + token
-                });
-                var functionUrl = 'https://fukbpkitugcanbzyyrwk.supabase.co/functions/v1/send-reset-email';
-
-                console.log('handleForgotPassword sending request to function');
-                var response = await fetch(functionUrl, {
+            try {
+                var response = await fetch(SUPABASE_URL + '/functions/v1/forgot-password-send-code', {
                     method: 'POST',
-                    mode: 'cors',
                     headers: {
                         'Content-Type': 'application/json',
-                        'apikey': window.SUPABASE_ANON_KEY,
-                        'Authorization': 'Bearer ' + window.SUPABASE_ANON_KEY
+                        'Authorization': 'Bearer ' + SUPABASE_ANON_KEY,
                     },
-                    body: payload
+                    body: JSON.stringify({ email: email }),
                 });
-                console.log('handleForgotPassword fetch response status:', response.status, response.statusText);
-                debugEl.textContent = 'HTTP status: ' + response.status + ' ' + response.statusText;
-
-                if (!response.ok) {
-                    var text = await response.text();
-                    var msg = text || 'Erreur serveur';
-                    throw new Error('HTTP ' + response.status + ' ' + msg);
-                }
 
                 var data = await response.json();
-                console.log('handleForgotPassword function response data:', data);
+                if (!response.ok) throw new Error(data.message || 'Erreur envoi');
 
-                if (data.error) {
-                    console.error('Send email response error:', data.error);
-                    debugEl.textContent = 'Erreur fonction: ' + (data.error.message || JSON.stringify(data.error));
-                    window.toast('❌ Erreur lors de l\'envoi de l\'email', true);
-                    btn.disabled = false;
-                    btn.textContent = '📧 Envoyer le lien';
-                    return;
-                }
-
-                console.log('handleForgotPassword success! Showing success message');
-                debugEl.textContent = 'Mail envoyé. Vérifie aussi les spams.';
-                document.getElementById('forgot-success-msg').classList.add('show');
-                console.log('handleForgotPassword success message added to DOM');
-                setTimeout(() => {
-                    console.log('handleForgotPassword closing modal');
-                    closeForgotModal();
-                    window.toast('✅ Lien envoyé ! Vérifie ton email', false);
-                    console.log('handleForgotPassword modal closed and toast shown');
-                }, 2000);
-                btn.disabled = false;
-                btn.textContent = '📧 Envoyer le lien';
-            } catch (err) {
-                console.error('handleForgotPassword exception:', err);
-                var message = err.message || 'Erreur interne';
-                if (window.location.protocol === 'file:' || window.location.origin === 'null') {
-                    message = 'Erreur CORS : page ouverte localement via file:// ou origine null. Servez la page via HTTP (localhost ou GitHub Pages).';
-                }
-                debugEl.textContent = 'Erreur: ' + message;
-                window.toast('🌐 Erreur lors de l\'envoi : ' + message, true);
-                btn.disabled = false;
-                btn.textContent = '📧 Envoyer le lien';
+                document.getElementById('reset-email-display').textContent = email;
+                goResetStep(2);
+                codeInputs[0].focus();
+                showAlert('✅ Code envoyé !', 'success');
+            } catch (error) {
+                showAlert(error.message, 'error');
+            } finally {
+                btn.disabled = false; btn.textContent = '📧 Envoyer le code';
             }
         };
 
-        // ── ÉTAPE 2: Valider le token et réinitialiser ──
-        window.handleResetPassword = function () {
-            var newPass = document.getElementById('reset-pass').value;
-            var confirmPass = document.getElementById('reset-pass-confirm').value;
+        // ===== ÉTAPE 2: Vérifier code =====
+        codeInputs.forEach(function (input, index) {
+            input.addEventListener('input', function (e) {
+                // Accepter alphanumérique uniquement (a-z, A-Z, 0-9)
+                e.target.value = e.target.value.replace(/[^a-zA-Z0-9]/g, '').toUpperCase().slice(0, 1);
+                if (e.target.value && index < codeInputs.length - 1) {
+                    codeInputs[index + 1].focus();
+                }
+                updateVerifyButton();
+            });
 
-            if (!newPass || !confirmPass) {
-                showResetError('Remplis tous les champs !');
-                return;
-            }
+            input.addEventListener('keydown', function (e) {
+                if (e.key === 'Backspace' && !e.target.value && index > 0) {
+                    codeInputs[index - 1].focus();
+                }
+            });
 
-            if (newPass !== confirmPass) {
-                showResetError('Les mots de passe ne correspondent pas !');
-                return;
-            }
-
-            if (newPass.length < 6) {
-                showResetError('Mot de passe trop court (6 caractères min)');
-                return;
-            }
-
-            var btn = document.getElementById('btn-reset-confirm');
-            btn.disabled = true;
-            btn.textContent = '⏳ Réinitialisation...';
-
-            // Récupérer le token depuis l'URL
-            var urlParams = new URLSearchParams(window.location.hash.split('?')[1] || '');
-            var token = urlParams.get('token');
-
-            if (!token) {
-                showResetError('Token invalide ou expiré');
-                btn.disabled = false;
-                btn.textContent = '🐧 Réinitialiser';
-                return;
-            }
-
-            // Chercher le token dans la DB
-            sb.from('password_reset_tokens')
-                .select('*')
-                .eq('token', token)
-                .single()
-                .then(function (res) {
-                    if (res.error || !res.data) {
-                        showResetError('Token invalide');
-                        btn.disabled = false;
-                        btn.textContent = '🐧 Réinitialiser';
-                        return;
+            // Paste handling
+            input.addEventListener('paste', function (e) {
+                e.preventDefault();
+                var text = (e.clipboardData || window.clipboardData).getData('text');
+                text = text.replace(/[^a-zA-Z0-9]/g, '').toUpperCase();
+                
+                if (text.length > 0) {
+                    for (var i = 0; i < Math.min(text.length, 6); i++) {
+                        codeInputs[i].value = text[i];
                     }
-
-                    var resetData = res.data;
-
-                    // Vérifier l'expiration
-                    if (new Date(resetData.expires_at) < new Date()) {
-                        showResetError('Le lien a expiré. Demande un nouveau lien.');
-                        btn.disabled = false;
-                        btn.textContent = '🐧 Réinitialiser';
-                        return;
+                    updateVerifyButton();
+                    if (text.length === 6) {
+                        codeInputs[5].focus();
+                    } else {
+                        codeInputs[Math.min(text.length, 5)].focus();
                     }
+                }
+            });
+        });
 
-                    // Vérifier si déjà utilisé
-                    if (resetData.used) {
-                        showResetError('Ce lien a déjà été utilisé');
-                        btn.disabled = false;
+        function updateVerifyButton() {
+            var code = Array.from(codeInputs).map(function (input) { return input.value; }).join('');
+            var btn = document.getElementById('btn-verify-reset');
+            btn.style.display = code.length === 6 ? 'block' : 'none';
+        }
+
+        window.verifyResetCode = async function () {
+            resetCode = Array.from(codeInputs).map(function (input) { return input.value; }).join('');
+            var btn = document.getElementById('btn-verify-reset');
+            btn.disabled = true; btn.textContent = '⏳ Vérification...';
+
+            try {
+                var response = await fetch(SUPABASE_URL + '/functions/v1/forgot-password-verify-code', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': 'Bearer ' + SUPABASE_ANON_KEY,
+                    },
+                    body: JSON.stringify({ email: userEmail, code: resetCode }),
+                });
+
+                var data = await response.json();
+                if (!response.ok) throw new Error(data.message || 'Code invalide');
+
+                goResetStep(3);
+            } catch (error) {
+                showAlert(error.message, 'error');
+            } finally {
+                btn.disabled = false; btn.textContent = '✓ Vérifier';
+            }
+        };
+
+        // ===== ÉTAPE 3: Nouveau mot de passe =====
+        window.updateResetPassword = async function () {
+            var password = document.getElementById('reset-pass').value;
+            var confirm = document.getElementById('reset-pass-confirm').value;
+
+            if (!password) { showAlert('🔒 Entre un mot de passe !', 'error'); return; }
+            if (password.length < 8) { showAlert('🔒 Min 8 caractères !', 'error'); return; }
+            if (!/[A-Z]/.test(password)) { showAlert('🔒 Min 1 majuscule !', 'error'); return; }
+            if (!/\d/.test(password)) { showAlert('🔒 Min 1 chiffre !', 'error'); return; }
+            if (password !== confirm) { showAlert('❌ Les mots de passe ne correspondent pas !', 'error'); return; }
+
+            var btn = document.getElementById('btn-update-pass');
+            btn.disabled = true; btn.textContent = '⏳ Réinitialisation...';
+
+            try {
+                var response = await fetch(SUPABASE_URL + '/functions/v1/forgot-password-reset', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': 'Bearer ' + SUPABASE_ANON_KEY,
+                    },
+                    body: JSON.stringify({
+                        email: userEmail,
+                        code: resetCode,
+                        password: password,
+                    }),
+                });
+
+                var data = await response.json();
+                if (!response.ok) throw new Error(data.message || 'Erreur réinitialisation');
+
+                showAlert('✅ Mot de passe réinitialisé !', 'success');
+                setTimeout(function () {
+                    closePasswordReset();
+                    window.openModal('login');
+                    window.toast('✅ Tu peux maintenant te connecter ! 🐧');
+                }, 1500);
+            } catch (error) {
+                showAlert(error.message, 'error');
+            } finally {
+                btn.disabled = false; btn.textContent = '🐧 Réinitialiser';
+            }
+        };
+
+    })();
+    </script>
                         btn.textContent = '🐧 Réinitialiser';
                         return;
                     }
