@@ -4329,7 +4329,9 @@
             border-radius: 28px;
             width: min(620px, 100%);
             position: relative;
-            overflow: hidden;
+            overflow-y: auto;
+            overflow-x: hidden;
+            max-height: 95vh;
             box-shadow: 0 40px 100px rgba(0, 0, 0, .7);
             font-family: 'Nunito', sans-serif;
         }
@@ -4392,6 +4394,13 @@
             padding: 0 28px 28px;
             position: relative;
             z-index: 1;
+        }
+
+        @media (max-width: 768px) {
+            .pm-plans {
+                grid-template-columns: 1fr;
+                padding: 0 16px 20px;
+            }
         }
 
         .pm-plan {
