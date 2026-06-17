@@ -5158,6 +5158,19 @@
             display: block;
         }
 
+        .forgot-debug-msg {
+            margin-top: 12px;
+            color: rgba(255,255,255,.85);
+            font-size: .85rem;
+            padding: 10px 12px;
+            border-radius: 10px;
+            background: rgba(255,255,255,.05);
+            border: 1px solid rgba(255,255,255,.08);
+            min-height: 40px;
+            white-space: pre-wrap;
+            word-break: break-word;
+        }
+
         #reset-password-modal {
             position: fixed;
             inset: 0;
@@ -10685,6 +10698,9 @@ body.theme-feu_artifice .aurora-bg .a3{background:#f1c40f;}
             <div class="forgot-success-msg" id="forgot-success-msg">
                 ✅ Lien envoyé ! Vérifie ton email (et les spams)
             </div>
+            <div class="forgot-debug-msg" id="forgot-debug-msg">
+                <!-- Debug info will appear ici -->
+            </div>
         </div>
     </div>
 
@@ -10793,45 +10809,76 @@ body.theme-feu_artifice .aurora-bg .a3{background:#f1c40f;}
                     return;
                 }
 
-                // Envoyer l'email via Brevo via une Edge Function
-                fetch('https://fukbpkitugcanbzyyrwk.supabase.co/functions/v1/send-reset-email', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'apikey': window.SUPABASE_ANON_KEY,
-                        'Authorization': 'Bearer ' + window.SUPABASE_ANON_KEY
-                    },
-                    body: JSON.stringify({
-                        email: email,
-                        token: token,
-                        resetLink: window.RESET_LINK_BASE + '/#/reset-password?token=' + token
-                    })
-                }).then(function (r) {
+                var debugEl = document.getElementById('forgot-debug-msg');
+                var payload = JSON.stringify({
+                    email: email,
+                    token: token,
+                    resetLink: window.RESET_LINK_BASE + '/#/reset-password?token=' + token
+                });
+                var functionUrl = 'https://fukbpkitugcanbzyyrwk.supabase.co/functions/v1/send-reset-email';
+
+                function handleSendEmailResponse(data) {
                     btn.disabled = false;
                     btn.textContent = '📧 Envoyer le lien';
-                    if (!r.ok) {
-                        return r.text().then(function (text) {
-                            throw new Error(text || 'Erreur serveur');
-                        });
-                    }
-                    return r.json();
-                }).then(function (data) {
                     if (data.error) {
-                        console.error('Brevo error:', data.error);
+                        console.error('Send email response error:', data.error);
+                        debugEl.textContent = 'Erreur fonction: ' + (data.error.message || JSON.stringify(data.error));
                         window.toast('❌ Erreur lors de l\'envoi de l\'email', true);
                         return;
                     }
-
+                    debugEl.textContent = 'Mail envoyé. Vérifie aussi les spams.';
                     document.getElementById('forgot-success-msg').classList.add('show');
                     setTimeout(() => {
                         closeForgotModal();
                         window.toast('✅ Lien envoyé ! Vérifie ton email', false);
                     }, 2000);
+                }
+
+                sb.functions.invoke('send-reset-email', {
+                    body: payload
+                }).then(function (res) {
+                    if (res.error) {
+                        throw res.error;
+                    }
+                    handleSendEmailResponse(res.data || {});
                 }).catch(function (err) {
-                    btn.disabled = false;
-                    btn.textContent = '📧 Envoyer le lien';
-                    console.error('Network error:', err);
-                    window.toast('🌐 Erreur réseau lors de l\'envoi : ' + err.message, true);
+                    console.warn('Function invoke failed, trying direct fetch fallback:', err);
+                    if (window.location.protocol === 'file:' || window.location.origin === 'null') {
+                        btn.disabled = false;
+                        btn.textContent = '📧 Envoyer le lien';
+                        var message = 'Erreur CORS : page ouverte localement via file:// ou origine null. Servez la page via HTTP (localhost ou GitHub Pages).';
+                        console.error(message, err);
+                        debugEl.textContent = message;
+                        window.toast('❌ Impossible d\'appeler la fonction depuis file://', true);
+                        return;
+                    }
+                    debugEl.textContent = 'Fonction invoke échouée, tentative de fallback direct... origin=' + window.location.origin;
+                    return fetch(functionUrl, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'apikey': window.SUPABASE_ANON_KEY,
+                            'Authorization': 'Bearer ' + window.SUPABASE_ANON_KEY
+                        },
+                        body: payload
+                    }).then(function (r) {
+                        btn.disabled = false;
+                        btn.textContent = '📧 Envoyer le lien';
+                        debugEl.textContent = 'HTTP status: ' + r.status + ' ' + r.statusText;
+                        if (!r.ok) {
+                            return r.text().then(function (text) {
+                                var msg = text || 'Erreur serveur';
+                                throw new Error('HTTP ' + r.status + ' ' + msg);
+                            });
+                        }
+                        return r.json();
+                    }).then(handleSendEmailResponse).catch(function (fetchErr) {
+                        btn.disabled = false;
+                        btn.textContent = '📧 Envoyer le lien';
+                        console.error('Fetch fallback error:', fetchErr);
+                        debugEl.textContent = 'Erreur: ' + fetchErr.message;
+                        window.toast('🌐 Erreur réseau lors de l\'envoi : ' + fetchErr.message, true);
+                    });
                 });
             }).catch(function (err) {
                 btn.disabled = false;
