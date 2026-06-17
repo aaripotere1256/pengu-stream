@@ -6244,6 +6244,18 @@
 
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
     <script>
+        // DÉTECTION TOKEN RESET AU CHARGEMENT (avant tout)
+        (function() {
+            console.log('EARLY DETECTION: checking for reset token');
+            var urlParams = new URLSearchParams(window.location.hash.split('?')[1] || '');
+            var token = urlParams.get('token');
+            console.log('EARLY DETECTION: token =', token);
+            if (token) {
+                window._resetTokenFromURL = token;
+                console.log('EARLY DETECTION: reset token found, will auto-open modal');
+            }
+        })();
+
         (function () {
             'use strict';
 
@@ -6283,6 +6295,7 @@
             var currentUser = null;
             var currentRole = 'user';
             var currentTypeFilter = 'all';
+            console.log('v75 script loaded: supabase client initialized');
             var currentCatFilter = 'all';
             var customCats = JSON.parse(localStorage.getItem('pengu_cats') || '[]');
             // Données temporaires pour builder épisodes
@@ -10455,6 +10468,24 @@ body.theme-feu_artifice .aurora-bg .a3{background:#f1c40f;}
             }
 
             console.log('🐧 [PenguRouter] Routeur hash-based initialisé');
+            
+            // AUTO-DETECT AND OPEN RESET PASSWORD MODAL IF TOKEN IN URL
+            if (window._resetTokenFromURL) {
+                console.log('🐧 AUTO-OPEN: reset token detected, opening modal');
+                setTimeout(function() {
+                    var modal = document.getElementById('reset-password-modal');
+                    if (modal) {
+                        document.getElementById('authModal').classList.remove('active');
+                        document.getElementById('forgot-password-modal').classList.remove('active');
+                        modal.classList.add('active');
+                        document.getElementById('reset-pass').value = '';
+                        document.getElementById('reset-pass-confirm').value = '';
+                        var errorEl = document.getElementById('reset-error-msg');
+                        if (errorEl) errorEl.textContent = '';
+                        console.log('🐧 AUTO-OPEN: modal opened successfully');
+                    }
+                }, 300);
+            }
         })();
     </script>
     
@@ -10762,45 +10793,76 @@ body.theme-feu_artifice .aurora-bg .a3{background:#f1c40f;}
             if (e.target === this) closeForgotModal();
         });
 
-        document.getElementById('reset-password-modal')?.addEventListener('click', function (e) {
-            if (e.target === this) closeResetModal();
-        });
+        // ── Détection automatique du token au chargement ──
+        function checkForResetToken() {
+            console.log('checkForResetToken called, hash:', window.location.hash);
+            var urlParams = new URLSearchParams(window.location.hash.split('?')[1] || '');
+            var token = urlParams.get('token');
+            console.log('checkForResetToken token:', token);
+            
+            if (token) {
+                console.log('Reset token detected in URL, opening reset modal');
+                // Attendre que les éléments DOM soient prêts
+                setTimeout(function() {
+                    document.getElementById('authModal').classList.remove('active');
+                    document.getElementById('forgot-password-modal').classList.remove('active');
+                    document.getElementById('reset-password-modal').classList.add('active');
+                }, 100);
+            }
+        }
+        
+        // Vérifier au chargement initial
+        checkForResetToken();
+        
+        // Écouter les changements de hash
+        window.addEventListener('hashchange', checkForResetToken);
 
         // ── ÉTAPE 1: Demander le reset ──
-        window.handleForgotPassword = function () {
+        window.handleForgotPassword = async function () {
+            console.log('handleForgotPassword invoked');
             var email = document.getElementById('forgot-email').value.trim();
+            var btn = document.getElementById('btn-forgot-send');
+            var debugEl = document.getElementById('forgot-debug-msg');
+
+            console.log('handleForgotPassword email:', email);
 
             if (!email) {
+                console.log('handleForgotPassword abort: no email');
                 window.toast('📧 Remplis ton email !', true);
                 return;
             }
 
             var emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
             if (!emailRegex.test(email)) {
+                console.log('handleForgotPassword abort: invalid email format');
                 window.toast('📧 Format d\'email invalide !', true);
                 return;
             }
 
-            var btn = document.getElementById('btn-forgot-send');
             btn.disabled = true;
             btn.textContent = '⏳ Envoi en cours...';
 
-            // Générer un token sécurisé (32 caractères aléatoires)
-            var token = Array.from(crypto.getRandomValues(new Uint8Array(24)))
-                .map(b => b.toString(16).padStart(2, '0'))
-                .join('');
+            try {
+                // Générer un token sécurisé (32 caractères aléatoires)
+                var token = Array.from(crypto.getRandomValues(new Uint8Array(24)))
+                    .map(b => b.toString(16).padStart(2, '0'))
+                    .join('');
+                console.log('handleForgotPassword token generated');
 
-            // Créer l'entrée dans password_reset_tokens
-            var expiresAt = new Date();
-            expiresAt.setMinutes(expiresAt.getMinutes() + 15); // 15 min d'expiration
+                // Créer l'entrée dans password_reset_tokens
+                var expiresAt = new Date();
+                expiresAt.setMinutes(expiresAt.getMinutes() + 15); // 15 min d'expiration
+                console.log('handleForgotPassword inserting token into DB');
 
-            sb.from('password_reset_tokens').insert({
-                token: token,
-                user_email: email,
-                created_at: new Date().toISOString(),
-                expires_at: expiresAt.toISOString(),
-                used: false
-            }).then(function (res) {
+                var res = await sb.from('password_reset_tokens').insert({
+                    token: token,
+                    user_email: email,
+                    created_at: new Date().toISOString(),
+                    expires_at: expiresAt.toISOString(),
+                    used: false
+                });
+                console.log('handleForgotPassword insert result:', res);
+
                 if (res.error) {
                     console.error('Error creating reset token:', res.error);
                     window.toast('❌ Erreur lors de la création du token', true);
@@ -10809,83 +10871,69 @@ body.theme-feu_artifice .aurora-bg .a3{background:#f1c40f;}
                     return;
                 }
 
-                var debugEl = document.getElementById('forgot-debug-msg');
+                debugEl.textContent = 'Token créé, envoi du mail en cours...';
                 var payload = JSON.stringify({
                     email: email,
                     token: token,
-                    resetLink: window.RESET_LINK_BASE + '/#/reset-password?token=' + token
+                    resetLink: window.location.origin + window.location.pathname + '#/reset-password?token=' + token
                 });
                 var functionUrl = 'https://fukbpkitugcanbzyyrwk.supabase.co/functions/v1/send-reset-email';
 
-                function handleSendEmailResponse(data) {
-                    btn.disabled = false;
-                    btn.textContent = '📧 Envoyer le lien';
-                    if (data.error) {
-                        console.error('Send email response error:', data.error);
-                        debugEl.textContent = 'Erreur fonction: ' + (data.error.message || JSON.stringify(data.error));
-                        window.toast('❌ Erreur lors de l\'envoi de l\'email', true);
-                        return;
-                    }
-                    debugEl.textContent = 'Mail envoyé. Vérifie aussi les spams.';
-                    document.getElementById('forgot-success-msg').classList.add('show');
-                    setTimeout(() => {
-                        closeForgotModal();
-                        window.toast('✅ Lien envoyé ! Vérifie ton email', false);
-                    }, 2000);
+                console.log('handleForgotPassword sending request to function');
+                var response = await fetch(functionUrl, {
+                    method: 'POST',
+                    mode: 'cors',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'apikey': window.SUPABASE_ANON_KEY,
+                        'Authorization': 'Bearer ' + window.SUPABASE_ANON_KEY
+                    },
+                    body: payload
+                });
+                console.log('handleForgotPassword fetch response status:', response.status, response.statusText);
+                debugEl.textContent = 'HTTP status: ' + response.status + ' ' + response.statusText;
+
+                if (!response.ok) {
+                    var text = await response.text();
+                    var msg = text || 'Erreur serveur';
+                    throw new Error('HTTP ' + response.status + ' ' + msg);
                 }
 
-                sb.functions.invoke('send-reset-email', {
-                    body: payload
-                }).then(function (res) {
-                    if (res.error) {
-                        throw res.error;
-                    }
-                    handleSendEmailResponse(res.data || {});
-                }).catch(function (err) {
-                    console.warn('Function invoke failed, trying direct fetch fallback:', err);
-                    if (window.location.protocol === 'file:' || window.location.origin === 'null') {
-                        btn.disabled = false;
-                        btn.textContent = '📧 Envoyer le lien';
-                        var message = 'Erreur CORS : page ouverte localement via file:// ou origine null. Servez la page via HTTP (localhost ou GitHub Pages).';
-                        console.error(message, err);
-                        debugEl.textContent = message;
-                        window.toast('❌ Impossible d\'appeler la fonction depuis file://', true);
-                        return;
-                    }
-                    debugEl.textContent = 'Fonction invoke échouée, tentative de fallback direct... origin=' + window.location.origin;
-                    return fetch(functionUrl, {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json',
-                            'apikey': window.SUPABASE_ANON_KEY,
-                            'Authorization': 'Bearer ' + window.SUPABASE_ANON_KEY
-                        },
-                        body: payload
-                    }).then(function (r) {
-                        btn.disabled = false;
-                        btn.textContent = '📧 Envoyer le lien';
-                        debugEl.textContent = 'HTTP status: ' + r.status + ' ' + r.statusText;
-                        if (!r.ok) {
-                            return r.text().then(function (text) {
-                                var msg = text || 'Erreur serveur';
-                                throw new Error('HTTP ' + r.status + ' ' + msg);
-                            });
-                        }
-                        return r.json();
-                    }).then(handleSendEmailResponse).catch(function (fetchErr) {
-                        btn.disabled = false;
-                        btn.textContent = '📧 Envoyer le lien';
-                        console.error('Fetch fallback error:', fetchErr);
-                        debugEl.textContent = 'Erreur: ' + fetchErr.message;
-                        window.toast('🌐 Erreur réseau lors de l\'envoi : ' + fetchErr.message, true);
-                    });
-                });
-            }).catch(function (err) {
+                var data = await response.json();
+                console.log('handleForgotPassword function response data:', data);
+
+                if (data.error) {
+                    console.error('Send email response error:', data.error);
+                    debugEl.textContent = 'Erreur fonction: ' + (data.error.message || JSON.stringify(data.error));
+                    window.toast('❌ Erreur lors de l\'envoi de l\'email', true);
+                    btn.disabled = false;
+                    btn.textContent = '📧 Envoyer le lien';
+                    return;
+                }
+
+                console.log('handleForgotPassword success! Showing success message');
+                debugEl.textContent = 'Mail envoyé. Vérifie aussi les spams.';
+                document.getElementById('forgot-success-msg').classList.add('show');
+                console.log('handleForgotPassword success message added to DOM');
+                setTimeout(() => {
+                    console.log('handleForgotPassword closing modal');
+                    closeForgotModal();
+                    window.toast('✅ Lien envoyé ! Vérifie ton email', false);
+                    console.log('handleForgotPassword modal closed and toast shown');
+                }, 2000);
                 btn.disabled = false;
                 btn.textContent = '📧 Envoyer le lien';
-                console.error('DB error:', err);
-                window.toast('❌ Erreur serveur', true);
-            });
+            } catch (err) {
+                console.error('handleForgotPassword exception:', err);
+                var message = err.message || 'Erreur interne';
+                if (window.location.protocol === 'file:' || window.location.origin === 'null') {
+                    message = 'Erreur CORS : page ouverte localement via file:// ou origine null. Servez la page via HTTP (localhost ou GitHub Pages).';
+                }
+                debugEl.textContent = 'Erreur: ' + message;
+                window.toast('🌐 Erreur lors de l\'envoi : ' + message, true);
+                btn.disabled = false;
+                btn.textContent = '📧 Envoyer le lien';
+            }
         };
 
         // ── ÉTAPE 2: Valider le token et réinitialiser ──
