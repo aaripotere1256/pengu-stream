@@ -6217,6 +6217,7 @@
                 <button class="fp-tab" id="tab-suggestions-btn" onclick="fpTab('suggestions',this)">💡
                     Suggestions</button>
                 <button class="fp-tab" id="tab-spotlight-btn" onclick="fpTab('spotlight',this)">🔥 Spotlight</button>
+                <button class="fp-tab" id="tab-majtmdb-btn" onclick="fpTab('majtmdb',this)">🔄 Maj Globale</button>
             </div>
 
             <!-- ── UTILISATEURS ── -->
@@ -6586,6 +6587,169 @@
                     </div>
                 </div>
             </div>
+
+            <!-- ── MAJ TMDB GLOBALE ── -->
+            <div class="fp-section" id="fp-majtmdb">
+                <p style="color:rgba(255,255,255,.5);font-size:.86rem;margin-bottom:18px;">
+                    Cette action met à jour <strong style="color:#fff;">tous les films ou séries</strong> de la base de données 
+                    en interrogeant TMDB pour écraser les affiches, bannières, et iframes automatiquement.
+                </p>
+                <div style="display:flex;gap:15px;margin-bottom:20px;">
+                    <button class="btn-tmdb" onclick="runGlobalTMDBUpdate('film')" id="btn-run-global-film" style="padding:10px 20px;font-size:1rem;cursor:pointer;">🚀 Maj Tous Les Films</button>
+                    <button class="btn-tmdb" onclick="runGlobalTMDBUpdate('serie')" id="btn-run-global-serie" style="padding:10px 20px;font-size:1rem;cursor:pointer;background:linear-gradient(135deg, #6c5ce7 0%, #a29bfe 100%);">🚀 Maj Toutes Les Séries</button>
+                </div>
+                
+                <div id="global-tmdb-log" style="background:rgba(0,0,0,.3);padding:15px;border-radius:10px;height:300px;overflow-y:auto;font-family:monospace;font-size:.85rem;color:rgba(255,255,255,.8);line-height:1.4;">
+                    En attente...
+                </div>
+            </div>
+
+            <script>
+            window.runGlobalTMDBUpdate = async function(type) {
+                var btnFilm = document.getElementById('btn-run-global-film');
+                var btnSerie = document.getElementById('btn-run-global-serie');
+                var logDiv = document.getElementById('global-tmdb-log');
+                if (!window.sb) return;
+
+                var isFilm = (type === 'film');
+                var tableName = isFilm ? 'films' : 'series';
+                var label = isFilm ? 'les FILMS' : 'les SÉRIES (et épisodes)';
+
+                if (!confirm("⚠️ ATTENTION : Cela va écraser les affiches, synopsis, et iframes de " + label + " de la base de données en fonction de leur titre. Poursuivre ?")) return;
+
+                btnFilm.disabled = true; btnSerie.disabled = true;
+                btnFilm.style.opacity = '0.5'; btnSerie.style.opacity = '0.5';
+                logDiv.innerHTML = 'Récupération depuis la base de données...<br>';
+
+                try {
+                    var r = await window.sb.from(tableName).select('*');
+                    if (r.error) throw r.error;
+                    var items = r.data || [];
+                    logDiv.innerHTML += '👉 ' + items.length + ' ' + tableName + ' trouvés.<br>';
+
+                    var key = 'f34c56c945e5e0de8bd72f85371deea0';
+                    var successCount = 0;
+                    var failCount = 0;
+                    var errorLog = [];
+
+                    for (var i = 0; i < items.length; i++) {
+                        var currentItem = items[i];
+                        logDiv.innerHTML += 'Recherche pour "' + currentItem.title + '"... ';
+                        logDiv.scrollTop = logDiv.scrollHeight;
+
+                        try {
+                            var searchType = isFilm ? 'movie' : 'tv';
+                            var searchRes = await fetch('https://api.themoviedb.org/3/search/' + searchType + '?api_key=' + key + '&language=fr-FR&query=' + encodeURIComponent(currentItem.title));
+                            var searchData = await searchRes.json();
+
+                            if (!searchData.results || searchData.results.length === 0) {
+                                logDiv.innerHTML += '<span style="color:#e74c3c">Non trouvé (0 résultat)</span><br>';
+                                failCount++;
+                                errorLog.push("- " + currentItem.title + " : Non trouvé sur TMDB");
+                                continue;
+                            }
+
+                            var item = searchData.results[0];
+                            var detailRes = await fetch('https://api.themoviedb.org/3/' + searchType + '/' + item.id + '?api_key=' + key + '&language=fr-FR');
+                            var details = await detailRes.json();
+
+                            var updates = {
+                                description: details.overview || '',
+                                thumb_url: details.poster_path ? 'https://image.tmdb.org/t/p/w500' + details.poster_path : '',
+                                banner_url: details.backdrop_path ? 'https://image.tmdb.org/t/p/original' + details.backdrop_path : ''
+                            };
+
+                            if (isFilm) {
+                                updates.video_url = '<iframe width="640" height="384" src="https://apis.wavewatch.top/zeus.php?type=movie&id=' + item.id + '" frameborder="0" scrolling="no" allowfullscreen></iframe>';
+                            } else {
+                                updates.nb_saisons = details.number_of_seasons || 1;
+                            }
+
+                            // Categorisation automatique
+                            if (details.genres && details.genres.length > 0) {
+                                var genreMap = {
+                                    16: 'anime', 27: 'horreur', 28: 'action', 878: 'scifi', 35: 'comedie',
+                                    18: 'drame', 99: 'documentaire', 53: 'thriller', 10749: 'romance', 14: 'fantasy',
+                                    12: 'action', 80: 'thriller', 9648: 'thriller', 10759: 'action', 10765: 'scifi', 10768: 'documentaire', 10762: 'anime'
+                                };
+                                var emojis = { 'anime': '🌸', 'horreur': '🔪', 'action': '🔥', 'scifi': '👽', 'comedie': '😂', 'drame': '🎭', 'documentaire': '📽️', 'thriller': '🕵️', 'romance': '❤️', 'fantasy': '🧙' };
+                                
+                                var genreId = details.genres[0].id;
+                                var mapped = genreMap[genreId];
+                                if (!mapped && details.genres.length > 1) mapped = genreMap[details.genres[1].id];
+                                
+                                if (mapped) {
+                                    updates.cat = mapped;
+                                    updates.emoji = emojis[mapped] || '🍿';
+                                }
+                            }
+
+                            var upRes = await window.sb.from(tableName).update(updates).eq('id', currentItem.id);
+                            if (upRes.error) throw upRes.error;
+
+                            // ── SÉRIES : Mise à jour des épisodes ──
+                            if (!isFilm) {
+                                logDiv.innerHTML += ' <i>(Saisons: ' + updates.nb_saisons + ')</i> ';
+                                
+                                var epsToInsert = [];
+                                for (var s = 1; s <= updates.nb_saisons; s++) {
+                                    var sRes = await fetch('https://api.themoviedb.org/3/tv/' + item.id + '/season/' + s + '?api_key=' + key + '&language=fr-FR');
+                                    var sData = await sRes.json();
+                                    
+                                    var sn = sData.season_number;
+                                    if (sn || sn === 0) {
+                                        (sData.episodes || []).forEach(function(ep) {
+                                            epsToInsert.push({
+                                                serie_id: currentItem.id,
+                                                saison: sn,
+                                                numero: ep.episode_number,
+                                                title: ep.name || ('Épisode ' + ep.episode_number),
+                                                description: ep.overview || '',
+                                                video_url: '<iframe width="640" height="384" src="https://apis.wavewatch.top/zeus.php?type=tv&id=' + item.id + '&s=' + sn + '&e=' + ep.episode_number + '" frameborder="0" scrolling="no" allowfullscreen></iframe>',
+                                                duration: ep.runtime ? (ep.runtime >= 60 ? Math.floor(ep.runtime / 60) + ':' + ('0' + (ep.runtime % 60)).slice(-2) + ':00' : ep.runtime + ':00') : null
+                                            });
+                                        });
+                                    }
+                                    await new Promise(function(r) { setTimeout(r, 200); });
+                                }
+
+                                await window.sb.from('episodes').delete().eq('serie_id', currentItem.id);
+                                if (epsToInsert.length > 0) {
+                                    var epsRes = await window.sb.from('episodes').insert(epsToInsert);
+                                    if (epsRes.error) throw epsRes.error;
+                                }
+                            }
+
+                            logDiv.innerHTML += '<span style="color:#2ecc71">OK !</span><br>';
+                            successCount++;
+
+                            // Pause pour ne pas saturer l'API TMDB ou Supabase
+                            await new Promise(function(resolve) { setTimeout(resolve, 300); });
+                        } catch (err) {
+                            logDiv.innerHTML += '<span style="color:#e74c3c">Erreur: ' + err.message + '</span><br>';
+                            failCount++;
+                            errorLog.push("- " + currentItem.title + " : " + err.message);
+                        }
+                    }
+
+                    logDiv.innerHTML += '<br><strong style="color:#2ecc71">✅ Terminé ! ' + successCount + ' succès, ' + failCount + ' échecs.</strong><br>';
+                    
+                    if (errorLog.length > 0) {
+                        logDiv.innerHTML += '<br><strong style="color:#e74c3c">❌ Titres nécessitant une vérification manuelle :</strong><br>';
+                        logDiv.innerHTML += '<textarea style="width:100%;height:100px;background:rgba(0,0,0,0.5);color:#fff;border:1px solid #e74c3c;border-radius:5px;padding:8px;font-family:monospace;font-size:0.8rem;margin-top:10px;resize:vertical;" readonly>' + errorLog.join('\n') + '</textarea><br>';
+                        logDiv.scrollTop = logDiv.scrollHeight;
+                    }
+                    
+                    window.toast('✅ Mise à jour globale terminée !');
+                } catch (e) {
+                    logDiv.innerHTML += '<br><span style="color:#e74c3c">Erreur fatale: ' + e.message + '</span><br>';
+                    window.toast('❌ ' + e.message, true);
+                }
+
+                btnFilm.disabled = false; btnSerie.disabled = false;
+                btnFilm.style.opacity = '1'; btnSerie.style.opacity = '1';
+            };
+            </script>
         </div>
     </div>
     <!-- MODAL SAGA DÉTAIL -->
@@ -6634,6 +6798,11 @@
         <div class="player-meta">
             <span id="player-cat-badge" class="card-badge"></span>
             <span id="player-access-label" style="color:rgba(255,255,255,.5);font-size:.85rem;"></span>
+            <select id="player-source-selector" onchange="changePlayerSource()" style="margin-left: auto; background: rgba(255,255,255,0.05); color: white; border: 1px solid rgba(255,255,255,0.1); border-radius: 5px; padding: 5px 10px; font-family: 'Nunito', sans-serif; font-size: 0.9rem; display: none; outline: none; cursor: pointer;">
+                <option value="wavewatch" style="color: #00cec9; background: #1a1a2e; font-weight: bold;">Lecteur 1 (Wavewatch)</option>
+                <option value="peachify" style="color: #e84393; background: #1a1a2e; font-weight: bold;">Lecteur 2 (Peachify)</option>
+                <option value="vidsrc" style="color: #fdcb6e; background: #1a1a2e; font-weight: bold;">Lecteur 3 (Multi-Langues)</option>
+            </select>
         </div>
         <!-- Zone épisodes série -->
         <div class="player-episodes" id="player-episodes-zone" style="display:none">
@@ -7249,6 +7418,44 @@
             /* ═══════════════════════════════════
                LECTEUR
             ═══════════════════════════════════ */
+            function transformUrl(url) {
+                var selector = document.getElementById('player-source-selector');
+                var source = selector ? selector.value : 'wavewatch';
+                
+                var movieMatch = url.match(/type=movie&id=([0-9]+)/);
+                var tvMatch = url.match(/type=tv&id=([0-9]+)&s=([0-9]+)&e=([0-9]+)/);
+
+                if (source === 'peachify') {
+                    if (movieMatch) return 'https://peachify.top/embed/movie/' + movieMatch[1] + '?dub=fr';
+                    if (tvMatch) return 'https://peachify.top/embed/tv/' + tvMatch[1] + '/' + tvMatch[2] + '/' + tvMatch[3] + '?dub=fr';
+                } else if (source === 'vidsrc') {
+                    if (movieMatch) return 'https://vidsrc.to/embed/movie/' + movieMatch[1];
+                    if (tvMatch) return 'https://vidsrc.to/embed/tv/' + tvMatch[1] + '/' + tvMatch[2] + '/' + tvMatch[3];
+                }
+                
+                return url; // fallback (wavewatch)
+            }
+
+            window.changePlayerSource = function() {
+                if (playerCurrentSerie && window._currentEpParams) {
+                    playEpisode(window._currentEpParams.url, window._currentEpParams.title, window._currentEpParams.num, window._currentEpParams.el);
+                } else if (window._currentFilmParams) {
+                    var eCode = window._currentFilmParams.eCode.trim();
+                    var processed = '';
+                    if (eCode.startsWith('<')) {
+                        eCode = eCode.replace(/src="([^"]+)"/, function(m, u) { return 'src="' + transformUrl(u) + '"'; });
+                        processed = eCode.replace(/<iframe/gi, '<iframe style="width:100%;height:min(56.25vw,562px);border:none;border-radius:14px;"');
+                    } else {
+                        eCode = transformUrl(eCode);
+                        processed = '<iframe src="' + eCode + '" style="width:100%;height:min(56.25vw,562px);border:none;border-radius:14px;" allowfullscreen allow="autoplay; fullscreen"></iframe>';
+                    }
+                    if (processed.indexOf('<iframe') !== -1) {
+                        processed = '<div style="color:rgba(255,255,255,0.7);text-align:center;padding:15px;font-size:0.9rem;background:rgba(255,255,255,0.05);border-radius:10px;margin-bottom:15px;">⏳ Le chargement de la vidéo peut durer plusieurs secondes, voire plusieurs minutes. Merci de patienter...</div>' + processed;
+                    }
+                    document.getElementById('player-embed-container').innerHTML = processed;
+                }
+            };
+
             var playerCurrentSerie = null;
             var playerCurrentSaison = 1;
 
@@ -7260,6 +7467,23 @@
                 window._playerStartTime = null;
                 window._currentPlayerSerie = serie || null;
                 window._currentPlayerTitle = title;
+                window._currentEpParams = null;
+                window._currentFilmParams = null;
+
+                var selector = document.getElementById('player-source-selector');
+                var hasWavewatch = false;
+                if (serie) {
+                    if (serie.startEp && (serie.startEp.video_url || serie.startEp.embed || '').indexOf('wavewatch') !== -1) hasWavewatch = true;
+                    if (!hasWavewatch && serie.episodes && serie.episodes.length > 0) {
+                        if ((serie.episodes[0].video_url || serie.episodes[0].embed || '').indexOf('wavewatch') !== -1) hasWavewatch = true;
+                    }
+                } else {
+                    if (embedCode && embedCode.indexOf('wavewatch') !== -1) hasWavewatch = true;
+                }
+                if (selector) {
+                    selector.style.display = hasWavewatch ? 'block' : 'none';
+                    if (!hasWavewatch) selector.value = 'wavewatch';
+                }
 
                 if (serie) {
                     playerCurrentSerie = serie;
@@ -7270,6 +7494,7 @@
                     // Auto-play l'épisode demandé
                     if (serie.startEp && serie.startEp.video_url) {
                         setTimeout(function () {
+                            window._currentEpParams = { url: encodeURIComponent(serie.startEp.video_url), title: serie.startEp.title, num: serie.startEp.numero, el: null };
                             var url = serie.startEp.video_url;
                             
                             // Appliquer le temps de reprise (s'il existe)
@@ -7283,12 +7508,20 @@
                                 }
                             }
 
+                            // --- Transformation URL Source ---
+                            var finalUrl = url;
+                            if (finalUrl.startsWith('<')) {
+                                finalUrl = finalUrl.replace(/src="([^"]+)"/, function(m, u) { return 'src="' + transformUrl(u) + '"'; });
+                            } else {
+                                finalUrl = transformUrl(finalUrl);
+                            }
+
                             var num = serie.startEp.numero;
                             var epTitle = serie.startEp.title || ('Épisode ' + num);
                             document.getElementById('player-title').textContent = '▶ Épisode ' + num + ' — ' + epTitle;
-                            var processed = url.startsWith('<')
-                                ? url.replace(/<iframe/gi, '<iframe style="width:100%;height:min(56.25vw,562px);border:none;border-radius:14px;"')
-                                : '<iframe src="' + url + '" style="width:100%;height:min(56.25vw,562px);border:none;border-radius:14px;" allowfullscreen></iframe>';
+                            var processed = finalUrl.startsWith('<')
+                                ? finalUrl.replace(/<iframe/gi, '<iframe style="width:100%;height:min(56.25vw,562px);border:none;border-radius:14px;"')
+                                : '<iframe src="' + finalUrl + '" style="width:100%;height:min(56.25vw,562px);border:none;border-radius:14px;" allowfullscreen></iframe>';
                             processed = '<div style="color:rgba(255,255,255,0.7);text-align:center;padding:15px;font-size:0.9rem;background:rgba(255,255,255,0.05);border-radius:10px;margin-bottom:15px;">⏳ Le chargement de la vidéo peut durer plusieurs secondes, voire plusieurs minutes. Merci de patienter...</div>' + processed;
                             document.getElementById('player-embed-container').innerHTML = processed;
                             // Marquer l'épisode actif
@@ -7304,6 +7537,7 @@
                     if (!embedCode) {
                         processed = '<p style="color:rgba(255,255,255,.4);text-align:center;padding:40px;">⚠️ Aucun lecteur disponible pour ce contenu.</p>';
                     } else {
+                        window._currentFilmParams = { eCode: embedCode };
                         var eCode = embedCode.trim();
                         // Appliquer le temps de reprise (s'il existe)
                         if (window._resumeAtSec) {
@@ -7317,8 +7551,10 @@
                         }
 
                         if (eCode.startsWith('<')) {
+                            eCode = eCode.replace(/src="([^"]+)"/, function(m, u) { return 'src="' + transformUrl(u) + '"'; });
                             processed = eCode.replace(/<iframe/gi, '<iframe style="width:100%;height:min(56.25vw,562px);border:none;border-radius:14px;"');
                         } else {
+                            eCode = transformUrl(eCode);
                             processed = '<iframe src="' + eCode + '" style="width:100%;height:min(56.25vw,562px);border:none;border-radius:14px;" allowfullscreen allow="autoplay; fullscreen"></iframe>';
                         }
                     }
@@ -7385,11 +7621,22 @@
             window.playEpisode = function (encodedUrl, title, num, el) {
                 var url = decodeURIComponent(encodedUrl);
                 if (!url) { toast('📭 Pas de lecteur pour cet épisode.', true); return; }
+                
+                window._currentEpParams = { url: encodedUrl, title: title, num: num, el: el };
+                
                 document.querySelectorAll('.ep-card').forEach(function (c) { c.classList.remove('active-ep'); });
                 var card = el ? el.closest('.ep-card') : null;
                 if (card) card.classList.add('active-ep');
                 document.getElementById('player-title').textContent = '▶ Épisode ' + num + ' — ' + title;
-                var processed = url.startsWith('<') ? url.replace(/<iframe/gi, '<iframe style="width:100%;height:min(56.25vw,562px);border:none;border-radius:14px;"') : '<iframe src="' + url + '" style="width:100%;height:min(56.25vw,562px);border:none;border-radius:14px;" allowfullscreen></iframe>';
+                
+                var finalUrl = url;
+                if (finalUrl.startsWith('<')) {
+                    finalUrl = finalUrl.replace(/src="([^"]+)"/, function(m, u) { return 'src="' + transformUrl(u) + '"'; });
+                } else {
+                    finalUrl = transformUrl(finalUrl);
+                }
+
+                var processed = finalUrl.startsWith('<') ? finalUrl.replace(/<iframe/gi, '<iframe style="width:100%;height:min(56.25vw,562px);border:none;border-radius:14px;"') : '<iframe src="' + finalUrl + '" style="width:100%;height:min(56.25vw,562px);border:none;border-radius:14px;" allowfullscreen></iframe>';
                 if (processed.indexOf('<iframe') !== -1) {
                     processed = '<div style="color:rgba(255,255,255,0.7);text-align:center;padding:15px;font-size:0.9rem;background:rgba(255,255,255,0.05);border-radius:10px;margin-bottom:15px;">⏳ Le chargement de la vidéo peut durer plusieurs secondes, voire plusieurs minutes. Merci de patienter...</div>' + processed;
                 }
