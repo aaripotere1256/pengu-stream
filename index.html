@@ -11491,12 +11491,36 @@ body.theme-feu_artifice .aurora-bg .a3{background:#f1c40f;}
                 // Utilise la clé API publique TMDB déjà présente dans le projet
                 var key = 'f34c56c945e5e0de8bd72f85371deea0';
                 var tmdbType = type === 'film' ? 'movie' : (type === 'serie' ? 'tv' : 'collection');
-                var url = 'https://api.themoviedb.org/3/search/' + tmdbType + '?api_key=' + key + '&language=fr-FR&query=' + encodeURIComponent(query);
-                
+
                 var stDiv = document.getElementById(type + '-tmdb-status');
                 if (stDiv) stDiv.innerHTML = ''; // Clear previous status
-                
+
                 window.toast("⏳ Recherche TMDB en cours...");
+
+                // ─── Détection ID TMDB ───────────────────────────────────────
+                // Si la valeur est un entier pur (ex: 1396), on récupère directement
+                // les détails sans passer par le endpoint de recherche.
+                var isNumericId = /^\d+$/.test(query);
+
+                if (isNumericId) {
+                    var directUrl = 'https://api.themoviedb.org/3/' + tmdbType + '/' + query + '?api_key=' + key + '&language=fr-FR';
+                    fetch(directUrl)
+                        .then(function(r) {
+                            if (!r.ok) throw new Error('ID TMDB ' + query + ' introuvable.');
+                            return r.json();
+                        })
+                        .then(function(details) {
+                            // On crée un objet `item` factice avec juste l'id pour réutiliser le code commun
+                            _handleTMDBDetails(type, tmdbType, key, { id: details.id }, details);
+                        })
+                        .catch(function(err) {
+                            window.toast("❌ " + err.message, true);
+                        });
+                    return;
+                }
+                // ─────────────────────────────────────────────────────────────
+
+                var url = 'https://api.themoviedb.org/3/search/' + tmdbType + '?api_key=' + key + '&language=fr-FR&query=' + encodeURIComponent(query);
 
                 fetch(url)
                     .then(function(r) { return r.json(); })
@@ -11513,96 +11537,104 @@ body.theme-feu_artifice .aurora-bg .a3{background:#f1c40f;}
                         var detailUrl = 'https://api.themoviedb.org/3/' + tmdbType + '/' + item.id + '?api_key=' + key + '&language=fr-FR';
                         
                         fetch(detailUrl).then(function(r) { return r.json(); }).then(function(details) {
-                            var prefix = type === 'film' ? 'film' : (type === 'serie' ? 'serie' : 'saga');
-                            var title = details.title || details.name;
-                            var overview = details.overview || '';
-                            var thumb = details.poster_path ? 'https://image.tmdb.org/t/p/w500' + details.poster_path : '';
-                            var banner = details.backdrop_path ? 'https://image.tmdb.org/t/p/original' + details.backdrop_path : '';
-                            
-                            var titleField = document.getElementById(prefix + '-title');
-                            if (titleField) titleField.value = title;
-                            var descField = document.getElementById(prefix + '-desc');
-                            if (descField) descField.value = overview;
-                            var thumbField = document.getElementById(prefix + '-thumb');
-                            if (thumbField) thumbField.value = thumb;
-                            var bannerField = document.getElementById(prefix + '-banner');
-                            if (bannerField) bannerField.value = banner;
-
-                            // Catégorie et Emoji Automatique
-                            if (details.genres && details.genres.length > 0) {
-                                var genreMap = {
-                                    16: 'anime', 27: 'horreur', 28: 'action', 878: 'scifi', 35: 'comedie',
-                                    18: 'drame', 99: 'documentaire', 53: 'thriller', 10749: 'romance', 14: 'fantasy',
-                                    12: 'action', 80: 'thriller', 9648: 'thriller', 10759: 'action', 10765: 'scifi', 10768: 'documentaire', 10762: 'anime'
-                                };
-                                var emojis = { 'anime': '🌸', 'horreur': '🔪', 'action': '🔥', 'scifi': '👽', 'comedie': '😂', 'drame': '🎭', 'documentaire': '📽️', 'thriller': '🕵️', 'romance': '❤️', 'fantasy': '🧙' };
-                                
-                                var genreId = details.genres[0].id;
-                                var mapped = genreMap[genreId];
-                                if (!mapped && details.genres.length > 1) mapped = genreMap[details.genres[1].id];
-                                
-                                if (mapped) {
-                                    var catField = document.getElementById(prefix + '-cat');
-                                    if (catField) catField.value = mapped;
-                                    var emojiField = document.getElementById(prefix + '-emoji');
-                                    if (emojiField) emojiField.value = emojis[mapped] || '🍿';
-                                }
-                            }
-
-                            if (type === 'film') {
-                                var embed = '<iframe width="640" height="384" src="https://apis.wavewatch.top/zeus.php?type=movie&id=' + item.id + '" frameborder="0" scrolling="no" allowfullscreen></iframe>';
-                                document.getElementById('film-embed').value = embed;
-                                var st = document.getElementById('film-tmdb-status');
-                                if (st) st.innerHTML = '<span style="color:#2ecc71;">✅ ID Rempli</span>';
-                                window.toast("✅ Auto-remplissage TMDB réussi !");
-                            } else if (type === 'serie') {
-                                var nbSaisons = details.number_of_seasons || 1;
-                                document.getElementById('serie-nb-saisons').value = nbSaisons;
-                                var newSeasonsData = {};
-                                
-                                var promises = [];
-                                for (var s = 1; s <= nbSaisons; s++) {
-                                    promises.push(
-                                        fetch('https://api.themoviedb.org/3/tv/' + item.id + '/season/' + s + '?api_key=' + key + '&language=fr-FR')
-                                        .then(function(r) { return r.json(); })
-                                        .then(function(seasonData) {
-                                            var sn = seasonData.season_number;
-                                            if (!sn && sn !== 0) return; // sécurité
-                                            newSeasonsData[sn] = [];
-                                            (seasonData.episodes || []).forEach(function(ep) {
-                                                newSeasonsData[sn].push({
-                                                    num: ep.episode_number,
-                                                    title: ep.name || ('Épisode ' + ep.episode_number),
-                                                    description: ep.overview || '',
-                                                    embed: '<iframe width="640" height="384" src="https://apis.wavewatch.top/zeus.php?type=tv&id=' + item.id + '&s=' + sn + '&e=' + ep.episode_number + '" frameborder="0" scrolling="no" allowfullscreen></iframe>',
-                                                    duration: ep.runtime ? (ep.runtime >= 60 ? Math.floor(ep.runtime / 60) + ':' + ('0' + (ep.runtime % 60)).slice(-2) + ':00' : ep.runtime + ':00') : ''
-                                                });
-                                            });
-                                        })
-                                    );
-                                }
-
-                                Promise.all(promises).then(function() {
-                                    window.replaceSeasonsData(newSeasonsData);
-                                    window.updateSeasonsBuilder();
-                                    var st = document.getElementById('serie-tmdb-status');
-                                    if (st) st.innerHTML = '<span style="color:#2ecc71;">✅ ID Rempli</span>';
-                                    window.toast("✅ Série & Épisodes importés avec succès !");
-                                }).catch(function(e) {
-                                    window.updateSeasonsBuilder();
-                                    window.toast("⚠️ Série remplie, mais erreur lors du scan des épisodes.", true);
-                                });
-                            } else if (type === 'saga') {
-                                var st = document.getElementById('saga-tmdb-status');
-                                if (st) st.innerHTML = '<span style="color:#2ecc71;">✅ ID Rempli</span>';
-                                window.toast("✅ Auto-remplissage Saga TMDB réussi !");
-                            }
+                            _handleTMDBDetails(type, tmdbType, key, item, details);
                         });
                     })
                     .catch(function(err) {
                         window.toast("❌ Erreur TMDB: " + err.message, true);
                     });
             };
+
+            // ─── Fonction partagée : traitement des détails TMDB ────────────
+            function _handleTMDBDetails(type, tmdbType, key, item, details) {
+                var prefix = type === 'film' ? 'film' : (type === 'serie' ? 'serie' : 'saga');
+                var title = details.title || details.name;
+                var overview = details.overview || '';
+                var thumb = details.poster_path ? 'https://image.tmdb.org/t/p/w500' + details.poster_path : '';
+                var banner = details.backdrop_path ? 'https://image.tmdb.org/t/p/original' + details.backdrop_path : '';
+                
+                var titleField = document.getElementById(prefix + '-title');
+                if (titleField) titleField.value = title;
+                var descField = document.getElementById(prefix + '-desc');
+                if (descField) descField.value = overview;
+                var thumbField = document.getElementById(prefix + '-thumb');
+                if (thumbField) thumbField.value = thumb;
+                var bannerField = document.getElementById(prefix + '-banner');
+                if (bannerField) bannerField.value = banner;
+
+                // Catégorie et Emoji Automatique
+                if (details.genres && details.genres.length > 0) {
+                    var genreMap = {
+                        16: 'anime', 27: 'horreur', 28: 'action', 878: 'scifi', 35: 'comedie',
+                        18: 'drame', 99: 'documentaire', 53: 'thriller', 10749: 'romance', 14: 'fantasy',
+                        12: 'action', 80: 'thriller', 9648: 'thriller', 10759: 'action', 10765: 'scifi', 10768: 'documentaire', 10762: 'anime'
+                    };
+                    var emojis = { 'anime': '🌸', 'horreur': '🔪', 'action': '🔥', 'scifi': '👽', 'comedie': '😂', 'drame': '🎭', 'documentaire': '📽️', 'thriller': '🕵️', 'romance': '❤️', 'fantasy': '🧙' };
+                    
+                    var genreId = details.genres[0].id;
+                    var mapped = genreMap[genreId];
+                    if (!mapped && details.genres.length > 1) mapped = genreMap[details.genres[1].id];
+                    
+                    if (mapped) {
+                        var catField = document.getElementById(prefix + '-cat');
+                        if (catField) catField.value = mapped;
+                        var emojiField = document.getElementById(prefix + '-emoji');
+                        if (emojiField) emojiField.value = emojis[mapped] || '🍿';
+                    }
+                }
+
+                if (type === 'film') {
+                    var embed = '<iframe width="640" height="384" src="https://apis.wavewatch.top/zeus.php?type=movie&id=' + item.id + '" frameborder="0" scrolling="no" allowfullscreen></iframe>';
+                    document.getElementById('film-embed').value = embed;
+                    var st = document.getElementById('film-tmdb-status');
+                    if (st) st.innerHTML = '<span style="color:#2ecc71;">✅ ID Rempli</span>';
+                    window.toast("✅ Auto-remplissage TMDB réussi !");
+                } else if (type === 'serie') {
+                    var nbSaisons = details.number_of_seasons || 1;
+                    document.getElementById('serie-nb-saisons').value = nbSaisons;
+                    var newSeasonsData = {};
+                    
+                    var promises = [];
+                    for (var s = 1; s <= nbSaisons; s++) {
+                        promises.push(
+                            (function(sNum) {
+                                return fetch('https://api.themoviedb.org/3/tv/' + item.id + '/season/' + sNum + '?api_key=' + key + '&language=fr-FR')
+                                .then(function(r) { return r.json(); })
+                                .then(function(seasonData) {
+                                    var sn = seasonData.season_number;
+                                    if (!sn && sn !== 0) return; // sécurité
+                                    newSeasonsData[sn] = [];
+                                    (seasonData.episodes || []).forEach(function(ep) {
+                                        newSeasonsData[sn].push({
+                                            num: ep.episode_number,
+                                            title: ep.name || ('Épisode ' + ep.episode_number),
+                                            description: ep.overview || '',
+                                            embed: '<iframe width="640" height="384" src="https://apis.wavewatch.top/zeus.php?type=tv&id=' + item.id + '&s=' + sn + '&e=' + ep.episode_number + '" frameborder="0" scrolling="no" allowfullscreen></iframe>',
+                                            duration: ep.runtime ? (ep.runtime >= 60 ? Math.floor(ep.runtime / 60) + ':' + ('0' + (ep.runtime % 60)).slice(-2) + ':00' : ep.runtime + ':00') : ''
+                                        });
+                                    });
+                                });
+                            })(s)
+                        );
+                    }
+
+                    Promise.all(promises).then(function() {
+                        window.replaceSeasonsData(newSeasonsData);
+                        window.updateSeasonsBuilder();
+                        var st = document.getElementById('serie-tmdb-status');
+                        if (st) st.innerHTML = '<span style="color:#2ecc71;">✅ ID Rempli</span>';
+                        window.toast("✅ Série & Épisodes importés avec succès !");
+                    }).catch(function(e) {
+                        window.updateSeasonsBuilder();
+                        window.toast("⚠️ Série remplie, mais erreur lors du scan des épisodes.", true);
+                    });
+                } else if (type === 'saga') {
+                    var st = document.getElementById('saga-tmdb-status');
+                    if (st) st.innerHTML = '<span style="color:#2ecc71;">✅ ID Rempli</span>';
+                    window.toast("✅ Auto-remplissage Saga TMDB réussi !");
+                }
+            }
+            // ────────────────────────────────────────────────────────────────
         })();
     </script>
 
