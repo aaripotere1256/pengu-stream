@@ -2797,6 +2797,22 @@
             background: rgba(184, 224, 247, .2);
         }
 
+        /* Bouton cadenas TMDB */
+        .btn-fp-lock {
+            background: rgba(255,255,255,.05);
+            border: 1px solid rgba(255,255,255,.15);
+            color: rgba(255,255,255,.5);
+            padding: 6px 10px;
+            border-radius: 8px;
+            font-size: .82rem;
+            cursor: pointer;
+            transition: all .2s;
+            title: 'Protéger des MAJ TMDB';
+        }
+        .btn-fp-lock:hover { background: rgba(255,200,0,.15); border-color:rgba(255,200,0,.4); color:#ffd700; }
+        .btn-fp-lock.locked { background:rgba(255,200,0,.18); border-color:rgba(255,200,0,.5); color:#ffd700; }
+        .btn-fp-lock.locked:hover { background:rgba(231,76,60,.15); border-color:rgba(231,76,60,.4); color:#e74c3c; }
+
         /* Content list */
         .content-list {
             display: flex;
@@ -6345,6 +6361,10 @@
                         </p>
                         <button class="btn-fp-action" onclick="showSerieForm(null)">➕ Nouvelle série</button>
                     </div>
+                    <div style="position:relative;margin-bottom:14px;">
+                        <span style="position:absolute;left:13px;top:50%;transform:translateY(-50%);font-size:1rem;opacity:.4;pointer-events:none;">🔍</span>
+                        <input type="text" oninput="searchSeriesPanel(this.value)" placeholder="Rechercher une série…" style="width:100%;padding:9px 14px 9px 40px;background:rgba(255,255,255,.06);border:1.5px solid rgba(184,224,247,.15);border-radius:50px;color:#fff;font-family:'Nunito',sans-serif;font-size:.88rem;outline:none;transition:border-color .2s;" onfocus="this.style.borderColor='var(--aurora1)'" onblur="this.style.borderColor='rgba(184,224,247,.15)'">
+                    </div>
                     <div id="series-list" class="content-list"></div>
                 </div>
                 <!-- Formulaire série -->
@@ -6421,6 +6441,10 @@
                                 (Marvel, Harry Potter…)</p>
                         </div>
                         <button class="btn-fp-action" onclick="showSagaForm(null)">➕ Nouvelle saga</button>
+                    </div>
+                    <div style="position:relative;margin-top:8px;margin-bottom:14px;">
+                        <span style="position:absolute;left:13px;top:50%;transform:translateY(-50%);font-size:1rem;opacity:.4;pointer-events:none;">🔍</span>
+                        <input type="text" oninput="searchSagasPanel(this.value)" placeholder="Rechercher une saga…" style="width:100%;padding:9px 14px 9px 40px;background:rgba(255,255,255,.06);border:1.5px solid rgba(184,224,247,.15);border-radius:50px;color:#fff;font-family:'Nunito',sans-serif;font-size:.88rem;outline:none;transition:border-color .2s;" onfocus="this.style.borderColor='var(--aurora1)'" onblur="this.style.borderColor='rgba(184,224,247,.15)'">
                     </div>
                     <div id="sagas-list" class="saga-panel-list"></div>
                 </div>
@@ -6606,6 +6630,7 @@
 
             <script>
             window.runGlobalTMDBUpdate = async function(type) {
+                if (window.currentRole !== 'fondateur') { window.toast('🚫 Accès réservé au fondateur.', true); return; }
                 var btnFilm = document.getElementById('btn-run-global-film');
                 var btnSerie = document.getElementById('btn-run-global-serie');
                 var logDiv = document.getElementById('global-tmdb-log');
@@ -6632,8 +6657,21 @@
                     var failCount = 0;
                     var errorLog = [];
 
+                    // ── Chargement des IDs verrouillés ──
+                    var _lockedMap = {};
+                    try { _lockedMap = JSON.parse(localStorage.getItem('pengu_tmdb_locked') || '{}'); } catch(e) {}
+
                     for (var i = 0; i < items.length; i++) {
                         var currentItem = items[i];
+
+                        // ── Ignorer les items verrouillés ──
+                        var _lockKey = (isFilm ? 'film_' : 'serie_') + currentItem.id;
+                        if (_lockedMap[_lockKey]) {
+                            logDiv.innerHTML += '"' + currentItem.title + '" → <span style="color:#ffd700">🔒 Verrouillé, ignoré.</span><br>';
+                            logDiv.scrollTop = logDiv.scrollHeight;
+                            continue;
+                        }
+
                         logDiv.innerHTML += 'Recherche pour "' + currentItem.title + '"... ';
                         logDiv.scrollTop = logDiv.scrollHeight;
 
@@ -7780,6 +7818,12 @@
                 document.getElementById('founder-panel').classList.add('open');
                 document.body.style.overflow = 'hidden';
                 document.getElementById('fp-role-label').textContent = '— ' + (ROLES[currentRole] || ROLES.user).label;
+                
+                var majTabBtn = document.getElementById('tab-majtmdb-btn');
+                if (majTabBtn) {
+                    majTabBtn.style.display = currentRole === 'fondateur' ? 'block' : 'none';
+                }
+
                 populateCatSelects();
                 searchUsers(true);
                 loadFilmsList();
@@ -7858,19 +7902,52 @@
                 });
             }
 
+            // ── Helpers cadenas TMDB ──────────────────────────────────────
+            function _getLockedMap() {
+                try { return JSON.parse(localStorage.getItem('pengu_tmdb_locked') || '{}'); } catch(e) { return {}; }
+            }
+            window.toggleTmdbLock = function(type, id, btn) {
+                if (window.currentRole !== 'fondateur') { window.toast('🚫 Action réservée au fondateur.', true); return; }
+                
+                var map = _getLockedMap();
+                var key = type + '_' + id;
+                if (map[key]) {
+                    delete map[key];
+                    btn.classList.remove('locked');
+                    btn.title = '🔓 Cliquer pour verrouiller (protéger des MAJ TMDB)';
+                    btn.textContent = '🔓';
+                    window.toast('🔓 "' + btn.dataset.title + '" déverrouillé.');
+                } else {
+                    map[key] = true;
+                    btn.classList.add('locked');
+                    btn.title = '🔒 Verrouillé — MAJ TMDB ignorées. Cliquer pour déverrouiller';
+                    btn.textContent = '🔒';
+                    window.toast('🔒 "' + btn.dataset.title + '" verrouillé. Les MAJ globales l\'ignoreront.');
+                }
+                localStorage.setItem('pengu_tmdb_locked', JSON.stringify(map));
+            };
+            // ─────────────────────────────────────────────────────────────────
+
             function renderFilmsList(data) {
                 var list = document.getElementById('films-list');
                 if (!data || data.length === 0) { list.innerHTML = '<p style="color:rgba(255,255,255,.3);font-size:.82rem;">Aucun résultat.</p>'; return; }
+                var lockedMap = _getLockedMap();
                 list.innerHTML = data.map(function (f) {
                     var thumb = f.thumb_url
                         ? '<img src="' + f.thumb_url + '" style="width:44px;height:60px;border-radius:8px;object-fit:cover;flex-shrink:0;" onerror="this.style.display=\'none\'">'
                         : '<div class="content-item-thumb">' + f.emoji + '</div>';
+                    var isLocked = !!lockedMap['film_' + f.id];
+                    var lockCls = isLocked ? ' locked' : '';
+                    var lockIcon = isLocked ? '🔒' : '🔓';
+                    var lockTitle = isLocked ? 'Verrouillé — MAJ TMDB ignorées. Cliquer pour déverrouiller' : 'Cliquer pour verrouiller (protéger des MAJ TMDB globales)';
+                    var safeTitle = (f.title || '').replace(/'/g, "\\'").replace(/"/g, '&quot;');
                     return '<div class="content-item">' + thumb +
                         '<div class="content-item-info">' +
-                        '<div class="content-item-title">' + f.title + '</div>' +
+                        '<div class="content-item-title">' + f.title + (isLocked ? ' <span style="font-size:.7rem;background:rgba(255,200,0,.2);color:#ffd700;padding:2px 6px;border-radius:6px;font-weight:700;">🔒 Protégé</span>' : '') + '</div>' +
                         '<div class="content-item-meta">' + f.cat + ' · ' + (f.access === 'vip' ? '👑 VIP' : '🌍 Public') + (f.video_url ? ' · ✅ lecteur' : ' · 🔒 sans lecteur') + '</div>' +
                         '</div>' +
                         '<div class="content-item-actions">' +
+                        '<button class="btn-fp-lock' + lockCls + '" title="' + lockTitle + '" data-title="' + safeTitle + '" onclick="event.stopPropagation();toggleTmdbLock(\'film\',\'' + f.id + '\',this)">' + lockIcon + '</button>' +
                         '<button class="btn-fp-edit" onclick="showFilmForm(\'' + f.id + '\')">✏️ Modifier</button>' +
                         '<button class="btn-fp-danger" onclick="deleteFilm(\'' + f.id + '\',\'' + f.title.replace(/'/g, "\\'") + '\')" title="Supprimer">🗑️</button>' +
                         '</div>' +
@@ -7940,19 +8017,25 @@
                     video_url: document.getElementById('film-embed').value || null
                 };
                 var editId = document.getElementById('film-edit-id').value;
-                setBtn('btn-save-film', true, '🔍 Vérification Wavewatch… (0s)');
+                setBtn('btn-save-film', true, '⏳ Vérification…');
 
-                // Compteur de secondes pendant la vérification
-                var _filmCheckSec = 0;
-                var _filmCheckTimer = setInterval(function() {
-                    _filmCheckSec++;
-                    var b = document.getElementById('btn-save-film');
-                    if (b) b.textContent = '🔍 Vérification Wavewatch… (' + _filmCheckSec + 's)';
-                }, 1000);
-
-                // ── Vérification Wavewatch avant publication (BLOQUANTE) ──
+                // ── Vérification doublon (uniquement à l'ajout) ──────────────
                 function doSaveFilm() {
-                    clearInterval(_filmCheckTimer);
+                    if (!editId) {
+                        sb.from('films').select('id').ilike('title', title).then(function(dupRes) {
+                            if (!dupRes.error && dupRes.data && dupRes.data.length > 0) {
+                                setBtn('btn-save-film', false, '💾 Enregistrer le film');
+                                toast('⚠️ Un film "' + title + '" existe déjà dans la base !', true);
+                                return;
+                            }
+                            _doInsertFilm();
+                        });
+                    } else {
+                        _doInsertFilm();
+                    }
+                }
+
+                function _doInsertFilm() {
                     setBtn('btn-save-film', true, '💾 Enregistrement…');
                     var uploaderName = currentUser ? ((currentUser.user_metadata && currentUser.user_metadata.username) || currentUser.email.split('@')[0]) : 'Inconnu';
                     var op = editId
@@ -7975,15 +8058,6 @@
                     });
                 }
 
-                function cancelFilmSave(msg) {
-                    clearInterval(_filmCheckTimer);
-                    setBtn('btn-save-film', false, '💾 Enregistrer le film');
-                    toast(msg, true);
-                }
-
-                // La vérification Wavewatch est désactivée car Wavewatch bloque les proxys (Cloudflare)
-                // Ce qui provoquait un timeout de 15s et bloquait la sauvegarde.
-                clearInterval(_filmCheckTimer);
                 doSaveFilm();
             };
 
@@ -8002,6 +8076,7 @@
             /* ═══════════════════════════════════
                PANNEAU — SÉRIES
             ═══════════════════════════════════ */
+            var _seriesData = [];
             function loadSeriesList() {
                 var list = document.getElementById('series-list');
                 list.innerHTML = '<p style="color:rgba(255,255,255,.3);font-size:.82rem;">⏳ Chargement...</p>';
@@ -8009,23 +8084,44 @@
                     if (res.error || !res.data || res.data.length === 0) {
                         list.innerHTML = '<p style="color:rgba(255,255,255,.3);font-size:.82rem;">Aucune série enregistrée.</p>'; return;
                     }
-                    list.innerHTML = res.data.map(function (s) {
-                        var thumb = s.thumb_url
-                            ? '<img src="' + s.thumb_url + '" style="width:44px;height:60px;border-radius:8px;object-fit:cover;flex-shrink:0;" onerror="this.style.display=\'none\'">'
-                            : '<div class="content-item-thumb">' + s.emoji + '</div>';
-                        return '<div class="content-item">' + thumb +
-                            '<div class="content-item-info">' +
-                            '<div class="content-item-title">' + s.title + '</div>' +
-                            '<div class="content-item-meta">' + s.cat + ' · ' + (s.nb_saisons || 1) + ' saison(s) · ' + (s.access === 'vip' ? '👑 VIP' : '🌍 Public') + '</div>' +
-                            '</div>' +
-                            '<div class="content-item-actions">' +
-                            '<button class="btn-fp-edit" onclick="showSerieForm(\'' + s.id + '\')">✏️ Modifier</button>' +
-                            '<button class="btn-fp-danger" onclick="deleteSerie(\'' + s.id + '\',\'' + s.title.replace(/'/g, "\\'") + '\')" title="Supprimer">🗑️</button>' +
-                            '</div>' +
-                            '</div>';
-                    }).join('');
+                    _seriesData = res.data;
+                    renderSeriesList(_seriesData);
                 });
             }
+
+            function renderSeriesList(data) {
+                var list = document.getElementById('series-list');
+                if (!data || data.length === 0) { list.innerHTML = '<p style="color:rgba(255,255,255,.3);font-size:.82rem;">Aucun résultat.</p>'; return; }
+                var lockedMap = _getLockedMap();
+                list.innerHTML = data.map(function (s) {
+                    var thumb = s.thumb_url
+                        ? '<img src="' + s.thumb_url + '" style="width:44px;height:60px;border-radius:8px;object-fit:cover;flex-shrink:0;" onerror="this.style.display=\'none\'">'
+                        : '<div class="content-item-thumb">' + s.emoji + '</div>';
+                    var isLocked = !!lockedMap['serie_' + s.id];
+                    var lockCls = isLocked ? ' locked' : '';
+                    var lockIcon = isLocked ? '🔒' : '🔓';
+                    var lockTitle = isLocked ? 'Verrouillée — MAJ TMDB ignorées. Cliquer pour déverrouiller' : 'Cliquer pour verrouiller (protéger des MAJ TMDB globales)';
+                    var safeTitle = (s.title || '').replace(/'/g, "\\'").replace(/"/g, '&quot;');
+                    return '<div class="content-item">' + thumb +
+                        '<div class="content-item-info">' +
+                        '<div class="content-item-title">' + s.title + (isLocked ? ' <span style="font-size:.7rem;background:rgba(255,200,0,.2);color:#ffd700;padding:2px 6px;border-radius:6px;font-weight:700;">🔒 Protégée</span>' : '') + '</div>' +
+                        '<div class="content-item-meta">' + s.cat + ' · ' + (s.nb_saisons || 1) + ' saison(s) · ' + (s.access === 'vip' ? '👑 VIP' : '🌍 Public') + '</div>' +
+                        '</div>' +
+                        '<div class="content-item-actions">' +
+                        '<button class="btn-fp-lock' + lockCls + '" title="' + lockTitle + '" data-title="' + safeTitle + '" onclick="event.stopPropagation();toggleTmdbLock(\'serie\',\'' + s.id + '\',this)">' + lockIcon + '</button>' +
+                        '<button class="btn-fp-edit" onclick="showSerieForm(\'' + s.id + '\')">✏️ Modifier</button>' +
+                        '<button class="btn-fp-danger" onclick="deleteSerie(\'' + s.id + '\',\'' + s.title.replace(/'/g, "\\'") + '\')" title="Supprimer">🗑️</button>' +
+                        '</div>' +
+                        '</div>';
+                }).join('');
+            }
+
+            window.searchSeriesPanel = function (val) {
+                if (!_seriesData.length) return;
+                var q = (val || '').toLowerCase().trim();
+                if (!q) { renderSeriesList(_seriesData); return; }
+                renderSeriesList(_seriesData.filter(function (s) { return s.title.toLowerCase().indexOf(q) !== -1 || (s.cat || '').toLowerCase().indexOf(q) !== -1; }));
+            };
 
             window.showSerieForm = function (id) {
                 document.getElementById('series-list-wrap').style.display = 'none';
@@ -8206,29 +8302,28 @@
                     nb_saisons: nb
                 };
                 var editId = document.getElementById('serie-edit-id').value;
-                setBtn('btn-save-serie', true, '🔍 Vérification Wavewatch… (0s)');
-
-                // Compteur de secondes pendant la vérification
-                var _serieCheckSec = 0;
-                var _serieCheckTimer = setInterval(function() {
-                    _serieCheckSec++;
-                    var b = document.getElementById('btn-save-serie');
-                    if (b) b.textContent = '🔍 Vérification Wavewatch… (' + _serieCheckSec + 's)';
-                }, 1000);
-
-                // ── Vérification Wavewatch S1E1 avant publication ──
-                // Chercher le premier épisode dans le DOM pour extraire le TMDB ID
-                var firstEmbedEl = document.querySelector('[id^="ep-row-1-0"] input:nth-child(3)');
-                var firstEmbed = firstEmbedEl ? firstEmbedEl.value.trim() : '';
-                var tvMatch = firstEmbed.match(/type=tv&id=(\d+)/);
+                setBtn('btn-save-serie', true, '⏳ Vérification…');
 
                 function proceedSaveSerie() {
-                    clearInterval(_serieCheckTimer);
+                    // ── Vérification doublon (uniquement à l'ajout) ──
+                    if (!editId) {
+                        sb.from('series').select('id').ilike('title', title).then(function(dupRes) {
+                            if (!dupRes.error && dupRes.data && dupRes.data.length > 0) {
+                                setBtn('btn-save-serie', false, '💾 Enregistrer la série');
+                                toast('⚠️ Une série "' + title + '" existe déjà dans la base !', true);
+                                return;
+                            }
+                            _doSaveSerie();
+                        });
+                    } else {
+                        _doSaveSerie();
+                    }
+                }
+
+                function _doSaveSerie() {
                     setBtn('btn-save-serie', true, '💾 Enregistrement…');
 
                     // ─── LECTURE DIRECTE DU DOM (fix principal) ───
-                    // On lit TOUTES les valeurs depuis les inputs au moment du clic,
-                    // sans dépendre de onchange (qui ne se déclenche pas si on clique direct).
                     var allEps = [];
                     for (var sn = 1; sn <= nb; sn++) {
                         var epIdx = 0;
@@ -8284,10 +8379,8 @@
                             });
                         });
                     });
-                } // fin proceedSaveSerie
+                } // fin _doSaveSerie
 
-                // La vérification Wavewatch est désactivée car Wavewatch bloque les proxys (Cloudflare)
-                clearInterval(_serieCheckTimer);
                 proceedSaveSerie();
             };
 
@@ -10020,6 +10113,7 @@ body.theme-feu_artifice .aurora-bg .a3{background:#f1c40f;}
                 if (thumb) thumb.appendChild(tag);
             }
 
+            var _sagasData = [];
             window.loadSagasList = function () {
                 var list = document.getElementById('sagas-list');
                 if (!list) return;
@@ -10033,24 +10127,38 @@ body.theme-feu_artifice .aurora-bg .a3{background:#f1c40f;}
                             + '</div>';
                         return;
                     }
-                    list.innerHTML = r.data.map(function (saga) {
-                        var fc = (saga.film_ids || []).length, sc = (saga.serie_ids || []).length;
-                        var posterHTML = saga.thumb_url
-                            ? '<div class="saga-panel-poster"><img src="' + saga.thumb_url + '" onerror="this.parentNode.textContent=\'' + (saga.emoji || '🎭') + '\'"></div>'
-                            : '<div class="saga-panel-poster">' + (saga.emoji || '🎭') + '</div>';
-                        return '<div class="saga-panel-item">'
-                            + posterHTML
-                            + '<div class="saga-panel-info">'
-                            + '<div class="saga-panel-name">' + (saga.emoji || '🎭') + ' ' + saga.title + '</div>'
-                            + '<div class="saga-panel-sub">' + fc + ' film' + (fc !== 1 ? 's' : '') + ' · ' + sc + ' série' + (sc !== 1 ? 's' : '') + '</div>'
-                            + '</div>'
-                            + '<div class="saga-panel-actions">'
-                            + '<button class="btn-fp-edit" onclick="showSagaForm(\'' + saga.id + '\')">✏️</button>'
-                            + '<button class="btn-fp-danger" onclick="deleteSaga(\'' + saga.id + '\',\'' + saga.title.replace(/'/g, "\\'") + '\')" title="Supprimer">🗑️</button>'
-                            + '</div>'
-                            + '</div>';
-                    }).join('');
+                    _sagasData = r.data;
+                    renderSagasList(_sagasData);
                 });
+            };
+
+            function renderSagasList(data) {
+                var list = document.getElementById('sagas-list');
+                if (!data || data.length === 0) { list.innerHTML = '<p style="color:rgba(255,255,255,.3);font-size:.82rem;padding:10px 0;">Aucun résultat.</p>'; return; }
+                list.innerHTML = data.map(function (saga) {
+                    var fc = (saga.film_ids || []).length, sc = (saga.serie_ids || []).length;
+                    var posterHTML = saga.thumb_url
+                        ? '<div class="saga-panel-poster"><img src="' + saga.thumb_url + '" onerror="this.parentNode.textContent=\'' + (saga.emoji || '🎭') + '\'"></div>'
+                        : '<div class="saga-panel-poster">' + (saga.emoji || '🎭') + '</div>';
+                    return '<div class="saga-panel-item">'
+                        + posterHTML
+                        + '<div class="saga-panel-info">'
+                        + '<div class="saga-panel-name">' + (saga.emoji || '🎭') + ' ' + saga.title + '</div>'
+                        + '<div class="saga-panel-sub">' + fc + ' film' + (fc !== 1 ? 's' : '') + ' · ' + sc + ' série' + (sc !== 1 ? 's' : '') + '</div>'
+                        + '</div>'
+                        + '<div class="saga-panel-actions">'
+                        + '<button class="btn-fp-edit" onclick="showSagaForm(\'' + saga.id + '\')">✏️</button>'
+                        + '<button class="btn-fp-danger" onclick="deleteSaga(\'' + saga.id + '\',\'' + saga.title.replace(/'/g, "\\'") + '\')" title="Supprimer">🗑️</button>'
+                        + '</div>'
+                        + '</div>';
+                }).join('');
+            }
+
+            window.searchSagasPanel = function (val) {
+                if (!_sagasData.length) return;
+                var q = (val || '').toLowerCase().trim();
+                if (!q) { renderSagasList(_sagasData); return; }
+                renderSagasList(_sagasData.filter(function (s) { return s.title.toLowerCase().indexOf(q) !== -1; }));
             };
 
             window.showSagaForm = function (id) {
@@ -10243,7 +10351,24 @@ body.theme-feu_artifice .aurora-bg .a3{background:#f1c40f;}
                     film_ids: filmIds, serie_ids: serieIds
                 };
                 var btn = document.getElementById('btn-save-saga');
-                if (btn) { btn.disabled = true; btn.textContent = '⏳ Enregistrement…'; btn.style.opacity = '.6'; }
+                if (btn) { btn.disabled = true; btn.textContent = '⏳ Vérification…'; btn.style.opacity = '.6'; }
+
+                // ── Vérification doublon (uniquement à l'ajout) ──────────────
+                if (!editId) {
+                    window.sb.from('sagas').select('id').ilike('title', title).then(function(dupRes) {
+                        if (!dupRes.error && dupRes.data && dupRes.data.length > 0) {
+                            if (btn) { btn.disabled = false; btn.textContent = '💾 Enregistrer la saga'; btn.style.opacity = '1'; }
+                            window.toast('⚠️ Une saga "' + title + '" existe déjà dans la base !', true);
+                            return;
+                        }
+                        _doSaveSagaInsert();
+                    });
+                } else {
+                    _doSaveSagaInsert();
+                }
+
+                function _doSaveSagaInsert() {
+                if (btn) { btn.textContent = '⏳ Enregistrement…'; }
                 var op = editId
                     ? window.sb.from('sagas').update(data).eq('id', editId).select()
                     : window.sb.from('sagas').insert(Object.assign({}, data, { created_by: window.currentUser ? window.currentUser.id : null })).select();
@@ -10261,6 +10386,7 @@ body.theme-feu_artifice .aurora-bg .a3{background:#f1c40f;}
                     if (btn) { btn.disabled = false; btn.textContent = '💾 Enregistrer la saga'; btn.style.opacity = '1'; }
                     window.toast('❌ ' + (err.message || err), true);
                 });
+                } // fin _doSaveSagaInsert
             };
 
             function toastSaga(title, sub, icon) {
@@ -10894,17 +11020,23 @@ body.theme-feu_artifice .aurora-bg .a3{background:#f1c40f;}
 
             /* Recherche dans le panel spotlight */
             var _spotAllContent = [];
+            var _isSpotLoading = false;
 
             function loadSpotlightContentList() {
-                if (!window.sb) return;
+                if (!window.sb || _isSpotLoading) return;
+                _isSpotLoading = true;
                 Promise.all([
                     window.sb.from('films').select('id,title,thumb_url,banner_url,cat,access,video_url,emoji,badge,description'),
                     window.sb.from('series').select('id,title,thumb_url,banner_url,cat,access,emoji,badge,description,nb_saisons')
                 ]).then(function (res) {
+                    _isSpotLoading = false;
                     _spotAllContent = [];
                     (res[0].data || []).forEach(function (f) { f._type = 'film'; _spotAllContent.push(f); });
                     (res[1].data || []).forEach(function (s) { s._type = 'serie'; _spotAllContent.push(s); });
-                });
+                    
+                    var inp = document.getElementById('spotlight-search-input');
+                    if (inp && inp.value && inp.value.trim() !== '') searchSpotlightContent(inp.value);
+                }).catch(function() { _isSpotLoading = false; });
             }
 
             window.searchSpotlightContent = function (val) {
@@ -10912,15 +11044,14 @@ body.theme-feu_artifice .aurora-bg .a3{background:#f1c40f;}
                 if (!_spotAllContent.length) { loadSpotlightContentList(); }
                 if (!val || !val.trim()) { res.innerHTML = ''; return; }
                 var q = val.toLowerCase();
-                var filtered = _spotAllContent.filter(function (c) { return c.title.toLowerCase().indexOf(q) !== -1; });
+                var filtered = _spotAllContent.filter(function (c) { return (c.title || '').toLowerCase().indexOf(q) !== -1; });
                 if (!filtered.length) { res.innerHTML = '<p style="color:rgba(255,255,255,.3);font-size:.82rem;padding:6px 0;">Aucun résultat.</p>'; return; }
                 res.innerHTML = filtered.slice(0, 8).map(function (c) {
                     var thumbHTML = c.thumb_url
                         ? '<img src="' + c.thumb_url + '" style="width:38px;height:54px;border-radius:6px;object-fit:cover;flex-shrink:0;" onerror="this.style.display=\'none\'">'
                         : '<div style="width:38px;height:54px;border-radius:6px;background:rgba(184,224,247,.08);display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:1.3rem;">' + (c._type === 'film' ? '🎬' : '📺') + '</div>';
                     var isCurrent = _spotlightData && _spotlightData.id === c.id;
-                    var safeJson = JSON.stringify(c).replace(/\\/g, '\\\\').replace(/'/g, "\\'").replace(/</g, '\\u003c').replace(/>/g, '\\u003e').replace(/&/g, '\\u0026');
-                    return '<div onclick=\'setSpotlight(JSON.parse(decodeURIComponent("' + encodeURIComponent(JSON.stringify(c)) + '")))\' style="display:flex;align-items:center;gap:11px;padding:10px 12px;background:' + (isCurrent ? 'rgba(67,230,181,.06)' : 'rgba(255,255,255,.04)') + ';border:1px solid ' + (isCurrent ? 'rgba(67,230,181,.4)' : 'rgba(184,224,247,.1)') + ';border-radius:11px;cursor:pointer;transition:background .15s;">'
+                    return '<div onclick="setSpotlightById(\'' + c.id + '\')" style="display:flex;align-items:center;gap:11px;padding:10px 12px;background:' + (isCurrent ? 'rgba(67,230,181,.06)' : 'rgba(255,255,255,.04)') + ';border:1px solid ' + (isCurrent ? 'rgba(67,230,181,.4)' : 'rgba(184,224,247,.1)') + ';border-radius:11px;cursor:pointer;transition:background .15s;">'
                         + thumbHTML
                         + '<div style="flex:1;min-width:0;">'
                         + '<div style="font-weight:800;font-size:.88rem;color:#fff;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">' + c.title + '</div>'
@@ -10931,6 +11062,11 @@ body.theme-feu_artifice .aurora-bg .a3{background:#f1c40f;}
                             : '<span style="background:rgba(184,224,247,.08);color:rgba(255,255,255,.5);font-size:.68rem;font-weight:700;padding:3px 9px;border-radius:50px;white-space:nowrap;">Choisir</span>')
                         + '</div>';
                 }).join('');
+            };
+
+            window.setSpotlightById = function(id) {
+                var content = _spotAllContent.find(function(c) { return c.id === id; });
+                if (content) window.setSpotlight(content);
             };
 
             window.setSpotlight = function (content) {
@@ -11812,202 +11948,3 @@ body.theme-feu_artifice .aurora-bg .a3{background:#f1c40f;}
         window.closePasswordReset = function () {
             document.getElementById('password-reset-modal').classList.remove('active');
             goResetStep(1);
-        };
-
-        window.goResetStep = function (step) {
-            currentStep = step;
-            document.querySelectorAll('.reset-section').forEach(function (s) { s.classList.remove('show'); s.style.display = 'none'; });
-            document.getElementById('reset-step' + step).classList.add('show');
-            document.getElementById('reset-step' + step).style.display = 'block';
-        };
-
-        function showAlert(msg, type) {
-            alertEl.textContent = msg;
-            alertEl.className = 'alert-' + type;
-            alertEl.style.display = 'block';
-            if (type === 'success') alertEl.style.background = 'rgba(46,204,113,.1)', alertEl.style.color = '#2ecc71', alertEl.style.border = '1px solid rgba(46,204,113,.3)';
-            else alertEl.style.background = 'rgba(231,76,60,.1)', alertEl.style.color = '#e74c3c', alertEl.style.border = '1px solid rgba(231,76,60,.3)';
-        }
-
-        // ===== RATE LIMITING (LocalStorage) =====
-        function checkRateLimit(email) {
-            var key = 'reset-code-' + email;
-            var attempts = JSON.parse(localStorage.getItem(key) || '[]');
-            var now = Date.now();
-            var oneHourAgo = now - (60 * 60 * 1000);
-            
-            // Supprimer les tentatives > 1h
-            attempts = attempts.filter(function(t) { return t > oneHourAgo; });
-            
-            if (attempts.length >= 3) {
-                var oldestAttempt = Math.min.apply(null, attempts);
-                var timeUntilReset = Math.ceil((oldestAttempt + 3600000 - now) / 1000 / 60);
-                throw new Error('⏱️ Trop de tentatives. Réessaie dans ' + timeUntilReset + ' min');
-            }
-            
-            // Ajouter la tentative actuelle
-            attempts.push(now);
-            localStorage.setItem(key, JSON.stringify(attempts));
-        }
-
-        // ===== ÉTAPE 1: Envoyer code =====
-        window.sendResetCode = async function () {
-            var email = emailInput.value.trim();
-            if (!email) { showAlert('📧 Entre ton email !', 'error'); return; }
-            var emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-            if (!emailRegex.test(email)) { showAlert('📧 Email invalide !', 'error'); return; }
-
-            try {
-                checkRateLimit(email);
-            } catch (error) {
-                showAlert(error.message, 'error');
-                return;
-            }
-
-            userEmail = email;
-            var btn = document.getElementById('btn-send-reset');
-            btn.disabled = true; btn.textContent = '⏳ Envoi...';
-
-            try {
-                var response = await fetch(SUPABASE_URL + '/functions/v1/forgot-password-send-code', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'Authorization': 'Bearer ' + SUPABASE_ANON_KEY,
-                    },
-                    body: JSON.stringify({ email: email }),
-                });
-
-                var data = await response.json();
-                if (!response.ok) throw new Error(data.message || 'Erreur envoi');
-
-                document.getElementById('reset-email-display').textContent = email;
-                goResetStep(2);
-                codeInputs[0].focus();
-                showAlert('✅ Code envoyé !', 'success');
-            } catch (error) {
-                showAlert(error.message, 'error');
-            } finally {
-                btn.disabled = false; btn.textContent = '📧 Envoyer le code';
-            }
-        };
-
-        // ===== ÉTAPE 2: Vérifier code =====
-        codeInputs.forEach(function (input, index) {
-            input.addEventListener('input', function (e) {
-                // Accepter alphanumérique uniquement (a-z, A-Z, 0-9)
-                e.target.value = e.target.value.replace(/[^a-zA-Z0-9]/g, '').toUpperCase().slice(0, 1);
-                if (e.target.value && index < codeInputs.length - 1) {
-                    codeInputs[index + 1].focus();
-                }
-                updateVerifyButton();
-            });
-
-            input.addEventListener('keydown', function (e) {
-                if (e.key === 'Backspace' && !e.target.value && index > 0) {
-                    codeInputs[index - 1].focus();
-                }
-            });
-
-            // Paste handling
-            input.addEventListener('paste', function (e) {
-                e.preventDefault();
-                var text = (e.clipboardData || window.clipboardData).getData('text');
-                text = text.replace(/[^a-zA-Z0-9]/g, '').toUpperCase();
-                
-                if (text.length > 0) {
-                    for (var i = 0; i < Math.min(text.length, 6); i++) {
-                        codeInputs[i].value = text[i];
-                    }
-                    updateVerifyButton();
-                    if (text.length === 6) {
-                        codeInputs[5].focus();
-                    } else {
-                        codeInputs[Math.min(text.length, 5)].focus();
-                    }
-                }
-            });
-        });
-
-        function updateVerifyButton() {
-            var code = Array.from(codeInputs).map(function (input) { return input.value; }).join('');
-            var btn = document.getElementById('btn-verify-reset');
-            btn.style.display = code.length === 6 ? 'block' : 'none';
-        }
-
-        window.verifyResetCode = async function () {
-            resetCode = Array.from(codeInputs).map(function (input) { return input.value; }).join('');
-            var btn = document.getElementById('btn-verify-reset');
-            btn.disabled = true; btn.textContent = '⏳ Vérification...';
-
-            try {
-                var response = await fetch(SUPABASE_URL + '/functions/v1/forgot-password-verify-code', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'Authorization': 'Bearer ' + SUPABASE_ANON_KEY,
-                    },
-                    body: JSON.stringify({ email: userEmail, code: resetCode }),
-                });
-
-                var data = await response.json();
-                if (!response.ok) throw new Error(data.message || 'Code invalide');
-
-                goResetStep(3);
-            } catch (error) {
-                showAlert(error.message, 'error');
-            } finally {
-                btn.disabled = false; btn.textContent = '✓ Vérifier';
-            }
-        };
-
-        // ===== ÉTAPE 3: Nouveau mot de passe =====
-        window.updateResetPassword = async function () {
-            var password = document.getElementById('reset-pass').value;
-            var confirm = document.getElementById('reset-pass-confirm').value;
-
-            if (!password) { showAlert('🔒 Entre un mot de passe !', 'error'); return; }
-            if (password.length < 8) { showAlert('🔒 Min 8 caractères !', 'error'); return; }
-            if (!/[A-Z]/.test(password)) { showAlert('🔒 Min 1 majuscule !', 'error'); return; }
-            if (!/\d/.test(password)) { showAlert('🔒 Min 1 chiffre !', 'error'); return; }
-            if (password !== confirm) { showAlert('❌ Les mots de passe ne correspondent pas !', 'error'); return; }
-
-            var btn = document.getElementById('btn-update-pass');
-            btn.disabled = true; btn.textContent = '⏳ Réinitialisation...';
-
-            try {
-                var response = await fetch(SUPABASE_URL + '/functions/v1/forgot-password-reset', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'Authorization': 'Bearer ' + SUPABASE_ANON_KEY,
-                    },
-                    body: JSON.stringify({
-                        email: userEmail,
-                        code: resetCode,
-                        password: password,
-                    }),
-                });
-
-                var data = await response.json();
-                if (!response.ok) throw new Error(data.message || 'Erreur réinitialisation');
-
-                showAlert('✅ Mot de passe réinitialisé !', 'success');
-                setTimeout(function () {
-                    closePasswordReset();
-                    window.openModal('login');
-                    window.toast('✅ Tu peux maintenant te connecter ! 🐧');
-                }, 1500);
-            } catch (error) {
-                showAlert(error.message, 'error');
-            } finally {
-                btn.disabled = false; btn.textContent = '🐧 Réinitialiser';
-            }
-        };
-
-    })(); 
-
-    </script>
-</body>
-
-</html>
