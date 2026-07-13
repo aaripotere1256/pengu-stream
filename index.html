@@ -5879,11 +5879,8 @@
         </div>
         <button id="nav-burger" onclick="toggleMenu()" aria-label="Menu">☰</button>
     </nav>
-    <button id="fireworks-audio-btn" onclick="toggleFireworksSound()" style="position:fixed;top:16px;left:16px;z-index:100000;background:rgba(0,0,0,.55);color:#fff;border:1px solid rgba(255,255,255,.16);border-radius:999px;padding:10px 16px;font-size:.86rem;font-weight:800;cursor:pointer;backdrop-filter:blur(6px);box-shadow:0 18px 60px rgba(0,0,0,.22);">
-        ▶ Lecture feux.mp3
-    </button>
-    <button id="fireworks-theme-btn" onclick="applyThemeFromPanel('feu_artifice')" style="position:fixed;top:56px;left:16px;z-index:100000;background:rgba(255,255,255,.08);color:#fff;border:1px solid rgba(255,255,255,.16);border-radius:999px;padding:9px 14px;font-size:.84rem;font-weight:800;cursor:pointer;backdrop-filter:blur(6px);box-shadow:0 18px 60px rgba(0,0,0,.16);">
-        Thème Feux
+    <button id="fireworks-audio-btn" onclick="toggleFireworksSound()" style="position:fixed;top:110px;left:16px;z-index:100000;background:rgba(0,0,0,.55);color:#fff;border:1px solid rgba(255,255,255,.16);border-radius:999px;padding:10px 16px;font-size:.86rem;font-weight:800;cursor:pointer;backdrop-filter:blur(6px);box-shadow:0 18px 60px rgba(0,0,0,.22);">
+        ▶ Play
     </button>
 
     <!-- HERO -->
@@ -5891,7 +5888,7 @@
         <div style="font-size:clamp(7rem,20vw,11rem);animation:float 5s ease-in-out infinite;filter:drop-shadow(0 16px 50px rgba(67,230,181,.5));margin-bottom:4px;line-height:1;"
             aria-label="Pingouin cartoon">🐧</div>
         <h1 class="hero-title">Le Streaming<br>des Grands Froids 🧊</h1>
-        <p class="hero-sub">Plongez dans un océan de films, séries et animés avec PenguStream - frais, rapide et sans
+        <p class="hero-sub">Plongez dans un océan de films, séries et animés avec PenguStream — frais, rapide et sans
             publicités.</p>
         <div class="hero-btns">
             <button class="btn-primary" onclick="openModal('register')"
@@ -5912,7 +5909,10 @@
                 </svg>
                 Rejoindre le Discord
             </button>
-            </div>
+            <button class="btn-primary"
+                onclick="document.getElementById('catalogue').scrollIntoView({behavior:'smooth'})">Découvrir le
+                catalogue</button>
+        </div>
     </section>
 
     <!-- FIREWORKS BUTTON + OVERLAY -->
@@ -6145,9 +6145,9 @@
             var btn = document.getElementById('fireworks-audio-btn');
             if (btn) {
                 if (fireworksSoundEnabled) {
-                    btn.textContent = '⏸ Pause feux.mp3';
+                    btn.textContent = '⏹ Stop';
                 } else {
-                    btn.textContent = '▶ Lecture feux.mp3';
+                    btn.textContent = '▶ Play';
                 }
                 btn.style.opacity = fireworksSoundEnabled ? '1' : '.92';
             }
@@ -6193,7 +6193,7 @@
             startFireworks();
             var btn = document.getElementById('fireworks-audio-btn');
             if (btn) {
-                btn.textContent = '🔇 Activer le son';
+                btn.textContent = '▶ Play';
             }
         });
     })();
