@@ -5883,7 +5883,7 @@
         <div style="font-size:clamp(7rem,20vw,11rem);animation:float 5s ease-in-out infinite;filter:drop-shadow(0 16px 50px rgba(67,230,181,.5));margin-bottom:4px;line-height:1;"
             aria-label="Pingouin cartoon">🐧</div>
         <h1 class="hero-title">Le Streaming<br>des Grands Froids 🧊</h1>
-        <p class="hero-sub">Plongez dans un océan de films, séries et animés avec PenguStream — frais, rapide et sans
+        <p class="hero-sub">Plongez dans un océan de films, séries et animés avec PenguStream - frais, rapide et sans
             publicités.</p>
         <div class="hero-btns">
             <button class="btn-primary" onclick="openModal('register')"
@@ -6105,7 +6105,7 @@
         </svg>
     </div>
     <footer>
-        <p>© 2026 PenguStream — Fait avec ❄️ par la colonie |
+        <p>© 2026 PenguStream - Fait par Aarnvx & par la colonie ❄️|
             <a href="#"
                 onclick="document.getElementById('cgu-modal').style.display='flex';document.body.style.overflow='hidden';return false;">CGU</a>
             ·
@@ -6554,7 +6554,7 @@
                     définitivement
                     jusqu'au prochain changement.</p>
                 <p style="color:rgba(255,255,255,.3);font-size:.78rem;margin-bottom:20px;">Thème actif : <span
-                        id="current-theme-label" style="color:var(--aurora1);font-weight:800;">—</span></p>
+                        id="current-theme-label" style="color:var(--aurora1);font-weight:800;">-</span></p>
                 <div class="theme-grid" id="theme-grid"></div>
             </div>
 
@@ -7290,7 +7290,33 @@
                 });
             };
 
-            window.handleLogout = function () { sb.auth.signOut().then(function () { toast('👋 À bientôt dans la colonie !'); }); };
+            window.logoutCurrentSession = function (scope, message) {
+                var auth = window.sb && window.sb.auth ? window.sb.auth : null;
+                var options = scope === 'global' ? { scope: 'global' } : undefined;
+                var promise = auth ? auth.signOut(options).catch(function () { return auth.signOut(); }) : Promise.resolve();
+                return promise.then(function () {
+                    window.currentUser = null;
+                    currentUser = null;
+                    window.currentRole = 'user';
+                    currentRole = 'user';
+                    if (window.updateNavbar) window.updateNavbar(null, 'user');
+                    localStorage.removeItem('pengu_account_device_id');
+                    localStorage.removeItem('pengu_account_devices');
+                    if (window.closeAccountModal) window.closeAccountModal();
+                    toast(message || '👋 Déconnecté');
+                }).catch(function (err) {
+                    window.currentUser = null;
+                    currentUser = null;
+                    window.currentRole = 'user';
+                    currentRole = 'user';
+                    if (window.updateNavbar) window.updateNavbar(null, 'user');
+                    localStorage.removeItem('pengu_account_device_id');
+                    localStorage.removeItem('pengu_account_devices');
+                    if (window.closeAccountModal) window.closeAccountModal();
+                    toast(message || '❌ Déconnexion impossible', true);
+                });
+            };
+            window.handleLogout = function () { window.logoutCurrentSession('global', '👋 À bientôt dans la colonie !'); };
 
             /* ═══════════════════════════════════
                CATALOGUE — FILTRES
@@ -7708,7 +7734,8 @@
             function loadCatalogue() {
                 // Films
                 sb.from('films').select('*').order('created_at', { ascending: true }).then(function (res) {
-                    if (res.error || !res.data) return;
+                    if (res.error) { console.error('loadCatalogue films error', { status: res.status, error: res.error, message: (res.error && res.error.message), details: (res.error && res.error.details), hint: (res.error && res.error.hint) }); return; }
+                    if (!res.data) { console.warn('loadCatalogue films: no data', res); return; }
                     res.data.forEach(function (f) {
                         addFilmCard({ id: f.id, title: f.title, cat: f.cat || 'anime', emoji: f.emoji || '🎬', badge: f.badge || 'new', access: f.access || 'all', embedCode: f.video_url, thumbUrl: f.thumb_url, bannerUrl: f.banner_url, description: f.description });
                     });
@@ -7898,9 +7925,8 @@
                 var list = document.getElementById('films-list');
                 list.innerHTML = '<p style="color:rgba(255,255,255,.3);font-size:.82rem;">⏳ Chargement...</p>';
                 sb.from('films').select('*').order('created_at', { ascending: false }).then(function (res) {
-                    if (res.error || !res.data || res.data.length === 0) {
-                        list.innerHTML = '<p style="color:rgba(255,255,255,.3);font-size:.82rem;">Aucun film enregistré.</p>'; return;
-                    }
+                    if (res.error) { console.error('loadFilmsList error', { status: res.status, error: res.error, message: (res.error && res.error.message), details: (res.error && res.error.details), hint: (res.error && res.error.hint) }); list.innerHTML = '<p style="color:rgba(255,255,255,.3);font-size:.82rem;">Erreur chargement films.</p>'; return; }
+                    if (!res.data || res.data.length === 0) { list.innerHTML = '<p style="color:rgba(255,255,255,.3);font-size:.82rem;">Aucun film enregistré.</p>'; return; }
                     _filmsData = res.data;
                     renderFilmsList(_filmsData);
                 });
@@ -8644,6 +8670,7 @@
             <div class="acc-tabs">
                 <button class="acc-tab active" onclick="switchAccTab('profil',this)">👤 Profil</button>
                 <button class="acc-tab" onclick="switchAccTab('securite',this)">🔒 Sécurité</button>
+                <button class="acc-tab" onclick="switchAccTab('appareils',this)">📱 Appareils</button>
                 <button class="acc-tab" onclick="switchAccTab('danger',this)">⚠️ Danger</button>
             </div>
 
@@ -8672,6 +8699,17 @@
                 </div>
                 <button class="btn-submit" id="btn-save-pass" onclick="saveAccountPassword()">🔒 Changer le mot de
                     passe</button>
+            </div>
+
+            <!-- Appareils -->
+            <div class="acc-section" id="acc-appareils">
+                <p style="color:rgba(255,255,255,.5);font-size:.88rem;line-height:1.6;margin-bottom:16px;">
+                    Voici l’appareil actuel et les sessions enregistrées sur ce navigateur. Tu peux les déconnecter à tout moment.
+                </p>
+                <div id="acc-devices-list" style="display:grid;gap:10px;"></div>
+                <button class="btn-submit" onclick="disconnectAllAccountDevices()" style="margin-top:12px;width:100%;">
+                    🔐 Déconnecter tous les appareils
+                </button>
             </div>
 
             <!-- Danger -->
@@ -9130,6 +9168,7 @@
             document.getElementById('acc-new-pass').value = '';
             document.getElementById('acc-confirm-pass').value = '';
             switchAccTab('profil', document.querySelector('.acc-tab'));
+            window.renderAccountDevices();
         };
         window.closeAccountModal = function () {
             document.getElementById('account-modal').classList.remove('active');
@@ -9144,6 +9183,145 @@
             document.querySelectorAll('.acc-tab').forEach(function (b) { b.classList.remove('active'); });
             document.getElementById('acc-' + tab).classList.add('active');
             if (btn) btn.classList.add('active');
+        };
+
+        function getAccountDeviceLabel() {
+            var ua = navigator.userAgent || '';
+            var os = 'Inconnu';
+            if (/Windows/i.test(ua)) os = 'Windows';
+            else if (/Mac/i.test(ua)) os = 'macOS';
+            else if (/Linux/i.test(ua)) os = 'Linux';
+            else if (/Android/i.test(ua)) os = 'Android';
+            else if (/iPhone|iPad|iPod/i.test(ua)) os = 'iOS';
+
+            var browser = 'Navigateur';
+            if (/Edg\//i.test(ua)) browser = 'Edge';
+            else if (/Chrome\//i.test(ua) && !/Edg\//i.test(ua)) browser = 'Chrome';
+            else if (/Firefox\//i.test(ua)) browser = 'Firefox';
+            else if (/Safari\//i.test(ua) && !/Chrome\//i.test(ua)) browser = 'Safari';
+
+            return browser + ' · ' + os;
+        }
+
+        function getAccountDeviceId() {
+            var key = 'pengu_account_device_id';
+            var deviceId = localStorage.getItem(key);
+            if (!deviceId) {
+                deviceId = window.crypto && window.crypto.randomUUID ? window.crypto.randomUUID() : 'device-' + Date.now() + '-' + Math.random().toString(16).slice(2);
+                localStorage.setItem(key, deviceId);
+            }
+            return deviceId;
+        }
+
+        function getAccountDeviceListFromUser(user) {
+            if (!user) return [];
+            var meta = user.user_metadata || {};
+            if (Array.isArray(meta.account_devices)) return meta.account_devices;
+            if (typeof meta.account_devices === 'string') {
+                try { return JSON.parse(meta.account_devices); } catch (e) { return []; }
+            }
+            return [];
+        }
+
+        function saveAccountDeviceList(list) {
+            if (!window.sb || !window.currentUser || !window.currentUser.id) return Promise.resolve(null);
+            return window.sb.auth.updateUser({ data: { account_devices: list } });
+        }
+
+        function ensureAccountDeviceEntry() {
+            if (!window.currentUser || !window.sb) return Promise.resolve({ list: [] });
+            var deviceId = getAccountDeviceId();
+            return window.sb.auth.getUser().then(function (res) {
+                var user = (res.data && res.data.user) ? res.data.user : window.currentUser;
+                if (user && user.user_metadata) {
+                    window.currentUser = user;
+                }
+                var list = getAccountDeviceListFromUser(user || window.currentUser);
+                var now = new Date().toISOString();
+                var existing = list.find(function (item) { return item && item.id === deviceId; });
+                if (!existing) {
+                    existing = { id: deviceId, name: 'Cet appareil', label: getAccountDeviceLabel(), lastSeen: now, connected: true };
+                    list.push(existing);
+                } else {
+                    existing.label = getAccountDeviceLabel();
+                    existing.lastSeen = now;
+                    existing.connected = true;
+                }
+                list.forEach(function (item) {
+                    item.current = item && item.id === deviceId;
+                    if (item && item.connected === undefined) item.connected = true;
+                });
+                return saveAccountDeviceList(list).then(function (saveRes) {
+                    if (saveRes && saveRes.error) {
+                        return { list: list, error: saveRes.error };
+                    }
+                    return { list: list };
+                });
+            }).catch(function () {
+                return { list: getAccountDeviceListFromUser(window.currentUser) };
+            });
+        }
+
+        window.renderAccountDevices = function () {
+            if (!window.currentUser) return;
+            var container = document.getElementById('acc-devices-list');
+            if (!container) return;
+            container.innerHTML = '<div style="padding:12px 14px;border:1px solid rgba(255,255,255,.08);border-radius:12px;background:rgba(255,255,255,.04);color:rgba(255,255,255,.65);">Chargement…</div>';
+            return ensureAccountDeviceEntry().then(function (state) {
+                var list = Array.isArray(state && state.list) ? state.list : [];
+                if (!list.length) {
+                    container.innerHTML = '<div style="padding:12px 14px;border:1px solid rgba(255,255,255,.08);border-radius:12px;background:rgba(255,255,255,.04);color:rgba(255,255,255,.65);">Aucun appareil enregistré.</div>';
+                    return;
+                }
+                list.slice().sort(function (a, b) { return new Date(b.lastSeen || 0) - new Date(a.lastSeen || 0); });
+                container.innerHTML = list.map(function (item) {
+                    var date = item.lastSeen ? new Date(item.lastSeen).toLocaleString('fr-FR', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' }) : 'À l’instant';
+                    return '<div style="padding:12px 14px;border:1px solid rgba(255,255,255,.08);border-radius:12px;background:rgba(255,255,255,.04);display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;">' +
+                        '<div>' +
+                        '<div style="font-weight:700;color:#fff;">' + (item.current ? 'Cet appareil' : 'Autre session') + '</div>' +
+                        '<div style="font-size:.82rem;color:rgba(255,255,255,.55);margin-top:2px;">' + (item.label || 'Navigateur') + '</div>' +
+                        '<div style="font-size:.76rem;color:rgba(255,255,255,.4);margin-top:4px;">Dernière activité : ' + date + '</div>' +
+                        '</div>' +
+                        '<button class="btn-submit" onclick="disconnectAccountDevice(\'' + item.id + '\')" style="padding:9px 12px;font-size:.82rem;">Déconnecter</button>' +
+                        '</div>';
+                }).join('');
+            }).catch(function (err) {
+                container.innerHTML = '<div style="padding:12px 14px;border:1px solid rgba(255,255,255,.08);border-radius:12px;background:rgba(255,255,255,.04);color:#ff8a80;">Impossible de charger les appareils : ' + (err && err.message ? err.message : 'Erreur') + '</div>';
+            });
+        };
+
+        window.disconnectAccountDevice = function (deviceId) {
+            if (!window.currentUser) return;
+            if (!confirm('Déconnecter cet appareil ?')) return;
+            ensureAccountDeviceEntry().then(function (state) {
+                var list = Array.isArray(state && state.list) ? state.list : [];
+                var item = list.find(function (entry) { return entry && entry.id === deviceId; });
+                if (!item) {
+                    window.renderAccountDevices();
+                    return;
+                }
+                var isCurrentDevice = !!item.current;
+                if (isCurrentDevice) {
+                    return window.logoutCurrentSession('global', '🔐 Déconnexion effectuée.');
+                }
+                var updatedList = list.filter(function (entry) { return entry && entry.id !== deviceId; });
+                return saveAccountDeviceList(updatedList).then(function (saveRes) {
+                    if (saveRes && saveRes.error) {
+                        toast('❌ Impossible de mettre à jour la liste : ' + saveRes.error.message, true);
+                        return;
+                    }
+                    window.renderAccountDevices();
+                    toast('✅ Appareil retiré de la liste.');
+                });
+            }).catch(function (err) {
+                toast('❌ Impossible de déconnecter cet appareil : ' + (err && err.message ? err.message : 'Erreur'), true);
+            });
+        };
+
+        window.disconnectAllAccountDevices = function () {
+            if (!window.currentUser) return;
+            if (!confirm('Déconnecter tous les appareils connectés à ton compte ?')) return;
+            return window.logoutCurrentSession('global', '🔐 Tous les appareils ont été déconnectés.');
         };
 
         window.saveAccountProfil = function () {
@@ -10226,8 +10404,12 @@ body.theme-feu_artifice .aurora-bg .a3{background:#f1c40f;}
                     window.sb.from('series').select('id,title,thumb_url,emoji').order('title')
                 ]).then(function (results) {
                     var films = (results[1].data || []), series = (results[2].data || []);
-                    window._sagaPickerData = { films: films, series: series, currentFilmIds: currentFilmIds, currentSerieIds: currentSerieIds };
-                    renderPickerItems(films, series, currentFilmIds, currentSerieIds, '');
+                    // Merge with any previous in-memory selections to avoid losing multi-selection on refresh
+                    var prev = window._sagaPickerData || { currentFilmIds: [], currentSerieIds: [] };
+                    var mergedFilmIds = Array.from(new Set((prev.currentFilmIds || []).concat(currentFilmIds || [])));
+                    var mergedSerieIds = Array.from(new Set((prev.currentSerieIds || []).concat(currentSerieIds || [])));
+                    window._sagaPickerData = { films: films, series: series, currentFilmIds: mergedFilmIds, currentSerieIds: mergedSerieIds };
+                    renderPickerItems(films, series, mergedFilmIds, mergedSerieIds, '');
                     restorePickerOrders();
                     updatePickerCount();
                 });
@@ -10275,6 +10457,28 @@ body.theme-feu_artifice .aurora-bg .a3{background:#f1c40f;}
             window.onPickerCheck = function (cb) {
                 var label = cb.closest('label');
                 if (label) label.classList.toggle('checked', cb.checked);
+                // Persist selection in memory so re-render/refresh doesn't lose previous picks
+                try {
+                    if (!window._sagaPickerData) window._sagaPickerData = { films: [], series: [], currentFilmIds: [], currentSerieIds: [] };
+                    var id = cb.dataset.id;
+                    if (cb.dataset.type === 'film') {
+                        var arr = window._sagaPickerData.currentFilmIds || [];
+                        if (cb.checked) {
+                            if (arr.indexOf(id) === -1) arr.push(id);
+                        } else {
+                            var idx = arr.indexOf(id); if (idx !== -1) arr.splice(idx, 1);
+                        }
+                        window._sagaPickerData.currentFilmIds = arr;
+                    } else {
+                        var arr2 = window._sagaPickerData.currentSerieIds || [];
+                        if (cb.checked) {
+                            if (arr2.indexOf(id) === -1) arr2.push(id);
+                        } else {
+                            var idx2 = arr2.indexOf(id); if (idx2 !== -1) arr2.splice(idx2, 1);
+                        }
+                        window._sagaPickerData.currentSerieIds = arr2;
+                    }
+                } catch (e) { console.error('onPickerCheck persist error', e); }
                 updatePickerCount();
             };
 
@@ -10357,6 +10561,187 @@ body.theme-feu_artifice .aurora-bg .a3{background:#f1c40f;}
                 var btn = document.getElementById('btn-save-saga');
                 if (btn) { btn.disabled = true; btn.textContent = '⏳ Vérification…'; btn.style.opacity = '.6'; }
 
+                // Découverte automatique : rechercher dans la base puis sur TMDB les films liés à la saga
+                function discoverAndInsertSagaFilms(sagaName, existingFilmIds) {
+                    var TMDB_KEY = 'f34c56c945e5e0de8bd72f85371deea0';
+                    var statusEl = document.getElementById('saga-tmdb-status');
+                    if (statusEl) statusEl.innerHTML = '<span style="color:#ffd700;">⏳ Recherche saga…</span>';
+
+                    return new Promise(async function (resolve) {
+                        try {
+                            var idsSet = {};
+                            existingFilmIds = existingFilmIds || [];
+                            existingFilmIds.forEach(function (id) { idsSet[id] = true; });
+
+                            function shortCandidates(name) {
+                                var candidates = [name];
+                                var s = name.replace(/\s*-?\s*(Saga|Collection|Franchise)\s*$/i, '').trim();
+                                if (s && candidates.indexOf(s) === -1) candidates.push(s);
+                                // remove parentheses content
+                                var s2 = s.replace(/\s*\(.*\)\s*/g, '').trim();
+                                if (s2 && candidates.indexOf(s2) === -1) candidates.push(s2);
+                                return candidates;
+                            }
+
+                            var candidates = shortCandidates(sagaName);
+
+                            // Si l'utilisateur a renseigné un ID TMDB numérique (ex: 87359),
+                            // tenter de récupérer directement la collection par ID.
+                            if (/^\d+$/.test(sagaName)) {
+                                try {
+                                    var colId = sagaName;
+                                    if (statusEl) statusEl.innerHTML = '<span style="color:#ffd700;">⏳ Récupération collection TMDB #' + colId + '…</span>';
+                                    var colDetailRes = await fetch('https://api.themoviedb.org/3/collection/' + colId + '?api_key=' + TMDB_KEY + '&language=fr-FR');
+                                    if (colDetailRes && colDetailRes.ok) {
+                                        var colDetail = await colDetailRes.json();
+                                        var parts = (colDetail.parts || []).slice().sort(function(a,b){ return new Date(a.release_date || 0) - new Date(b.release_date || 0); });
+                                        var insertedLocal = 0;
+                                        for (var pi = 0; pi < parts.length; pi++) {
+                                            var p = parts[pi];
+                                            try {
+                                                var check0 = await window.sb.from('films').select('id').ilike('title', p.title).limit(1);
+                                                if (check0 && check0.error) { console.error('discover.collection check0 error', check0); }
+                                                if (!check0.error && check0.data && check0.data.length) {
+                                                    var existingId0 = check0.data[0].id;
+                                                    if (!idsSet[existingId0]) { existingFilmIds.push(existingId0); idsSet[existingId0] = true; }
+                                                    continue;
+                                                }
+                                            } catch (e) { console.error('discover.collection check0 exception', e); }
+                                            try {
+                                                var newF0 = {
+                                                    title: p.title || ('Film ' + (p.id || '')),
+                                                    description: p.overview || null,
+                                                    thumb_url: p.poster_path ? 'https://image.tmdb.org/t/p/w500' + p.poster_path : null,
+                                                    banner_url: p.backdrop_path ? 'https://image.tmdb.org/t/p/original' + p.backdrop_path : null,
+                                                    video_url: '<iframe width="640" height="384" src="https://apis.wavewatch.top/zeus.php?type=movie&id=' + p.id + '" frameborder="0" scrolling="no" allowfullscreen></iframe>',
+                                                    emoji: '🎬', access: 'all'
+                                                };
+                                                var ins0 = await window.sb.from('films').insert(Object.assign({}, newF0, { created_by: window.currentUser ? window.currentUser.id : null, uploader_name: (window.currentUser && window.currentUser.user_metadata && window.currentUser.user_metadata.username) ? window.currentUser.user_metadata.username : 'Automated' })).select();
+                                                if (ins0 && ins0.error) { console.error('discover.collection insert ins0 error', { status: ins0.status, error: ins0.error, message: (ins0.error && ins0.error.message), details: (ins0.error && ins0.error.details), hint: (ins0.error && ins0.error.hint) }); }
+                                                if (!ins0.error && ins0.data && ins0.data[0] && ins0.data[0].id) { existingFilmIds.push(ins0.data[0].id); idsSet[ins0.data[0].id] = true; insertedLocal++; }
+                                            } catch (e) { console.error('discover.collection insert ins0 exception', e); }
+                                            await new Promise(function (r) { setTimeout(r, 160); });
+                                        }
+                                        if (statusEl) statusEl.innerHTML = '<span style="color:#2ecc71;">✅ ' + insertedLocal + ' film(s) créés (collection #' + colId + ')</span>';
+                                        resolve(existingFilmIds);
+                                        return;
+                                    }
+                                } catch (e) {
+                                    console.error('discover numeric collection fetch error', e);
+                                    // si échec, on continue avec la recherche par mot-clé
+                                }
+                            }
+                            var inserted = 0;
+
+                            // 1) Try to find close matches in local DB by title tokens
+                            try {
+                                for (var t = 0; t < candidates.length; t++) {
+                                    var q = candidates[t];
+                                    var res = await window.sb.from('films').select('id,title').ilike('title', '%' + q + '%').limit(50);
+                                    if (!res.error && res.data && res.data.length) {
+                                        res.data.forEach(function (f) { if (!idsSet[f.id]) { existingFilmIds.push(f.id); idsSet[f.id] = true; } });
+                                    }
+                                }
+                            } catch (e) { /* ignore DB search errors */ }
+
+                            // 2) Query TMDB for collection first, then fallback to movie search
+                            var tmdbFound = false;
+                            for (var ci = 0; ci < candidates.length && !tmdbFound; ci++) {
+                                var cand = candidates[ci];
+                                try {
+                                    var searchCol = await fetch('https://api.themoviedb.org/3/search/collection?api_key=' + TMDB_KEY + '&language=fr-FR&query=' + encodeURIComponent(cand));
+                                    var scJson = await searchCol.json();
+                                    if (scJson && scJson.results && scJson.results.length) {
+                                        tmdbFound = true;
+                                        var col = scJson.results[0];
+                                        if (statusEl) statusEl.innerHTML = '<span style="color:#ffd700;">🔎 Collection TMDB trouvée</span>';
+                                        var colDetailRes = await fetch('https://api.themoviedb.org/3/collection/' + col.id + '?api_key=' + TMDB_KEY + '&language=fr-FR');
+                                        var colDetail = await colDetailRes.json();
+                                        var parts = (colDetail.parts || []).slice().sort(function(a,b){ return new Date(a.release_date || 0) - new Date(b.release_date || 0); });
+                                        for (var i = 0; i < parts.length; i++) {
+                                            var p = parts[i];
+                                            // check by exact title then by tmdb id if available
+                                            try {
+                                                var check = await window.sb.from('films').select('id').ilike('title', p.title).limit(1);
+                                                if (!check.error && check.data && check.data.length) {
+                                                    var existingId = check.data[0].id;
+                                                    if (!idsSet[existingId]) { existingFilmIds.push(existingId); idsSet[existingId] = true; }
+                                                    continue;
+                                                }
+                                            } catch (e) {}
+
+                                            // Insert minimal film
+                                            try {
+                                                var newFilm = {
+                                                    title: p.title || ('Film ' + (p.id || '')),
+                                                    description: p.overview || null,
+                                                    thumb_url: p.poster_path ? 'https://image.tmdb.org/t/p/w500' + p.poster_path : null,
+                                                    banner_url: p.backdrop_path ? 'https://image.tmdb.org/t/p/original' + p.backdrop_path : null,
+                                                    video_url: '<iframe width="640" height="384" src="https://apis.wavewatch.top/zeus.php?type=movie&id=' + p.id + '" frameborder="0" scrolling="no" allowfullscreen></iframe>',
+                                                    emoji: '🎬',
+                                                    access: 'all'
+                                                };
+                                                var ins = await window.sb.from('films').insert(Object.assign({}, newFilm, { created_by: window.currentUser ? window.currentUser.id : null, uploader_name: (window.currentUser && window.currentUser.user_metadata && window.currentUser.user_metadata.username) ? window.currentUser.user_metadata.username : 'Automated' })).select();
+                                                if (ins && ins.error) { console.error('discover.collection insert ins error', { status: ins.status, error: ins.error, message: (ins.error && ins.error.message), details: (ins.error && ins.error.details), hint: (ins.error && ins.error.hint) }); }
+                                                if (!ins.error && ins.data && ins.data[0] && ins.data[0].id) {
+                                                    existingFilmIds.push(ins.data[0].id);
+                                                    idsSet[ins.data[0].id] = true;
+                                                    inserted++;
+                                                }
+                                            } catch (e) {
+                                                console.error('discover.collection insert ins exception', e);
+                                            }
+                                            await new Promise(function (r) { setTimeout(r, 180); });
+                                        }
+                                    }
+                                } catch (e) { /* continue to next candidate */ }
+                            }
+
+                            // 3) If no collection found, fallback to searching movies by keyword
+                            if (!tmdbFound) {
+                                if (statusEl) statusEl.innerHTML = '<span style="color:#ffd700;">🔎 Recherche films TMDB…</span>';
+                                for (var k = 0; k < candidates.length; k++) {
+                                    var q2 = candidates[k];
+                                    try {
+                                        var searchMovies = await fetch('https://api.themoviedb.org/3/search/movie?api_key=' + TMDB_KEY + '&language=fr-FR&query=' + encodeURIComponent(q2));
+                                        var smJson = await searchMovies.json();
+                                        var candidatesMovies = (smJson.results || []).slice(0, 20);
+                                        for (var j = 0; j < candidatesMovies.length; j++) {
+                                            var c = candidatesMovies[j];
+                                            try {
+                                                var check2 = await window.sb.from('films').select('id').ilike('title', c.title).limit(1);
+                                                if (check2 && check2.error) { console.error('discover.search check2 error', check2); }
+                                                if (!check2.error && check2.data && check2.data.length) { var exId = check2.data[0].id; if (!idsSet[exId]) { existingFilmIds.push(exId); idsSet[exId] = true; } continue; }
+                                            } catch (e) { console.error('discover.search check2 exception', e); }
+                                            try {
+                                                var newF = {
+                                                    title: c.title || ('Film ' + (c.id || '')),
+                                                    description: c.overview || null,
+                                                    thumb_url: c.poster_path ? 'https://image.tmdb.org/t/p/w500' + c.poster_path : null,
+                                                    banner_url: c.backdrop_path ? 'https://image.tmdb.org/t/p/original' + c.backdrop_path : null,
+                                                    video_url: '<iframe width="640" height="384" src="https://apis.wavewatch.top/zeus.php?type=movie&id=' + c.id + '" frameborder="0" scrolling="no" allowfullscreen></iframe>',
+                                                    emoji: '🎬',
+                                                    access: 'all'
+                                                };
+                                                var ins2 = await window.sb.from('films').insert(Object.assign({}, newF, { created_by: window.currentUser ? window.currentUser.id : null, uploader_name: (window.currentUser && window.currentUser.user_metadata && window.currentUser.user_metadata.username) ? window.currentUser.user_metadata.username : 'Automated' })).select();
+                                                if (ins2 && ins2.error) { console.error('discover.search insert ins2 error', { status: ins2.status, error: ins2.error, message: (ins2.error && ins2.error.message), details: (ins2.error && ins2.error.details), hint: (ins2.error && ins2.error.hint) }); }
+                                                if (!ins2.error && ins2.data && ins2.data[0] && ins2.data[0].id) { existingFilmIds.push(ins2.data[0].id); idsSet[ins2.data[0].id] = true; inserted++; }
+                                            } catch (e) { console.error('discover.search insert ins2 exception', e); }
+                                            await new Promise(function (r) { setTimeout(r, 140); });
+                                        }
+                                    } catch (e) { /* ignore search error */ }
+                                }
+                            }
+
+                            if (statusEl) statusEl.innerHTML = '<span style="color:#2ecc71;">✅ ' + inserted + ' film(s) créés</span>';
+                            resolve(existingFilmIds);
+                        } catch (err) {
+                            if (statusEl) statusEl.innerHTML = '<span style="color:#e74c3c;">⚠️ Erreur découverte</span>';
+                            resolve(existingFilmIds);
+                        }
+                    });
+                }
+
                 // ── Vérification doublon (uniquement à l'ajout) ──────────────
                 if (!editId) {
                     window.sb.from('sagas').select('id').ilike('title', title).then(function(dupRes) {
@@ -10365,9 +10750,11 @@ body.theme-feu_artifice .aurora-bg .a3{background:#f1c40f;}
                             window.toast('⚠️ Une saga "' + title + '" existe déjà dans la base !', true);
                             return;
                         }
+                        // Enregistrement simple sans découverte automatique (comportement précédent)
                         _doSaveSagaInsert();
                     });
                 } else {
+                    // Enregistrement simple pour modification (comportement précédent)
                     _doSaveSagaInsert();
                 }
 
@@ -10599,10 +10986,11 @@ body.theme-feu_artifice .aurora-bg .a3{background:#f1c40f;}
                 if (!window.sb) return;
                 
                 window.sb.from('films')
-                    .select('id,title,poster_url,genre,created_at')
+                    .select('id,title,thumb_url,genre,created_at')
                     .order('created_at', { ascending: false })
                     .then(function (r) {
-                        if (r.error || !r.data) return;
+                        if (r.error) { console.error('initCategories films error', { status: r.status, error: r.error, message: (r.error && r.error.message), details: (r.error && r.error.details), hint: (r.error && r.error.hint) }); return; }
+                        if (!r.data) { console.warn('initCategories films: no data', r); return; }
                         
                         var allFilms = r.data || [];
                         var now = new Date();
@@ -10617,8 +11005,8 @@ body.theme-feu_artifice .aurora-bg .a3{background:#f1c40f;}
                         if (newFilms.length > 0) {
                             var sliderNew = document.getElementById('slider-new');
                             sliderNew.innerHTML = newFilms.slice(0, 20).map(function (film) {
-                                return '<div class="category-film-card" onclick="window.openDetail(\'' + film.id + '\')">'
-                                    + (film.poster_url ? '<img src="' + film.poster_url + '" alt="' + film.title + '">' : '<div style="font-size:2rem;">🎬</div>')
+                                    return '<div class="category-film-card" onclick="window.openDetail(\'' + film.id + '\')">'
+                                    + (film.thumb_url ? '<img src="' + film.thumb_url + '" alt="' + film.title + '">' : '<div style="font-size:2rem;">🎬</div>')
                                     + '<div class="category-film-overlay"><span class="category-film-title">' + film.title + '</span></div>'
                                     + '</div>';
                             }).join('');
@@ -10641,8 +11029,8 @@ body.theme-feu_artifice .aurora-bg .a3{background:#f1c40f;}
                                 + '<h2 class="category-title" style="color: ' + color + ';">' + genre + '</h2>'
                                 + '<div class="category-slider" data-genre="' + genre + '" style="position:relative;">'
                                 + genreMap[genre].map(function (film) {
-                                    return '<div class="category-film-card" onclick="window.openDetail(\'' + film.id + '\')">'
-                                        + (film.poster_url ? '<img src="' + film.poster_url + '" alt="' + film.title + '">' : '<div style="font-size:2rem;">🎬</div>')
+                                        return '<div class="category-film-card" onclick="window.openDetail(\'' + film.id + '\')">'
+                                        + (film.thumb_url ? '<img src="' + film.thumb_url + '" alt="' + film.title + '">' : '<div style="font-size:2rem;">🎬</div>')
                                         + '<div class="category-film-overlay"><span class="category-film-title">' + film.title + '</span></div>'
                                         + '</div>';
                                 }).join('')
