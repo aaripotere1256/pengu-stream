@@ -6612,7 +6612,7 @@
                 <div
                     style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;flex-wrap:wrap;gap:8px;">
                     <p style="color:rgba(255,255,255,.6);font-size:.9rem;font-weight:700;">Suggestions des membres</p>
-                    <div style="display:flex;gap:8px;flex-wrap:wrap;">
+                    <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;">
                         <button onclick="loadSuggestions('en_attente')" id="sug-btn-attente" class="btn-fp-action"
                             style="font-size:.78rem;padding:7px 14px;">⏳ En attente</button>
                         <button onclick="loadSuggestions('accepte')" id="sug-btn-accepte"
@@ -6621,6 +6621,8 @@
                         <button onclick="loadSuggestions('refuse')" id="sug-btn-refuse"
                             style="background:rgba(231,76,60,.1);border:1px solid rgba(231,76,60,.25);color:#e74c3c;padding:7px 14px;border-radius:50px;font-family:'Nunito',sans-serif;font-weight:700;font-size:.78rem;cursor:pointer;">❌
                             Refusées</button>
+                        <button id="delete-all-suggestions-btn" onclick="deleteAllSuggestions()"
+                            style="display:none;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.15);color:#fff;padding:7px 14px;border-radius:50px;font-family:'Nunito',sans-serif;font-weight:700;font-size:.78rem;cursor:pointer;">🗑️ Vider</button>
                     </div>
                 </div>
                 <div id="suggestions-list" style="display:flex;flex-direction:column;gap:10px;">
@@ -11835,7 +11837,12 @@ body.theme-feu_artifice .aurora-bg .a3{background:#f1c40f;}
 
             // Charger suggestions par statut
             window.loadSuggestions = function (statut) {
+                window.currentSuggestionStatus = statut;
                 var list = document.getElementById('suggestions-list');
+                var deleteAllButton = document.getElementById('delete-all-suggestions-btn');
+                if (deleteAllButton) {
+                    deleteAllButton.style.display = (statut === 'accepte' || statut === 'refuse') ? 'inline-flex' : 'none';
+                }
                 list.innerHTML = '<p style="color:rgba(255,255,255,.3);text-align:center;padding:24px;">⏳ Chargement…</p>';
 
                 window.sb.from('suggestions')
@@ -11909,6 +11916,22 @@ body.theme-feu_artifice .aurora-bg .a3{background:#f1c40f;}
                     var list = document.getElementById('suggestions-list');
                     // Refresh : recharger en attente par défaut
                     loadSuggestions('en_attente');
+                });
+            };
+
+            // Supprimer toutes les suggestions du statut actif
+            window.deleteAllSuggestions = function () {
+                var statut = window.currentSuggestionStatus || 'en_attente';
+                if (statut !== 'accepte' && statut !== 'refuse') {
+                    toast('🚫 Cette fonction est uniquement disponible pour les suggestions acceptées ou refusées.', true);
+                    return;
+                }
+                var confirmationLabel = statut === 'accepte' ? 'acceptées' : 'refusées';
+                if (!confirm('Supprimer toutes les suggestions ' + confirmationLabel + ' ? Cette action est irréversible.')) return;
+                window.sb.from('suggestions').delete().eq('statut', statut).then(function (r) {
+                    if (r.error) { toast('❌ ' + r.error.message, true); return; }
+                    toast('🗑️ Toutes les suggestions ' + confirmationLabel + ' ont été supprimées.');
+                    loadSuggestions(statut);
                 });
             };
 
