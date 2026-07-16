@@ -1425,6 +1425,117 @@
             overflow: hidden;
         }
 
+        #tmdb-search-popup {
+            position: fixed;
+            top: 8%;
+            left: 50%;
+            transform: translateX(-50%) translateY(-10px);
+            width: min(96vw, 920px);
+            max-height: 84vh;
+            background: rgba(8, 12, 20, 0.98);
+            border: 1px solid rgba(255, 255, 255, .08);
+            border-radius: 24px;
+            box-shadow: 0 32px 90px rgba(0, 0, 0, .55);
+            color: #fff;
+            z-index: 10005;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity .25s ease, transform .25s ease;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        #tmdb-search-popup.show {
+            opacity: 1;
+            transform: translateX(-50%) translateY(0);
+            pointer-events: auto;
+        }
+
+        #tmdb-search-popup-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 18px 22px;
+            border-bottom: 1px solid rgba(255,255,255,.06);
+        }
+
+        #tmdb-search-popup-header h4 {
+            margin: 0;
+            font-size: 1rem;
+            color: #fff;
+            letter-spacing: .02em;
+        }
+
+        #tmdb-search-popup-close {
+            background: transparent;
+            border: none;
+            color: #fff;
+            font-size: 1.35rem;
+            cursor: pointer;
+            padding: 6px;
+        }
+
+        #tmdb-search-popup-results {
+            display: flex;
+            gap: 14px;
+            padding: 16px 22px 22px;
+            overflow-x: auto;
+            overflow-y: hidden;
+            scroll-behavior: smooth;
+            width: 100%;
+            min-height: 360px;
+            box-sizing: border-box;
+        }
+
+        #tmdb-search-popup-results button {
+            flex: 0 0 auto;
+            min-width: 220px;
+            max-width: 220px;
+            background: rgba(255,255,255,.04);
+            border: 1px solid rgba(255,255,255,.08);
+            border-radius: 16px;
+            overflow: hidden;
+            padding: 0;
+            text-align: left;
+            cursor: pointer;
+            transition: transform .15s ease, border-color .15s ease;
+        }
+
+        #tmdb-search-popup-results button:hover {
+            transform: translateY(-1px);
+            border-color: rgba(255,255,255,.16);
+        }
+
+        #tmdb-search-popup-results img {
+            width: 220px;
+            height: 330px;
+            object-fit: contain;
+            display: block;
+            background: #090b10;
+        }
+
+        #tmdb-search-popup-results .tmdb-card-body {
+            padding: 12px;
+            min-height: 120px;
+        }
+
+        #tmdb-search-popup-results .tmdb-card-body h5 {
+            margin: 0;
+            font-size: .94rem;
+            line-height: 1.2;
+            color: #fff;
+        }
+
+        #tmdb-search-popup-results .tmdb-card-body p {
+            margin: 10px 0 0;
+            font-size: .78rem;
+            line-height: 1.4;
+            color: rgba(255,255,255,.7);
+            height: 58px;
+            overflow: hidden;
+        }
+
         #suggestion-popup.show {
             transform: translateX(-50%) translateY(0);
             opacity: 1;
@@ -6353,10 +6464,15 @@
                     <div class="fp-grid-2">
                         <div class="fp-form-group">
                             <label>Titre *</label>
-                            <div style="display:flex;gap:8px;">
-                                <input type="text" id="film-title" placeholder="Ex: Interstellar" style="flex:1;">
-                                <button onclick="autoFetchTMDB('film')" type="button" class="btn-tmdb" title="Recherche Auto TMDB">✨ TMDB</button>
-                                <div id="film-tmdb-status" style="font-size:0.85rem;font-weight:700;display:flex;align-items:center;margin-left:8px;"></div>
+                            <div style="display:flex;gap:8px;flex-direction:column;position:relative;">
+                                <div style="display:flex;gap:8px;">
+                                    <input type="text" id="film-title" placeholder="Ex: Interstellar" style="flex:1;" oninput="searchTmdbPanel('film')">
+                                    <button onclick="autoFetchTMDB('film')" type="button" class="btn-tmdb" title="Recherche Auto TMDB">✨ TMDB</button>
+                                    <div id="film-tmdb-status" style="font-size:0.85rem;font-weight:700;display:flex;align-items:center;margin-left:8px;"></div>
+                                </div>
+                                <input type="hidden" id="film-tmdb-id">
+                                <div id="film-tmdb-results" style="display:none;position:absolute;top:100%;left:0;right:0;gap:14px;margin-top:8px;min-width:680px;max-width:90vw;max-height:520px;overflow-x:auto;overflow-y:hidden;padding:10px;background:rgba(0,0,0,0.14);border:1px solid rgba(255,255,255,0.12);border-radius:14px;box-sizing:border-box;z-index:50;">
+                                </div>
                             </div>
                         </div>
                         <div class="fp-form-group"><label>Catégorie</label><select id="film-cat"></select></div>
@@ -6429,10 +6545,15 @@
                     <div class="fp-grid-2">
                         <div class="fp-form-group">
                             <label>Titre *</label>
-                            <div style="display:flex;gap:8px;">
-                                <input type="text" id="serie-title" placeholder="Ex: Breaking Bad" style="flex:1;">
-                                <button onclick="autoFetchTMDB('serie')" type="button" class="btn-tmdb" title="Recherche Auto TMDB">✨ TMDB</button>
-                                <div id="serie-tmdb-status" style="font-size:0.85rem;font-weight:700;display:flex;align-items:center;margin-left:8px;"></div>
+                            <div style="display:flex;gap:8px;flex-direction:column;position:relative;">
+                                <div style="display:flex;gap:8px;">
+                                    <input type="text" id="serie-title" placeholder="Ex: Breaking Bad" style="flex:1;" oninput="searchTmdbPanel('serie')">
+                                    <button onclick="autoFetchTMDB('serie')" type="button" class="btn-tmdb" title="Recherche Auto TMDB">✨ TMDB</button>
+                                    <div id="serie-tmdb-status" style="font-size:0.85rem;font-weight:700;display:flex;align-items:center;margin-left:8px;"></div>
+                                </div>
+                                <input type="hidden" id="serie-tmdb-id">
+                                <div id="serie-tmdb-results" style="display:none;position:absolute;top:100%;left:0;right:0;gap:14px;margin-top:8px;min-width:680px;max-width:90vw;max-height:520px;overflow-x:auto;overflow-y:hidden;padding:10px;background:rgba(0,0,0,0.14);border:1px solid rgba(255,255,255,0.12);border-radius:14px;box-sizing:border-box;z-index:50;">
+                                </div>
                             </div>
                         </div>
                         <div class="fp-form-group"><label>Catégorie</label><select id="serie-cat"></select></div>
@@ -7020,6 +7141,13 @@
         <h4 id="suggestion-popup-title">Contenu déjà présent</h4>
         <p id="suggestion-popup-message">Ce contenu existe déjà sur le site. Si tu penses que c'est une erreur, ouvre un ticket sur Discord.</p>
         <p><a id="suggestion-popup-link" href="https://discord.gg/23YKtZ6NcT" target="_blank" rel="noopener">Ouvrir un ticket Discord</a></p>
+    </div>
+    <div id="tmdb-search-popup">
+        <div id="tmdb-search-popup-header">
+            <h4>Résultats TMDB</h4>
+            <button id="tmdb-search-popup-close" onclick="closeTmdbSearchPopup()">✕</button>
+        </div>
+        <div id="tmdb-search-popup-results"></div>
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
@@ -8159,6 +8287,8 @@
             window.showFilmForm = function (id) {
                 document.getElementById('films-list-wrap').style.display = 'none';
                 document.getElementById('film-form-wrap').style.display = 'block';
+                var filmTmdbField = document.getElementById('film-tmdb-id');
+                var filmStatus = document.getElementById('film-tmdb-status');
                 if (!id) {
                     document.getElementById('film-form-title').textContent = '➕ Nouveau film';
                     document.getElementById('film-edit-id').value = '';
@@ -8168,6 +8298,8 @@
                     document.getElementById('film-color1').value = '#1a1a2e';
                     document.getElementById('film-color2').value = '#7b68ee';
                     document.getElementById('film-access').value = 'all';
+                    if (filmTmdbField) filmTmdbField.value = '';
+                    if (filmStatus) filmStatus.innerHTML = '';
                     return;
                 }
                 sb.from('films').select('*').eq('id', id).single().then(function (res) {
@@ -8186,12 +8318,18 @@
                     document.getElementById('film-banner').value = f.banner_url || '';
                     document.getElementById('film-access').value = f.access || 'all';
                     document.getElementById('film-embed').value = f.video_url || '';
+                    if (filmTmdbField) filmTmdbField.value = f.tmdb_id || '';
+                    if (filmStatus) filmStatus.innerHTML = f.tmdb_id ? '<span style="color:#2ecc71;">✅ ID TMDB récupéré</span>' : '';
                 });
             };
 
             window.hideFilmForm = function () {
                 document.getElementById('film-form-wrap').style.display = 'none';
                 document.getElementById('films-list-wrap').style.display = 'block';
+                var filmTmdbField = document.getElementById('film-tmdb-id');
+                if (filmTmdbField) filmTmdbField.value = '';
+                var filmResults = document.getElementById('film-tmdb-results');
+                if (filmResults) filmResults.style.display = 'none';
             };
 
             window.saveFilm = function () {
@@ -8208,7 +8346,8 @@
                     thumb_url: document.getElementById('film-thumb').value || null,
                     banner_url: document.getElementById('film-banner').value || null,
                     access: document.getElementById('film-access').value,
-                    video_url: document.getElementById('film-embed').value || null
+                    video_url: document.getElementById('film-embed').value || null,
+                    tmdb_id: document.getElementById('film-tmdb-id').value || null
                 };
                 var editId = document.getElementById('film-edit-id').value;
                 setBtn('btn-save-film', true, '⏳ Vérification…');
@@ -8320,6 +8459,10 @@
                     document.getElementById('serie-color2').value = '#e74c8b';
                     document.getElementById('serie-access').value = 'all';
                     document.getElementById('serie-nb-saisons').value = '1';
+                    var serieTmdbField = document.getElementById('serie-tmdb-id');
+                    var serieStatus = document.getElementById('serie-tmdb-status');
+                    if (serieTmdbField) serieTmdbField.value = '';
+                    if (serieStatus) serieStatus.innerHTML = '';
                     seasonsData = { 1: [] };
                     updateSeasonsBuilder();
                     return;
@@ -8340,6 +8483,8 @@
                     document.getElementById('serie-banner').value = s.banner_url || '';
                     document.getElementById('serie-access').value = s.access || 'all';
                     document.getElementById('serie-nb-saisons').value = s.nb_saisons || 1;
+                    var serieTmdbField = document.getElementById('serie-tmdb-id');
+                    if (serieTmdbField) serieTmdbField.value = s.tmdb_id || '';
                     // Charger les épisodes
                     sb.from('episodes').select('*').eq('serie_id', s.id).order('saison').order('numero').then(function (epRes) {
                         seasonsData = {};
@@ -8360,6 +8505,10 @@
                 document.getElementById('serie-form-wrap').style.display = 'none';
                 document.getElementById('series-list-wrap').style.display = 'block';
                 seasonsData = {};
+                var serieTmdbField = document.getElementById('serie-tmdb-id');
+                if (serieTmdbField) serieTmdbField.value = '';
+                var serieResults = document.getElementById('serie-tmdb-results');
+                if (serieResults) serieResults.style.display = 'none';
             };
 
             window.updateSeasonsBuilder = function () {
@@ -8482,7 +8631,8 @@
                     thumb_url: document.getElementById('serie-thumb').value || null,
                     banner_url: document.getElementById('serie-banner').value || null,
                     access: document.getElementById('serie-access').value,
-                    nb_saisons: nb
+                    nb_saisons: nb,
+                    tmdb_id: document.getElementById('serie-tmdb-id').value || null
                 };
                 var editId = document.getElementById('serie-edit-id').value;
                 setBtn('btn-save-serie', true, '⏳ Vérification…');
@@ -12338,9 +12488,9 @@ body.theme-feu_artifice .aurora-bg .a3{background:#f1c40f;}
     
     <script>
         (function() {
-            window.autoFetchTMDB = function(type) {
+            window.autoFetchTMDB = function(type, explicitQuery) {
                 var inputId = type === 'film' ? 'film-title' : (type === 'serie' ? 'serie-title' : 'saga-title');
-                var query = document.getElementById(inputId).value.trim();
+                var query = explicitQuery || document.getElementById(inputId).value.trim();
                 
                 if (!query) {
                     window.toast("❌ Veuillez entrer un titre à rechercher.", true);
@@ -12404,6 +12554,90 @@ body.theme-feu_artifice .aurora-bg .a3{background:#f1c40f;}
                     });
             };
 
+            window.openTmdbSearchPopup = function() {
+                var popup = document.getElementById('tmdb-search-popup');
+                if (!popup) return;
+                popup.classList.add('show');
+            };
+
+            window.closeTmdbSearchPopup = function() {
+                var popup = document.getElementById('tmdb-search-popup');
+                if (!popup) return;
+                popup.classList.remove('show');
+                var results = document.getElementById('tmdb-search-popup-results');
+                if (results) results.innerHTML = '';
+            };
+
+            window.searchTmdbPanel = function(type) {
+                var inputId = type === 'film' ? 'film-title' : 'serie-title';
+                var resultsId = type === 'film' ? 'film-tmdb-results' : 'serie-tmdb-results';
+                var query = document.getElementById(inputId).value.trim();
+                var results = document.getElementById(resultsId);
+                if (!results) return;
+                results.innerHTML = '';
+                if (query.length < 3) {
+                    results.style.display = 'none';
+                    closeTmdbSearchPopup();
+                    return;
+                }
+                if (window['__tmdbPanelTimeout_' + type]) clearTimeout(window['__tmdbPanelTimeout_' + type]);
+                window['__tmdbPanelTimeout_' + type] = setTimeout(function() {
+                    var key = 'f34c56c945e5e0de8bd72f85371deea0';
+                    var tmdbType = type === 'film' ? 'movie' : 'tv';
+                    fetch('https://api.themoviedb.org/3/search/' + tmdbType + '?api_key=' + key + '&language=fr-FR&query=' + encodeURIComponent(query))
+                        .then(function(r) { return r.json(); })
+                        .then(function(data) {
+                            if (!data.results || !data.results.length) {
+                                closeTmdbSearchPopup();
+                                return;
+                            }
+                            openTmdbSearchPopup();
+                            var results = document.getElementById('tmdb-search-popup-results');
+                            if (!results) return;
+                            results.innerHTML = data.results.slice(0, 12).map(function(item) {
+                                var title = item.title || item.name || 'Sans titre';
+                                var year = (item.release_date || item.first_air_date || '').slice(0, 4);
+                                var thumb = item.poster_path ? 'https://image.tmdb.org/t/p/w185' + item.poster_path : '';
+                                var subtitle = year ? ' (' + year + ')' : '';
+                                return '<button type="button" onclick="selectTmdbPanelResult(\'' + type + '\',' + item.id + ',\'' + title.replace(/'/g, "\\'") + '\')" style="cursor:pointer;border:none;padding:0;text-align:left;background:rgba(255,255,255,0.04);border-radius:14px;overflow:hidden;transition:transform .15s,background .15s;flex:0 0 auto;min-width:220px;max-width:220px;">'
+                                    + (thumb ? '<img src="' + thumb + '" style="width:220px;height:330px;object-fit:cover;display:block;background:#0d0d0d;">' : '<div style="width:220px;height:330px;background:rgba(255,255,255,.08);display:flex;align-items:center;justify-content:center;font-size:1.4rem;color:rgba(255,255,255,.6);">' + (type === 'film' ? '🎬' : '📺') + '</div>')
+                                    + '<div style="padding:10px;min-height:120px;">'
+                                    + '<div style="font-size:.92rem;font-weight:800;color:#fff;line-height:1.2;">' + title + '</div>'
+                                    + '<div style="font-size:.78rem;color:rgba(255,255,255,.55);margin-top:8px;height:60px;overflow:hidden;">' + (item.overview ? item.overview.slice(0, 72) + '...' : 'Sélectionner pour remplir le titre.') + '</div>'
+                                    + '</div>'
+                                    + '</button>';
+                            }).join('');
+                        })
+                        .catch(function(err) {
+                            results.style.display = 'none';
+                        });
+                }, 250);
+            };
+
+            window.selectTmdbPanelResult = function(type, id, title) {
+                var inputId = type === 'film' ? 'film-title' : 'serie-title';
+                var tmdbIdId = type === 'film' ? 'film-tmdb-id' : 'serie-tmdb-id';
+                var resultsId = type === 'film' ? 'film-tmdb-results' : 'serie-tmdb-results';
+                var input = document.getElementById(inputId);
+                var tmdbInput = document.getElementById(tmdbIdId);
+                var results = document.getElementById(resultsId);
+                if (input) input.value = title;
+                if (tmdbInput) tmdbInput.value = id;
+                if (results) results.style.display = 'none';
+                closeTmdbSearchPopup();
+                window.autoFetchTMDB(type, String(id));
+            };
+
+            document.addEventListener('click', function(event) {
+                ['film', 'serie'].forEach(function(type) {
+                    var results = document.getElementById(type + '-tmdb-results');
+                    var input = document.getElementById(type + '-title');
+                    if (!results || !input) return;
+                    if (results.contains(event.target) || input === event.target) return;
+                    results.style.display = 'none';
+                });
+            });
+
             // ─── Fonction partagée : traitement des détails TMDB ────────────
             function _handleTMDBDetails(type, tmdbType, key, item, details) {
                 var prefix = type === 'film' ? 'film' : (type === 'serie' ? 'serie' : 'saga');
@@ -12443,12 +12677,14 @@ body.theme-feu_artifice .aurora-bg .a3{background:#f1c40f;}
                 }
 
                 if (type === 'film') {
+                    document.getElementById('film-tmdb-id').value = item.id || '';
                     var embed = '<iframe width="640" height="384" src="https://apis.wavewatch.top/zeus.php?type=movie&id=' + item.id + '" frameborder="0" scrolling="no" allowfullscreen></iframe>';
                     document.getElementById('film-embed').value = embed;
                     var st = document.getElementById('film-tmdb-status');
                     if (st) st.innerHTML = '<span style="color:#2ecc71;">✅ ID Rempli</span>';
                     window.toast("✅ Auto-remplissage TMDB réussi !");
                 } else if (type === 'serie') {
+                    document.getElementById('serie-tmdb-id').value = item.id || '';
                     var nbSaisons = details.number_of_seasons || 1;
                     document.getElementById('serie-nb-saisons').value = nbSaisons;
                     var newSeasonsData = {};
