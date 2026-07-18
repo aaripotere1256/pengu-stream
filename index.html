@@ -2561,6 +2561,15 @@
             display: flex;
         }
 
+        body.player-open > :not(#player-modal) {
+            display: none !important;
+        }
+
+        body.player-open *:not(#player-modal):not(#player-modal *) {
+            animation-play-state: paused !important;
+            transition: none !important;
+        }
+
         .player-header {
             width: 100%;
             max-width: 1000px;
@@ -7928,6 +7937,7 @@
                 }
                 document.getElementById('player-modal').classList.add('open');
                 document.body.style.overflow = 'hidden';
+                document.body.classList.add('player-open');
             };
 
             function buildPlayerEpisodes(serie) {
@@ -8006,7 +8016,9 @@
                 window._playerStartTime = null;
                 document.getElementById('player-embed-container').innerHTML = '';
                 document.getElementById('player-modal').classList.remove('open');
-                document.body.style.overflow = ''; playerCurrentSerie = null;
+                document.body.style.overflow = '';
+                document.body.classList.remove('player-open');
+                playerCurrentSerie = null;
             };
 
             /* ═══════════════════════════════════
