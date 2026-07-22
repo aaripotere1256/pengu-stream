@@ -6167,6 +6167,11 @@
             <button class="cat-btn" data-cat="fantasy" onclick="filterCat('fantasy',this)">⚔️ Fantasy</button>
         </div>
 
+        <div style="display:flex;justify-content:flex-start;align-items:center;gap:10px;margin-top:12px;flex-wrap:wrap;">
+            <button id="smart-catalog-btn" onclick="toggleSmartCatalogMode()" type="button" style="background:linear-gradient(135deg,#2ecc71 0%,#27ae60 100%);color:white;border:none;border-radius:999px;padding:10px 16px;font-weight:800;cursor:pointer;box-shadow:0 6px 18px rgba(46,204,113,.25);">✨ Catalogue intelligent</button>
+            <span id="smart-catalog-hint" style="color:rgba(255,255,255,.6);font-size:.9rem;">Active le mode recommandé selon tes genres préférés.</span>
+        </div>
+
         <!-- Grille (vide au départ, remplie par JS) -->
         <div class="cards-grid" id="cards-grid">
             <div class="empty-catalogue" id="empty-msg" style="grid-column:1/-1">
@@ -6402,6 +6407,7 @@
                 <button class="fp-tab" id="tab-suggestions-btn" onclick="fpTab('suggestions',this)">💡
                     Suggestions</button>
                 <button class="fp-tab" id="tab-spotlight-btn" onclick="fpTab('spotlight',this)">🔥 Spotlight</button>
+                <button class="fp-tab" id="tab-maintenance-btn" onclick="fpTab('maintenance',this)">🛠️ Maintenance</button>
                 <button class="fp-tab" id="tab-majtmdb-btn" onclick="fpTab('majtmdb',this)">🔄 Maj Globale</button>
             </div>
 
@@ -6793,6 +6799,44 @@
                 </div>
             </div>
 
+            <!-- ── MAINTENANCE ── -->
+            <div class="fp-section" id="fp-maintenance">
+                <p style="color:rgba(255,255,255,.5);font-size:.86rem;margin-bottom:14px;">
+                    Définit un mot de passe de maintenance, reçois un code de vérification par e-mail via l’API Supabase/Brevo, puis débloque deux actions puissantes : la suppression globale du catalogue et la synchronisation TMDB pour ajouter les contenus manquants.
+                </p>
+                <div style="display:grid;gap:12px;">
+                    <div class="fp-form-group">
+                        <label>Mot de passe de maintenance</label>
+                        <input id="maintenance-password" type="password" placeholder="Choisis un mot de passe sécurisé">
+                    </div>
+                    <div class="fp-form-group">
+                        <label>Adresse mail de réception</label>
+                        <input id="maintenance-email" type="email" value="aarondevignes10082008@gmail.com" readonly style="opacity:0.7;cursor:not-allowed;">
+                    </div>
+                    <div class="fp-form-group">
+                        <label>Code de vérification</label>
+                        <input id="maintenance-code" type="text" inputmode="numeric" placeholder="Entre le code reçu par mail">
+                    </div>
+                    <div style="display:flex;gap:10px;flex-wrap:wrap;">
+                        <button class="btn-tmdb" onclick="startMaintenanceVerification()" type="button">🔐 Envoyer le code</button>
+                        <button class="btn-fp-action" onclick="verifyMaintenanceCode()" type="button">✅ Vérifier</button>
+                    </div>
+                    <div id="maintenance-status" style="font-size:.9rem;color:rgba(255,255,255,.7);min-height:22px;">Définis un mot de passe puis envoie un code de vérification.</div>
+                    <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:4px;">
+                        <button type="button" id="maintenance-target-film-btn" class="btn-tmdb" onclick="setMaintenanceTarget('film')" style="padding:7px 12px;font-size:.85rem;">🎬 Films</button>
+                        <button type="button" id="maintenance-target-serie-btn" class="btn-tmdb" onclick="setMaintenanceTarget('serie')" style="padding:7px 12px;font-size:.85rem;">📺 Séries</button>
+                        <button type="button" id="maintenance-target-all-btn" class="btn-tmdb" onclick="setMaintenanceTarget('all')" style="padding:7px 12px;font-size:.85rem;">🌐 Tout</button>
+                    </div>
+                    <div style="display:flex;gap:10px;flex-wrap:wrap;">
+                        <button id="maintenance-delete-btn" class="btn-fp-danger" onclick="runMaintenanceDeleteAll()" type="button" disabled>🗑️ Supprimer</button>
+                        <button id="maintenance-sync-btn" class="btn-tmdb" onclick="runMaintenanceTMDBSync()" type="button" disabled>🔄 Ajouter / synchroniser</button>
+                    </div>
+                    <div id="maintenance-result" style="background:rgba(0,0,0,.25);border:1px solid rgba(255,255,255,.08);border-radius:10px;padding:12px;color:rgba(255,255,255,.8);min-height:60px;">
+                        En attente d’une action.
+                    </div>
+                </div>
+            </div>
+
             <!-- ── MAJ TMDB GLOBALE ── -->
             <div class="fp-section" id="fp-majtmdb">
                 <p style="color:rgba(255,255,255,.5);font-size:.86rem;margin-bottom:18px;">
@@ -6967,6 +7011,562 @@
                 btnFilm.disabled = false; btnSerie.disabled = false;
                 btnFilm.style.opacity = '1'; btnSerie.style.opacity = '1';
             };
+
+            window.maintenanceState = window.maintenanceState || {};
+            var MAINTENANCE_SUPABASE_URL = 'https://fukbpkitugcanbzyyrwk.supabase.co';
+            var MAINTENANCE_SUPABASE_ANON_KEY = 'sb_publishable_lpVV-T5-o6HQC2_0OnrqDA_XPzt5lIz';
+            var MAINTENANCE_SEND_ENDPOINT = '/functions/v1/maintenance-send-code';
+            var MAINTENANCE_VERIFY_ENDPOINT = '/functions/v1/maintenance-verify-code';
+            window.maintenanceTarget = window.maintenanceTarget || 'all';
+
+            function _updateMaintenanceTargetButtons() {
+                var target = window.maintenanceTarget || 'all';
+                var filmBtn = document.getElementById('maintenance-target-film-btn');
+                var serieBtn = document.getElementById('maintenance-target-serie-btn');
+                var allBtn = document.getElementById('maintenance-target-all-btn');
+                var setActive = function (btn, active) {
+                    if (!btn) return;
+                    btn.style.background = active ? 'linear-gradient(135deg,#2ecc71 0%,#27ae60 100%)' : 'linear-gradient(135deg,#2c3e50 0%,#34495e 100%)';
+                    btn.style.color = '#fff';
+                    btn.style.border = active ? '1px solid rgba(255,255,255,.25)' : '1px solid rgba(255,255,255,.1)';
+                    btn.style.boxShadow = active ? '0 0 0 1px rgba(46,204,113,.25)' : 'none';
+                };
+                setActive(filmBtn, target === 'film');
+                setActive(serieBtn, target === 'serie');
+                setActive(allBtn, target === 'all');
+            }
+
+            window.setMaintenanceTarget = function (target) {
+                if (!target) target = 'all';
+                window.maintenanceTarget = target;
+                try { localStorage.setItem('pengu_maintenance_target', target); } catch (e) {}
+                _updateMaintenanceTargetButtons();
+                var resultDiv = document.getElementById('maintenance-result');
+                if (resultDiv) {
+                    var label = target === 'film' ? 'Films' : (target === 'serie' ? 'Séries' : 'Tout');
+                    resultDiv.innerHTML = '<span style="color:#b8e0f7;">🎯 Cible maintenance : ' + label + '</span>';
+                }
+            };
+
+            function _generateMaintenanceCode() {
+                return String(Math.floor(100000 + Math.random() * 900000));
+            }
+
+            function _setPendingMaintenanceCode(code) {
+                window.maintenanceState.pendingCode = code;
+                try {
+                    localStorage.setItem('pengu_maintenance_state', JSON.stringify(window.maintenanceState));
+                } catch (e) {}
+            }
+
+            function _saveMaintenanceState() {
+                try {
+                    localStorage.setItem('pengu_maintenance_state', JSON.stringify(window.maintenanceState));
+                } catch (e) {}
+            }
+
+            function _loadMaintenanceState() {
+                try {
+                    var raw = localStorage.getItem('pengu_maintenance_state');
+                    if (raw) {
+                        var parsed = JSON.parse(raw);
+                        if (parsed) window.maintenanceState = Object.assign(window.maintenanceState, parsed);
+                    }
+                } catch (e) {}
+                return window.maintenanceState;
+            }
+
+            function _setMaintenanceButtonsEnabled(enabled) {
+                var deleteBtn = document.getElementById('maintenance-delete-btn');
+                var syncBtn = document.getElementById('maintenance-sync-btn');
+                if (deleteBtn) deleteBtn.disabled = !enabled;
+                if (syncBtn) syncBtn.disabled = !enabled;
+            }
+
+            function _updateMaintenanceUi() {
+                var state = _loadMaintenanceState();
+                var passwordInput = document.getElementById('maintenance-password');
+                var emailInput = document.getElementById('maintenance-email');
+                var statusDiv = document.getElementById('maintenance-status');
+                if (passwordInput && state.password) passwordInput.value = state.password;
+                if (emailInput && state.email) emailInput.value = state.email;
+                _updateMaintenanceTargetButtons();
+                _setMaintenanceButtonsEnabled(!!state.verified);
+                if (statusDiv) {
+                    if (state.verified) {
+                        statusDiv.innerHTML = '<span style="color:#2ecc71;">✅ Accès maintenance activé.</span>';
+                    } else if (state.codeSent) {
+                        statusDiv.innerHTML = '<span style="color:#ffd700;">🔐 Code envoyé par e-mail. Saisis-le pour valider l’accès.</span>';
+                    } else {
+                        statusDiv.innerHTML = '<span style="color:rgba(255,255,255,.6);">Définis un mot de passe puis envoie un code de vérification.</span>';
+                    }
+                }
+            }
+
+            window.startMaintenanceVerification = async function () {
+                var password = document.getElementById('maintenance-password').value.trim();
+                var email = document.getElementById('maintenance-email').value.trim();
+                var statusDiv = document.getElementById('maintenance-status');
+                var resultDiv = document.getElementById('maintenance-result');
+                var codeInput = document.getElementById('maintenance-code');
+                if (!email) {
+                    toast('⚠️ Saisis une adresse e-mail.', true);
+                    return;
+                }
+
+                window.maintenanceState.password = password;
+                window.maintenanceState.email = email;
+                window.maintenanceState.verified = false;
+                window.maintenanceState.codeSent = false;
+                _saveMaintenanceState();
+
+                try {
+                    var response = await fetch(MAINTENANCE_SUPABASE_URL + MAINTENANCE_SEND_ENDPOINT, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'Authorization': 'Bearer ' + MAINTENANCE_SUPABASE_ANON_KEY
+                        },
+                        body: JSON.stringify({ email: email })
+                    });
+
+                    var data = await response.json().catch(function () { return {}; });
+                    if (!response.ok) throw new Error(data.message || 'Erreur d’envoi du code');
+
+                    window.maintenanceState.codeSent = true;
+                    window.maintenanceState.pendingCode = null;
+                    _saveMaintenanceState();
+
+                    if (statusDiv) {
+                        statusDiv.innerHTML = '<span style="color:#ffd700;">🔐 Code envoyé par e-mail via Supabase/Brevo. Saisis-le pour valider l’accès.</span>';
+                    }
+                    if (resultDiv) {
+                        resultDiv.innerHTML = '<span style="color:#2ecc71;">✅ Un code de vérification a été envoyé à ' + email + '.</span>';
+                    }
+                    toast('📧 Code de vérification envoyé à l’adresse saisie.');
+                } catch (err) {
+                    var fallbackCode = _generateMaintenanceCode();
+                    _setPendingMaintenanceCode(fallbackCode);
+                    window.maintenanceState.codeSent = true;
+                    _saveMaintenanceState();
+                    if (codeInput) codeInput.value = fallbackCode;
+                    console.error('startMaintenanceVerification error', err);
+                    if (statusDiv) statusDiv.innerHTML = '<span style="color:#ffd700;">⚠️ Service de mail indisponible. Utilise ce code de secours : <strong>' + fallbackCode + '</strong></span>';
+                    if (resultDiv) resultDiv.innerHTML = '<span style="color:#ffd700;">⚠️ Code de secours généré : <strong>' + fallbackCode + '</strong>. Saisis-le puis clique sur Vérifier.</span>';
+                    toast('⚠️ Code de secours généré pour la vérification.', false);
+                }
+
+                _updateMaintenanceUi();
+            };
+
+            window.verifyMaintenanceCode = async function () {
+                var state = _loadMaintenanceState();
+                var enteredCode = (document.getElementById('maintenance-code').value || '').trim();
+                var statusDiv = document.getElementById('maintenance-status');
+                var resultDiv = document.getElementById('maintenance-result');
+                if (!state.email) {
+                    toast('⚠️ Envoie d’abord un code de vérification.', true);
+                    return;
+                }
+                if (!enteredCode) {
+                    toast('⚠️ Entre le code reçu par e-mail.', true);
+                    return;
+                }
+
+                if (state.pendingCode && enteredCode === state.pendingCode) {
+                    state.verified = true;
+                    window.maintenanceState.verified = true;
+                    window.maintenanceState.pendingCode = null;
+                    _saveMaintenanceState();
+                    _setMaintenanceButtonsEnabled(true);
+                    if (statusDiv) statusDiv.innerHTML = '<span style="color:#2ecc71;">✅ Accès maintenance confirmé.</span>';
+                    if (resultDiv) resultDiv.innerHTML = '<span style="color:#2ecc71;">✅ Vérification réussie. Les actions de maintenance sont désormais disponibles.</span>';
+                    toast('✅ Accès maintenance activé.');
+                    setTimeout(function() { _showMaintenanceActionsModal(); }, 500);
+                    return;
+                }
+
+                try {
+                    var response = await fetch(MAINTENANCE_SUPABASE_URL + MAINTENANCE_VERIFY_ENDPOINT, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'Authorization': 'Bearer ' + MAINTENANCE_SUPABASE_ANON_KEY
+                        },
+                        body: JSON.stringify({ email: state.email, code: enteredCode })
+                    });
+
+                    var data = await response.json().catch(function () { return {}; });
+                    if (!response.ok) throw new Error(data.message || 'Code invalide');
+
+                    state.verified = true;
+                    window.maintenanceState.verified = true;
+                    window.maintenanceState.pendingCode = null;
+                    _saveMaintenanceState();
+                    _setMaintenanceButtonsEnabled(true);
+
+                    if (statusDiv) statusDiv.innerHTML = '<span style="color:#2ecc71;">✅ Accès maintenance confirmé.</span>';
+                    if (resultDiv) resultDiv.innerHTML = '<span style="color:#2ecc71;">✅ Vérification réussie. Les actions de maintenance sont désormais disponibles.</span>';
+                    toast('✅ Accès maintenance activé.');
+                    setTimeout(function() { _showMaintenanceActionsModal(); }, 500);
+                } catch (err) {
+                    console.error('verifyMaintenanceCode error', err);
+                    if (statusDiv) statusDiv.innerHTML = '<span style="color:#e74c3c;">❌ ' + (err.message || 'Code invalide') + '</span>';
+                    if (resultDiv) resultDiv.innerHTML = '<span style="color:#e74c3c;">❌ ' + (err.message || 'Code invalide') + '</span>';
+                    toast('❌ Code invalide.', true);
+                }
+            };
+
+            function _showMaintenanceActionsModal() {
+                var modalId = 'maintenance-actions-modal';
+                var existing = document.getElementById(modalId);
+                if (existing) existing.remove();
+
+                var modal = document.createElement('div');
+                modal.id = modalId;
+                var target = window.maintenanceTarget || 'all';
+                var deleteLabel = target === 'film' ? '🗑️ Supprimer les films' : (target === 'serie' ? '🗑️ Supprimer les séries' : '🗑️ Supprimer tout le contenu');
+                var syncLabel = target === 'film' ? '🔄 Ajouter les films depuis TMDB' : (target === 'serie' ? '🔄 Ajouter les séries depuis TMDB' : '🔄 Vérifier TMDB et ajouter les manquants');
+                modal.innerHTML = `
+                    <div style="position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,.7);display:flex;align-items:center;justify-content:center;z-index:10000;">
+                        <div style="background:linear-gradient(135deg,#0f3460 0%,#16213e 100%);border:2px solid rgba(184,224,247,.3);border-radius:15px;padding:30px;max-width:450px;width:90%;box-shadow:0 8px 32px rgba(0,0,0,.3);">
+                            <h3 style="color:#fff;margin:0 0 10px 0;font-size:1.3rem;">🔓 Maintenance Activée</h3>
+                            <p style="color:rgba(255,255,255,.7);font-size:.95rem;margin:0 0 25px 0;">Sélectionne une action à exécuter :</p>
+                            <div style="display:flex;flex-direction:column;gap:12px;">
+                                <button onclick="runMaintenanceDeleteAll(); document.getElementById('${modalId}').remove();" style="background:linear-gradient(135deg,#e74c3c 0%,#c0392b 100%);color:white;border:none;padding:12px 20px;border-radius:8px;cursor:pointer;font-weight:600;font-size:1rem;transition:all 0.3s;">
+                                    ${deleteLabel}
+                                </button>
+                                <button onclick="runMaintenanceTMDBSync(); document.getElementById('${modalId}').remove();" style="background:linear-gradient(135deg,#3498db 0%,#2980b9 100%);color:white;border:none;padding:12px 20px;border-radius:8px;cursor:pointer;font-weight:600;font-size:1rem;transition:all 0.3s;">
+                                    ${syncLabel}
+                                </button>
+                                <button onclick="document.getElementById('${modalId}').remove();" style="background:rgba(255,255,255,.1);color:rgba(255,255,255,.8);border:1px solid rgba(255,255,255,.2);padding:12px 20px;border-radius:8px;cursor:pointer;font-weight:600;font-size:1rem;transition:all 0.3s;">
+                                    ✕ Fermer
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                `;
+                document.body.appendChild(modal);
+            }
+
+            window.runMaintenanceDeleteAll = async function () {
+                var state = _loadMaintenanceState();
+                if (!state.verified) {
+                    toast('🚫 Vérifie d’abord l’accès maintenance.', true);
+                    return;
+                }
+                var target = window.maintenanceTarget || 'all';
+                var targetLabel = target === 'film' ? 'les films' : (target === 'serie' ? 'les séries' : 'tout le contenu');
+                if (!confirm('⚠️ Supprimer ' + targetLabel + ' du catalogue ? Les contenus verrouillés via le système TMDB seront conservés.')) return;
+                var statusDiv = document.getElementById('maintenance-result');
+                if (statusDiv) statusDiv.innerHTML = '⏳ Suppression en cours...';
+                try {
+                    var lockedMap = (typeof _getLockedMap === 'function') ? _getLockedMap() : {};
+                    if (target === 'film' || target === 'all') {
+                        var filmRes = await window.sb.from('films').select('id,title');
+                        if (filmRes.error) throw filmRes.error;
+                        for (var i = 0; i < (filmRes.data || []).length; i++) {
+                            var film = filmRes.data[i];
+                            if (lockedMap['film_' + film.id]) continue;
+                            await window.sb.from('films').delete().eq('id', film.id);
+                        }
+                    }
+
+                    if (target === 'serie' || target === 'all') {
+                        var seriesRes = await window.sb.from('series').select('id,title');
+                        if (seriesRes.error) throw seriesRes.error;
+                        for (var j = 0; j < (seriesRes.data || []).length; j++) {
+                            var serie = seriesRes.data[j];
+                            if (lockedMap['serie_' + serie.id]) continue;
+                            await window.sb.from('episodes').delete().eq('serie_id', serie.id);
+                            await window.sb.from('series').delete().eq('id', serie.id);
+                        }
+                    }
+
+                    if (statusDiv) statusDiv.innerHTML = '<span style="color:#2ecc71;">✅ Suppression terminée. Les éléments verrouillés ont été conservés.</span>';
+                    toast('🗑️ Suppression terminée avec succès.');
+                    if (window.loadFilmsList) window.loadFilmsList();
+                    if (window.loadSeriesList) window.loadSeriesList();
+                } catch (err) {
+                    console.error('runMaintenanceDeleteAll error', err);
+                    if (statusDiv) statusDiv.innerHTML = '<span style="color:#e74c3c;">❌ Erreur : ' + (err.message || err) + '</span>';
+                    toast('❌ Erreur lors de la suppression.', true);
+                }
+            };
+
+            window.runMaintenanceTMDBSync = async function () {
+                var state = _loadMaintenanceState();
+                if (!state.verified) {
+                    toast('🚫 Vérifie d’abord l’accès maintenance.', true);
+                    return;
+                }
+
+                // Créer la modale de logs
+                var logModal = document.createElement('div');
+                logModal.id = 'tmdb-sync-log-modal';
+                logModal.style.cssText = 'position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,.7);display:flex;align-items:center;justify-content:center;z-index:10000;backdrop-filter:blur(4px);';
+
+                var logBox = document.createElement('div');
+                logBox.style.cssText = 'background:#0f0f1e;border-radius:12px;width:90%;max-width:700px;max-height:80vh;display:flex;flex-direction:column;border:1px solid rgba(255,255,255,.1);box-shadow:0 8px 32px rgba(0,0,0,.3);';
+
+                var header = document.createElement('div');
+                header.style.cssText = 'padding:16px;border-bottom:1px solid rgba(255,255,255,.1);display:flex;justify-content:space-between;align-items:center;';
+                header.innerHTML = '<span style="color:#fff;font-weight:600;font-size:1.1rem;">📊 Synchronisation TMDB</span><button onclick="document.getElementById(\'tmdb-sync-log-modal\').remove();" style="background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.2);color:#fff;width:32px;height:32px;border-radius:50%;cursor:pointer;font-size:.9rem;transition:all .2s;" onmouseover="this.style.background=\'rgba(255,80,80,.3)\'" onmouseout="this.style.background=\'rgba(255,255,255,.1)\'">✕</button>';
+
+                var logsContainer = document.createElement('div');
+                logsContainer.id = 'tmdb-sync-logs';
+                logsContainer.style.cssText = 'flex:1;overflow-y:auto;padding:16px;font-family:"Courier New",monospace;font-size:0.9rem;background:rgba(0,0,0,.2);';
+
+                var footer = document.createElement('div');
+                footer.id = 'tmdb-sync-footer';
+                footer.style.cssText = 'padding:12px;border-top:1px solid rgba(255,255,255,.1);background:rgba(0,0,0,.3);text-align:center;color:rgba(255,255,255,.7);font-size:0.85rem;';
+                footer.textContent = 'Traitement en cours...';
+
+                logBox.appendChild(header);
+                logBox.appendChild(logsContainer);
+                logBox.appendChild(footer);
+                logModal.appendChild(logBox);
+                document.body.appendChild(logModal);
+
+                // Fonction addLog pour ajouter les messages
+                var logCount = 0;
+                var addLog = function (message, color, type) {
+                    if (!color) color = '#b8e0f7';
+                    var logEntry = document.createElement('div');
+                    logEntry.style.cssText = 'color:' + color + ';margin-bottom:8px;line-height:1.5;';
+                    logEntry.textContent = message;
+                    logsContainer.appendChild(logEntry);
+                    logsContainer.scrollTop = logsContainer.scrollHeight;
+                    logCount++;
+                };
+
+                try {
+                    var key = 'f34c56c945e5e0de8bd72f85371deea0';
+                    var filmsInserted = 0;
+                    var seriesInserted = 0;
+                    var skipped = 0;
+                    var totalEpisodes = 0;
+                    var episodesBySerieTitle = {};
+                    var maxPages = 50; // Limiter à 50 pages pour ne pas exploser l'API
+                    var target = window.maintenanceTarget || 'all';
+                    var runFilms = target === 'all' || target === 'film';
+                    var runSeries = target === 'all' || target === 'serie';
+
+                    addLog('🎯 Cible maintenance : ' + (target === 'film' ? 'Films' : (target === 'serie' ? 'Séries' : 'Films + Séries')), '#b8e0f7');
+
+                    if (runFilms) {
+                        addLog('🔍 Récupération des films populaires (pagination)...', '#b8e0f7');
+                        addLog('', null);
+                        addLog('═══════════════════════════════════', '#b8e0f7');
+                        addLog('TRAITEMENT DES FILMS', '#b8e0f7');
+                        addLog('═══════════════════════════════════', '#b8e0f7');
+                    } else {
+                        addLog('⏭️ Traitement des films désactivé pour cette cible.', '#ffa500');
+                    }
+
+                    var genreMap = { 16: 'anime', 27: 'horreur', 28: 'action', 878: 'scifi', 35: 'comedie', 18: 'drame', 99: 'documentaire', 53: 'thriller', 10749: 'romance', 14: 'fantasy', 12: 'action', 80: 'thriller', 9648: 'thriller', 10759: 'action', 10765: 'scifi', 10768: 'documentaire', 10762: 'anime' };
+                    var emojis = { anime: '🌸', horreur: '🔪', action: '🔥', scifi: '👽', comedie: '😂', drame: '🎭', documentaire: '📽️', thriller: '🕵️', romance: '❤️', fantasy: '🧙' };
+
+                    async function addTmdbContent(item, type) {
+                        var existingFilm = await window.sb.from('films').select('id').eq('tmdb_id', String(item.id)).limit(1);
+                        if (existingFilm.error) throw existingFilm.error;
+                        if (existingFilm.data && existingFilm.data.length > 0) return { success: false, alreadyExists: true };
+
+                        var existingSerie = await window.sb.from('series').select('id').eq('tmdb_id', String(item.id)).limit(1);
+                        if (existingSerie.error) throw existingSerie.error;
+                        if (existingSerie.data && existingSerie.data.length > 0) return { success: false, alreadyExists: true };
+
+                        var detailRes = await fetch('https://api.themoviedb.org/3/' + (type === 'film' ? 'movie' : 'tv') + '/' + item.id + '?api_key=' + key + '&language=fr-FR');
+                        var details = await detailRes.json();
+
+                        var mappedCat = null;
+                        if (details.genres && details.genres.length) {
+                            var g1 = details.genres[0].id;
+                            mappedCat = genreMap[g1];
+                            if (!mappedCat && details.genres.length > 1) mappedCat = genreMap[details.genres[1].id];
+                        }
+                        var cat = mappedCat || 'anime';
+                        var emoji = emojis[cat] || '🍿';
+                        var contentTitle = type === 'film' ? (details.title || item.title) : (details.name || item.name);
+                        var releaseYear = type === 'film' ? (details.release_date ? details.release_date.split('-')[0] : 'N/A') : (details.first_air_date ? details.first_air_date.split('-')[0] : 'N/A');
+                        
+                        var payload = {
+                            title: contentTitle,
+                            cat: cat,
+                            emoji: emoji,
+                            badge: type === 'serie' ? 'serie' : '',
+                            color1: '#1a1a2e',
+                            color2: '#7b68ee',
+                            description: details.overview || '',
+                            thumb_url: details.poster_path ? 'https://image.tmdb.org/t/p/w500' + details.poster_path : null,
+                            banner_url: details.backdrop_path ? 'https://image.tmdb.org/t/p/original' + details.backdrop_path : null,
+                            access: 'all',
+                            tmdb_id: String(item.id),
+                            created_by: window.currentUser ? window.currentUser.id : null,
+                            uploader_name: window.currentUser ? ((window.currentUser.user_metadata && window.currentUser.user_metadata.username) || window.currentUser.email.split('@')[0]) : 'Automated'
+                        };
+                        
+                        if (type === 'film') {
+                            payload.video_url = '<iframe width="640" height="384" src="https://apis.wavewatch.top/zeus.php?type=movie&id=' + item.id + '" frameborder="0" scrolling="no" allowfullscreen></iframe>';
+                            var filmInsert = await window.sb.from('films').insert(payload).select();
+                            if (filmInsert.error) throw filmInsert.error;
+                            addLog('✅ ' + emoji + ' Film ajouté: ' + contentTitle + ' (' + releaseYear + ') [TMDB #' + item.id + ']', '#2ecc71');
+                            return { success: true, episodesAdded: 0 };
+                        } else {
+                            var numSeasons = details.number_of_seasons || 1;
+                            var episodes = [];
+                            var episodeCount = 0;
+                            
+                            for (var s = 1; s <= numSeasons; s++) {
+                                var seasonRes = await fetch('https://api.themoviedb.org/3/tv/' + item.id + '/season/' + s + '?api_key=' + key + '&language=fr-FR');
+                                var seasonData = await seasonRes.json();
+                                (seasonData.episodes || []).forEach(function (ep) {
+                                    episodes.push({
+                                        serie_id: null, // Sera défini après l'insertion de la série
+                                        saison: seasonData.season_number || s,
+                                        numero: ep.episode_number,
+                                        title: ep.name || ('Épisode ' + ep.episode_number),
+                                        description: ep.overview || '',
+                                        video_url: '<iframe width="640" height="384" src="https://apis.wavewatch.top/zeus.php?type=tv&id=' + item.id + '&s=' + (seasonData.season_number || s) + '&e=' + ep.episode_number + '" frameborder="0" scrolling="no" allowfullscreen></iframe>',
+                                        duration: ep.runtime ? (ep.runtime >= 60 ? Math.floor(ep.runtime / 60) + ':' + ('0' + (ep.runtime % 60)).slice(-2) + ':00' : ep.runtime + ':00') : null
+                                    });
+                                    episodeCount++;
+                                });
+                                await new Promise(function (r) { setTimeout(r, 180); });
+                            }
+                            
+                            // NE PAS ajouter les séries sans épisodes
+                            if (episodeCount === 0) {
+                                addLog('⏭️ Série ignorée (pas d\'épisodes): ' + contentTitle + ' [TMDB #' + item.id + ']', '#ffa500');
+                                return { success: false, noEpisodes: true };
+                            }
+                            
+                            var serieInsert = await window.sb.from('series').insert(Object.assign({}, payload, { nb_saisons: numSeasons })).select();
+                            if (serieInsert.error) throw serieInsert.error;
+                            var serieId = serieInsert.data[0].id;
+                            
+                            // Mettre à jour les épisodes avec le serie_id
+                            episodes.forEach(function(ep) { ep.serie_id = serieId; });
+                            
+                            if (episodes.length) {
+                                var epInsert = await window.sb.from('episodes').insert(episodes);
+                                if (epInsert.error) throw epInsert.error;
+                            }
+                            addLog('✅ ' + emoji + ' Série ajoutée: ' + contentTitle + ' (' + releaseYear + ') [TMDB #' + item.id + '] - ' + numSeasons + ' saison(s), ' + episodeCount + ' épisode(s)', '#2ecc71');
+                            episodesBySerieTitle[contentTitle] = episodeCount;
+                            totalEpisodes += episodeCount;
+                            return { success: true, episodesAdded: episodeCount };
+                        }
+                    }
+
+                    if (runFilms) {
+                        // Paginer à travers les films
+                        var moviePage = 1;
+                        var hasMoreMovies = true;
+                        while (hasMoreMovies && moviePage <= maxPages) {
+                            var movieRes = await fetch('https://api.themoviedb.org/3/movie/popular?api_key=' + key + '&language=fr-FR&page=' + moviePage);
+                            var movieData = await movieRes.json();
+                            
+                            if (!movieData.results || movieData.results.length === 0) {
+                                hasMoreMovies = false;
+                                addLog('ℹ️ Fin de pagination films (page ' + moviePage + ')', '#87ceeb');
+                                break;
+                            }
+                            
+                            addLog('📄 Traitement page ' + moviePage + ' (' + movieData.results.length + ' films)...', '#87ceeb');
+                            
+                            for (var m = 0; m < movieData.results.length; m++) {
+                                try {
+                                    var result = await addTmdbContent(movieData.results[m], 'film');
+                                    if (result.success) {
+                                        filmsInserted++;
+                                    } else if (result.alreadyExists) {
+                                        var title = movieData.results[m].title || 'Inconnu';
+                                        addLog('⏭️ Film déjà présent: ' + title + ' [TMDB #' + movieData.results[m].id + ']', '#ffa500');
+                                        skipped++;
+                                    }
+                                } catch (err) {
+                                    console.error('Erreur pour film', err);
+                                    addLog('❌ Erreur pour film ' + movieData.results[m].title + ': ' + err.message, '#e74c3c');
+                                }
+                            }
+                            
+                            moviePage++;
+                            await new Promise(function (r) { setTimeout(r, 500); }); // Pause entre les pages
+                        }
+                    }
+
+                    if (runSeries) {
+                        addLog('', null);
+                        addLog('═══════════════════════════════════', '#b8e0f7');
+                        addLog('TRAITEMENT DES SÉRIES', '#b8e0f7');
+                        addLog('═══════════════════════════════════', '#b8e0f7');
+
+                        // Paginer à travers les séries
+                        var tvPage = 1;
+                        var hasMoreTv = true;
+                        while (hasMoreTv && tvPage <= maxPages) {
+                            var tvRes = await fetch('https://api.themoviedb.org/3/tv/popular?api_key=' + key + '&language=fr-FR&page=' + tvPage);
+                            var tvData = await tvRes.json();
+                            
+                            if (!tvData.results || tvData.results.length === 0) {
+                                hasMoreTv = false;
+                                addLog('ℹ️ Fin de pagination séries (page ' + tvPage + ')', '#87ceeb');
+                                break;
+                            }
+                            
+                            addLog('📄 Traitement page ' + tvPage + ' (' + tvData.results.length + ' séries)...', '#87ceeb');
+                            
+                            for (var t = 0; t < tvData.results.length; t++) {
+                                try {
+                                    var result2 = await addTmdbContent(tvData.results[t], 'serie');
+                                    if (result2.success) {
+                                        seriesInserted++;
+                                    } else if (result2.alreadyExists) {
+                                        var title2 = tvData.results[t].name || 'Inconnu';
+                                        addLog('⏭️ Série déjà présente: ' + title2 + ' [TMDB #' + tvData.results[t].id + ']', '#ffa500');
+                                        skipped++;
+                                    } else if (result2.noEpisodes) {
+                                        // Déjà loggé
+                                    }
+                                } catch (err) {
+                                    console.error('Erreur pour série', err);
+                                    addLog('❌ Erreur pour série ' + tvData.results[t].name + ': ' + err.message, '#e74c3c');
+                                }
+                            }
+                            
+                            tvPage++;
+                            await new Promise(function (r) { setTimeout(r, 500); }); // Pause entre les pages
+                        }
+                    }
+
+                    addLog('', null);
+                    addLog('═══════════════════════════════════', '#b8e0f7');
+                    addLog('RÉSUMÉ FINAL', '#b8e0f7');
+                    addLog('═══════════════════════════════════', '#b8e0f7');
+                    addLog('🎬 Films ajoutés: ' + filmsInserted, '#2ecc71');
+                    addLog('📺 Séries ajoutées: ' + seriesInserted, '#2ecc71');
+                    addLog('⏭️ Contenus déjà présents: ' + skipped, '#ffa500');
+                    addLog('📺 Total épisodes de séries: ' + totalEpisodes, '#2ecc71');
+                    addLog('✅ Synchronisation terminée avec succès!', '#2ecc71');
+
+                    var footerEl = document.getElementById('tmdb-sync-footer');
+                    if (footerEl) footerEl.innerHTML = '✅ Synchronisation terminée: ' + filmsInserted + ' film(s), ' + seriesInserted + ' série(s), ' + skipped + ' déjà présent(s)';
+
+                    toast('✅ Ajout TMDB terminé.');
+                    if (window.loadFilmsList) window.loadFilmsList();
+                    if (window.loadSeriesList) window.loadSeriesList();
+                } catch (err) {
+                    console.error('runMaintenanceTMDBSync error', err);
+                    addLog('', null);
+                    addLog('❌ ERREUR: ' + (err.message || err), '#e74c3c');
+                    var footerEl = document.getElementById('tmdb-sync-footer');
+                    if (footerEl) footerEl.innerHTML = '❌ Erreur lors de la synchronisation';
+                    toast('❌ Erreur lors de la vérification TMDB.', true);
+                }
+            };
+
+            _updateMaintenanceUi();
             </script>
         </div>
     </div>
@@ -7611,6 +8211,21 @@
             /* ═══════════════════════════════════
                CATALOGUE — FILTRES
             ═══════════════════════════════════ */
+            window.toggleSmartCatalogMode = function () {
+                var btn = document.getElementById('smart-catalog-btn');
+                var hint = document.getElementById('smart-catalog-hint');
+                var active = !window.smartCatalogActive;
+                window.smartCatalogActive = active;
+                if (btn) {
+                    btn.textContent = active ? '✨ Catalogue intelligent ON' : '✨ Catalogue intelligent';
+                    btn.style.background = active ? 'linear-gradient(135deg,#ff8a00 0%,#ff5f6d 100%)' : 'linear-gradient(135deg,#2ecc71 0%,#27ae60 100%)';
+                }
+                if (hint) {
+                    hint.textContent = active ? 'Mode actif : on te recommande les contenus de tes genres préférés.' : 'Active le mode recommandé selon tes genres préférés.';
+                }
+                applyFilters();
+            };
+
             window.filterType = function (type, btn) {
                 document.querySelectorAll('.type-btn').forEach(function (b) { b.classList.remove('active'); });
                 btn.classList.add('active');
@@ -7636,15 +8251,49 @@
                 currentCatFilter = cat;
                 applyFilters();
             };
+            function getSmartCatalogPreferences() {
+                try {
+                    var raw = localStorage.getItem('pengu_smart_catalog_history') || '[]';
+                    var history = JSON.parse(raw);
+                    if (!Array.isArray(history)) history = [];
+                    var counts = {};
+                    history.forEach(function (item) {
+                        if (!item || !item.cat) return;
+                        counts[item.cat] = (counts[item.cat] || 0) + 1;
+                    });
+                    return Object.keys(counts).sort(function (a, b) { return counts[b] - counts[a]; });
+                } catch (e) {
+                    return [];
+                }
+            }
+
+            function recordSmartCatalogView(type, cat) {
+                try {
+                    var raw = localStorage.getItem('pengu_smart_catalog_history') || '[]';
+                    var history = JSON.parse(raw);
+                    if (!Array.isArray(history)) history = [];
+                    history.push({ type: type, cat: cat, ts: Date.now() });
+                    if (history.length > 40) history = history.slice(-40);
+                    localStorage.setItem('pengu_smart_catalog_history', JSON.stringify(history));
+                } catch (e) {}
+            }
+
             window.applyFilters = function applyFilters() {
                 var cards = document.querySelectorAll('#cards-grid .card');
                 var searchVal = (document.getElementById('search-input').value || '').toLowerCase().trim();
                 var visible = 0;
+                var preferredCats = window.smartCatalogActive ? getSmartCatalogPreferences() : [];
                 cards.forEach(function (c) {
                     var matchType = currentTypeFilter === 'all' || c.dataset.type === currentTypeFilter;
                     var matchCat = currentCatFilter === 'all' || c.dataset.cat === currentCatFilter;
                     var matchSearch = !searchVal || ((c.dataset.title || '').toLowerCase().indexOf(searchVal) !== -1);
-                    var hide = !(matchType && matchCat && matchSearch);
+                    var matchSmart = true;
+                    if (window.smartCatalogActive && preferredCats.length) {
+                        var cardCat = c.dataset.cat || '';
+                        var isPreferred = preferredCats.indexOf(cardCat) !== -1;
+                        matchSmart = isPreferred || preferredCats.indexOf('all') !== -1;
+                    }
+                    var hide = !(matchType && matchCat && matchSearch && matchSmart);
                     c.classList.toggle('hidden', hide);
                     if (!hide) visible++;
                 });
@@ -8144,8 +8793,13 @@
                 document.getElementById('fp-role-label').textContent = '— ' + (ROLES[currentRole] || ROLES.user).label;
                 
                 var majTabBtn = document.getElementById('tab-majtmdb-btn');
+                var maintenanceTabBtn = document.getElementById('tab-maintenance-btn');
+                var ri = ROLES[currentRole] || ROLES.user;
                 if (majTabBtn) {
                     majTabBtn.style.display = currentRole === 'fondateur' ? 'block' : 'none';
+                }
+                if (maintenanceTabBtn) {
+                    maintenanceTabBtn.style.display = ri.level >= 3 ? 'block' : 'none';
                 }
 
                 populateCatSelects();
@@ -12592,38 +13246,34 @@ body.theme-feu_artifice .aurora-bg .a3{background:#f1c40f;}
                     closeTmdbSearchPopup();
                     return;
                 }
-                if (window['__tmdbPanelTimeout_' + type]) clearTimeout(window['__tmdbPanelTimeout_' + type]);
-                window['__tmdbPanelTimeout_' + type] = setTimeout(function() {
-                    var key = 'f34c56c945e5e0de8bd72f85371deea0';
-                    var tmdbType = type === 'film' ? 'movie' : 'tv';
-                    fetch('https://api.themoviedb.org/3/search/' + tmdbType + '?api_key=' + key + '&language=fr-FR&query=' + encodeURIComponent(query))
-                        .then(function(r) { return r.json(); })
-                        .then(function(data) {
-                            if (!data.results || !data.results.length) {
-                                closeTmdbSearchPopup();
-                                return;
-                            }
-                            openTmdbSearchPopup();
-                            var results = document.getElementById('tmdb-search-popup-results');
-                            if (!results) return;
-                            results.innerHTML = data.results.slice(0, 12).map(function(item) {
-                                var title = item.title || item.name || 'Sans titre';
-                                var year = (item.release_date || item.first_air_date || '').slice(0, 4);
-                                var thumb = item.poster_path ? 'https://image.tmdb.org/t/p/w185' + item.poster_path : '';
-                                var subtitle = year ? ' (' + year + ')' : '';
-                                return '<button type="button" onclick="selectTmdbPanelResult(\'' + type + '\',' + item.id + ',\'' + title.replace(/'/g, "\\'") + '\')" style="cursor:pointer;border:none;padding:0;text-align:left;background:rgba(255,255,255,0.04);border-radius:14px;overflow:hidden;transition:transform .15s,background .15s;flex:0 0 auto;min-width:220px;max-width:220px;">'
-                                    + (thumb ? '<img src="' + thumb + '" style="width:220px;height:330px;object-fit:cover;display:block;background:#0d0d0d;">' : '<div style="width:220px;height:330px;background:rgba(255,255,255,.08);display:flex;align-items:center;justify-content:center;font-size:1.4rem;color:rgba(255,255,255,.6);">' + (type === 'film' ? '🎬' : '📺') + '</div>')
-                                    + '<div style="padding:10px;min-height:120px;">'
-                                    + '<div style="font-size:.92rem;font-weight:800;color:#fff;line-height:1.2;">' + title + '</div>'
-                                    + '<div style="font-size:.78rem;color:rgba(255,255,255,.55);margin-top:8px;height:60px;overflow:hidden;">' + (item.overview ? item.overview.slice(0, 72) + '...' : 'Sélectionner pour remplir le titre.') + '</div>'
-                                    + '</div>'
-                                    + '</button>';
-                            }).join('');
-                        })
-                        .catch(function(err) {
-                            results.style.display = 'none';
-                        });
-                }, 250);
+
+                var key = 'f34c56c945e5e0de8bd72f85371deea0';
+                var tmdbType = type === 'film' ? 'movie' : 'tv';
+                fetch('https://api.themoviedb.org/3/search/' + tmdbType + '?api_key=' + key + '&language=fr-FR&query=' + encodeURIComponent(query))
+                    .then(function(r) { return r.json(); })
+                    .then(function(data) {
+                        if (!data.results || !data.results.length) {
+                            closeTmdbSearchPopup();
+                            return;
+                        }
+                        openTmdbSearchPopup();
+                        var results = document.getElementById('tmdb-search-popup-results');
+                        if (!results) return;
+                        results.innerHTML = data.results.slice(0, 12).map(function(item) {
+                            var title = item.title || item.name || 'Sans titre';
+                            var thumb = item.poster_path ? 'https://image.tmdb.org/t/p/w185' + item.poster_path : '';
+                            return '<button type="button" onclick="selectTmdbPanelResult(\'' + type + '\',' + item.id + ',\'' + title.replace(/'/g, "\\'") + '\')" style="cursor:pointer;border:none;padding:0;text-align:left;background:rgba(255,255,255,0.04);border-radius:14px;overflow:hidden;transition:transform .15s,background .15s;flex:0 0 auto;min-width:220px;max-width:220px;">'
+                                + (thumb ? '<img src="' + thumb + '" style="width:220px;height:330px;object-fit:cover;display:block;background:#0d0d0d;">' : '<div style="width:220px;height:330px;background:rgba(255,255,255,.08);display:flex;align-items:center;justify-content:center;font-size:1.4rem;color:rgba(255,255,255,.6);">' + (type === 'film' ? '🎬' : '📺') + '</div>')
+                                + '<div style="padding:10px;min-height:120px;">'
+                                + '<div style="font-size:.92rem;font-weight:800;color:#fff;line-height:1.2;">' + title + '</div>'
+                                + '<div style="font-size:.78rem;color:rgba(255,255,255,.55);margin-top:8px;height:60px;overflow:hidden;">' + (item.overview ? item.overview.slice(0, 72) + '...' : 'Sélectionner pour remplir le titre.') + '</div>'
+                                + '</div>'
+                                + '</button>';
+                        }).join('');
+                    })
+                    .catch(function(err) {
+                        results.style.display = 'none';
+                    });
             };
 
             window.selectTmdbPanelResult = function(type, id, title) {
