@@ -5986,6 +5986,92 @@
                 flex: 0 0 calc(100% / 2);
             }
         }
+
+        /* ══ PAGINATION CATALOGUE ══ */
+        .catalogue-pagination {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            margin-top: 40px;
+            flex-wrap: wrap;
+            padding: 4px 0 16px;
+        }
+
+        .pag-btn {
+            background: rgba(184, 224, 247, .07);
+            border: 1.5px solid rgba(184, 224, 247, .15);
+            color: rgba(255, 255, 255, .65);
+            padding: 8px 16px;
+            border-radius: 50px;
+            font-family: 'Nunito', sans-serif;
+            font-weight: 700;
+            font-size: .84rem;
+            cursor: pointer;
+            transition: all .2s;
+            min-width: 42px;
+            text-align: center;
+        }
+
+        .pag-btn:hover:not(:disabled) {
+            background: rgba(184, 224, 247, .15);
+            border-color: rgba(184, 224, 247, .35);
+            color: #fff;
+            transform: translateY(-2px);
+        }
+
+        .pag-btn:disabled {
+            opacity: .3;
+            cursor: not-allowed;
+        }
+
+        .pag-btn.active {
+            background: linear-gradient(135deg, var(--teal), var(--aurora2));
+            border-color: transparent;
+            color: #fff;
+            box-shadow: 0 4px 14px rgba(23, 165, 137, .35);
+        }
+
+        .pag-ellipsis {
+            color: rgba(255, 255, 255, .3);
+            font-size: .9rem;
+            padding: 0 4px;
+        }
+
+        .pag-info {
+            color: rgba(255, 255, 255, .4);
+            font-size: .82rem;
+            font-weight: 700;
+            white-space: nowrap;
+            padding: 0 6px;
+        }
+
+        .catalogue-loading-bar {
+            width: 100%;
+            height: 3px;
+            background: rgba(184, 224, 247, .1);
+            border-radius: 2px;
+            margin-bottom: 18px;
+            overflow: hidden;
+            display: none;
+        }
+
+        .catalogue-loading-bar.active {
+            display: block;
+        }
+
+        .catalogue-loading-bar-fill {
+            height: 100%;
+            background: linear-gradient(90deg, var(--teal), var(--aurora2));
+            border-radius: 2px;
+            animation: loadingPulse 1.2s ease-in-out infinite;
+            width: 40%;
+        }
+
+        @keyframes loadingPulse {
+            0% { transform: translateX(-100%); }
+            100% { transform: translateX(350%); }
+        }
     </style>
     <script src="https://jariz.github.io/vibrant.js/dist/vibrant.js"></script>
 </head>
@@ -6167,12 +6253,9 @@
             <button class="cat-btn" data-cat="fantasy" onclick="filterCat('fantasy',this)">⚔️ Fantasy</button>
         </div>
 
-        <div style="display:flex;justify-content:flex-start;align-items:center;gap:10px;margin-top:12px;flex-wrap:wrap;">
-            <button id="smart-catalog-btn" onclick="toggleSmartCatalogMode()" type="button" style="background:linear-gradient(135deg,#2ecc71 0%,#27ae60 100%);color:white;border:none;border-radius:999px;padding:10px 16px;font-weight:800;cursor:pointer;box-shadow:0 6px 18px rgba(46,204,113,.25);">✨ Catalogue intelligent</button>
-            <span id="smart-catalog-hint" style="color:rgba(255,255,255,.6);font-size:.9rem;">Active le mode recommandé selon tes genres préférés.</span>
-        </div>
 
         <!-- Grille (vide au départ, remplie par JS) -->
+        <div class="catalogue-loading-bar" id="catalogue-loading-bar"><div class="catalogue-loading-bar-fill"></div></div>
         <div class="cards-grid" id="cards-grid">
             <div class="empty-catalogue" id="empty-msg" style="grid-column:1/-1">
                 <div class="big-icon">🐧</div>
@@ -6180,6 +6263,8 @@
                 <small>Les contenus ajoutés par le fondateur apparaîtront ici</small>
             </div>
         </div>
+        <!-- Pagination -->
+        <div class="catalogue-pagination" id="catalogue-pagination" style="display:none;"></div>
     </section>
 
     <!-- SAGAS CULTES -->
@@ -6883,7 +6968,7 @@
                     var errorLog = [];
 
                     // ── Chargement des IDs verrouillés ──
-                    var _lockedMap = _getLockedMap();
+                    var _lockedMap = (typeof window._getLockedMap === 'function') ? window._getLockedMap() : {};
 
                     for (var i = 0; i < items.length; i++) {
                         var currentItem = items[i];
@@ -6972,7 +7057,7 @@
                                             });
                                         });
                                     }
-                                    await new Promise(function(r) { setTimeout(r, 200); });
+                                    // Cooldown supprimé
                                 }
 
                                 await window.sb.from('episodes').delete().eq('serie_id', currentItem.id);
@@ -6985,8 +7070,7 @@
                             logDiv.innerHTML += '<span style="color:#2ecc71">OK !</span><br>';
                             successCount++;
 
-                            // Pause pour ne pas saturer l'API TMDB ou Supabase
-                            await new Promise(function(resolve) { setTimeout(resolve, 300); });
+                            // Pause supprimée
                         } catch (err) {
                             logDiv.innerHTML += '<span style="color:#e74c3c">Erreur: ' + err.message + '</span><br>';
                             failCount++;
@@ -7261,7 +7345,7 @@
                 var statusDiv = document.getElementById('maintenance-result');
                 if (statusDiv) statusDiv.innerHTML = '⏳ Suppression en cours...';
                 try {
-                    var lockedMap = (typeof _getLockedMap === 'function') ? _getLockedMap() : {};
+                    var lockedMap = (typeof window._getLockedMap === 'function') ? window._getLockedMap() : {};
                     if (target === 'film' || target === 'all') {
                         var filmRes = await window.sb.from('films').select('id,title');
                         if (filmRes.error) throw filmRes.error;
@@ -7814,6 +7898,12 @@
             var currentTypeFilter = 'all';
             console.log('v75 script loaded: supabase client initialized');
             var currentCatFilter = 'all';
+            
+            // --- Pagination Variables ---
+            var ITEMS_PER_PAGE = 40;
+            var _currentPage = 1;
+            // ----------------------------
+            
             var customCats = JSON.parse(localStorage.getItem('pengu_cats') || '[]');
             var _tmdbLockMap = {};
             var _tmdbLocksLoaded = false;
@@ -7891,12 +7981,13 @@
                     .subscribe();
             }
 
-            function _getLockedMap() {
+            window._getLockedMap = function _getLockedMap() {
                 if (!_tmdbLocksLoaded) {
                     loadTmdbLockMapFromStorage();
                 }
                 return _tmdbLockMap || {};
-            }
+            };
+            function _getLockedMap() { return window._getLockedMap(); }
 
             // Données temporaires pour builder épisodes
             var seasonsData = {}; // {saison: [{num, title, embed, duration}]}
@@ -8278,32 +8369,258 @@
                 } catch (e) {}
             }
 
+            var _totalItemsCount = 0;
+
             window.applyFilters = function applyFilters() {
-                var cards = document.querySelectorAll('#cards-grid .card');
-                var searchVal = (document.getElementById('search-input').value || '').toLowerCase().trim();
-                var visible = 0;
-                var preferredCats = window.smartCatalogActive ? getSmartCatalogPreferences() : [];
-                cards.forEach(function (c) {
-                    var matchType = currentTypeFilter === 'all' || c.dataset.type === currentTypeFilter;
-                    var matchCat = currentCatFilter === 'all' || c.dataset.cat === currentCatFilter;
-                    var matchSearch = !searchVal || ((c.dataset.title || '').toLowerCase().indexOf(searchVal) !== -1);
-                    var matchSmart = true;
-                    if (window.smartCatalogActive && preferredCats.length) {
-                        var cardCat = c.dataset.cat || '';
-                        var isPreferred = preferredCats.indexOf(cardCat) !== -1;
-                        matchSmart = isPreferred || preferredCats.indexOf('all') !== -1;
-                    }
-                    var hide = !(matchType && matchCat && matchSearch && matchSmart);
-                    c.classList.toggle('hidden', hide);
-                    if (!hide) visible++;
-                });
-                var empty = document.getElementById('empty-msg');
-                if (empty) empty.style.display = visible === 0 ? 'block' : 'none';
+                _currentPage = 1;
+                window.fetchPage(1);
             }
 
-            /* ═══════════════════════════════════
-               CATALOGUE — RENDU CARTES
-            ═══════════════════════════════════ */
+            window.fetchPage = function fetchPage(page) {
+                var grid = document.getElementById('cards-grid');
+                if (!grid) return;
+                
+                var searchVal = (document.getElementById('search-input').value || '').toLowerCase().trim();
+                
+                var loadingBar = document.getElementById('catalogue-loading-bar');
+                if (loadingBar) loadingBar.classList.add('active');
+                
+                var startIdx = (page - 1) * ITEMS_PER_PAGE;
+                var endIdx = startIdx + ITEMS_PER_PAGE - 1;
+                
+                // CACHE: Load page 1 instantly
+                var cacheKey = 'pengu_page1_cache';
+                var isDefaultView = (page === 1 && currentTypeFilter === 'all' && currentCatFilter === 'all' && !searchVal);
+                if (isDefaultView && !window._homeCacheLoaded) {
+                    try {
+                        var cachedStr = localStorage.getItem(cacheKey);
+                        if (cachedStr) {
+                            var cached = JSON.parse(cachedStr);
+                            _totalItemsCount = cached.total;
+                            renderCards(cached.items);
+                            if (loadingBar) loadingBar.classList.remove('active');
+                            window._homeCacheLoaded = true;
+                        }
+                    } catch(e) {}
+                }
+                
+                _currentPage = page;
+                var currentItems = [];
+                var totalFilms = 0;
+                var totalSeries = 0;
+                
+                function applySupabaseFilters(query) {
+                    if (currentCatFilter !== 'all') query = query.eq('cat', currentCatFilter);
+                    if (searchVal) query = query.ilike('title', '%' + searchVal + '%');
+                    return query;
+                }
+                
+                var promises = [];
+                
+                if (currentTypeFilter === 'all' || currentTypeFilter === 'film' || currentTypeFilter === 'saga') {
+                    var fq = sb.from('films').select('*', { count: 'exact' });
+                    promises.push(applySupabaseFilters(fq).order('created_at', { ascending: false }).range(startIdx, endIdx).then(function(r) {
+                        if (r.error) throw new Error('Films: ' + JSON.stringify(r.error));
+                        if (r.count !== null) totalFilms = r.count;
+                        if (r.data) r.data.forEach(function(f) {
+                            f.type = 'film';
+                            f.timestamp = f.created_at ? new Date(f.created_at).getTime() : Date.now();
+                            f.embedCode = f.video_url;
+                            f.thumbUrl = f.thumb_url;
+                            f.bannerUrl = f.banner_url;
+                            f.cat = f.cat || 'anime';
+                            f.emoji = f.emoji || '🎬';
+                            f.badge = f.badge || 'new';
+                            f.access = f.access || 'all';
+                            currentItems.push(f);
+                        });
+                    }));
+                }
+                
+                if (currentTypeFilter === 'all' || currentTypeFilter === 'serie' || currentTypeFilter === 'saga') {
+                    var sq = sb.from('series').select('*', { count: 'exact' });
+                    promises.push(applySupabaseFilters(sq).order('created_at', { ascending: false }).range(startIdx, endIdx).then(function(r) {
+                        if (r.error) throw new Error('Series: ' + JSON.stringify(r.error));
+                        if (r.count !== null) totalSeries = r.count;
+                        if (r.data) {
+                            r.data.forEach(function(s) {
+                                s.type = 'serie';
+                                s.timestamp = s.created_at ? new Date(s.created_at).getTime() : Date.now();
+                                s.thumbUrl = s.thumb_url;
+                                s.bannerUrl = s.banner_url;
+                                s.cat = s.cat || 'anime';
+                                s.emoji = s.emoji || '📺';
+                                s.badge = s.badge || 'serie';
+                                s.access = s.access || 'all';
+                                s.nb_saisons = s.nb_saisons || 1;
+                                s.episodes = []; // Épisodes chargés dynamiquement
+                                currentItems.push(s);
+                            });
+                        }
+                    }));
+                }
+                
+                Promise.all(promises).then(function() {
+                    if (loadingBar) loadingBar.classList.remove('active');
+                    _totalItemsCount = totalFilms + totalSeries;
+                    
+                    if (currentTypeFilter === 'all' || currentTypeFilter === 'saga') {
+                        currentItems.sort(function(a, b) { return b.timestamp - a.timestamp; });
+                        currentItems = currentItems.slice(0, ITEMS_PER_PAGE);
+                    }
+                    
+                    if (isDefaultView) {
+                        try { localStorage.setItem(cacheKey, JSON.stringify({ total: _totalItemsCount, items: currentItems })); } catch(e) {}
+                    }
+                    
+                    try {
+                        renderCards(currentItems);
+                    } catch (e) {
+                        var grid = document.getElementById('cards-grid');
+                        if (grid) grid.innerHTML = '<p style="color:red;padding:20px;">Erreur JS de rendu: ' + e.message + '</p>';
+                    }
+                }).catch(function(err) {
+                    if (loadingBar) loadingBar.classList.remove('active');
+                    var grid = document.getElementById('cards-grid');
+                    if (grid) grid.innerHTML = '<p style="color:red;padding:20px;">Erreur base de données: ' + err.message + '</p>';
+                });
+            }
+
+            function renderCards(items) {
+                var grid = document.getElementById('cards-grid');
+                var emptyMsg = document.getElementById('empty-msg');
+                grid.innerHTML = '';
+                if (emptyMsg) grid.appendChild(emptyMsg);
+                
+                if (items.length === 0) {
+                    if (emptyMsg) emptyMsg.style.display = 'block';
+                    renderPagination(0);
+                    return;
+                }
+                
+                if (emptyMsg) emptyMsg.style.display = 'none';
+                var fragment = document.createDocumentFragment();
+                
+                items.forEach(function(item) {
+                    var card = document.createElement('div');
+                    card.className = 'card';
+                    card.dataset.type = item.type;
+                    card.dataset.cat = item.cat;
+                    card.dataset.title = item.title || '';
+                    if (item.access === 'vip') card.dataset.access = 'vip';
+                    
+                    if (item.type === 'film') {
+                        if (item.id) card.dataset.filmId = item.id;
+                        var g = catGradient(item.cat); var c1 = item.c1 || g.c1; var c2 = item.c2 || g.c2;
+                        
+                        var thumb = '<div class="card-thumb" style="background:linear-gradient(135deg,' + c1 + ',' + c2 + ');position:relative">';
+                        if (item.thumbUrl) thumb += '<img src="' + item.thumbUrl + '" alt="' + item.title + '" loading="lazy" onerror="this.style.display=\'none\'">';
+                        else thumb += '<div style="font-size:3.5rem;line-height:1;display:flex;align-items:center;justify-content:center;width:100%;height:100%;position:absolute;inset:0;">' + item.emoji + '</div>';
+                        if (item.access === 'vip') thumb += '<span class="card-vip-lock">👑 VIP</span>';
+                        thumb += '<div class="card-play-btn"><div class="card-play-icon' + (item.embedCode ? '' : ' no-video') + '">' + (item.embedCode ? '▶' : '🔒') + '</div></div>';
+                        if (item.id) thumb += '<button class="btn-fav" id="fav-btn-film-' + item.id + '" onclick="event.stopPropagation();toggleFav(\'film\',\'' + item.id + '\',\'' + item.title.replace(/'/g, "\\'") + '\')" title="Ajouter aux favoris">♡</button>';
+                        thumb += '</div>';
+
+                        var displayCat = item.cat ? (item.cat.charAt(0).toUpperCase() + item.cat.slice(1)) : '';
+                        var info = '<div class="card-info">';
+                        info += '<div class="card-tags-row"><span class="card-type-tag-ext">🎬 FILM</span>' + (displayCat ? '<span class="card-cat-tag-ext">' + displayCat + '</span>' : '') + '</div>';
+                        info += '<div class="card-title">' + item.title + '</div>';
+                        if (item.description) info += '<div class="card-meta">' + item.description.substring(0, 40) + (item.description.length > 40 ? '…' : '') + '</div>';
+                        info += badgeHtml(item.badge) + '</div>';
+
+                        card.innerHTML = thumb + info;
+                        card.addEventListener('click', function () {
+                            openDetailModal({
+                                type: 'film', id: item.id, title: item.title, description: item.description || '', thumb: item.thumbUrl,
+                                banner: item.bannerUrl, emoji: item.emoji, badge: item.badge, cat: item.cat, access: item.access,
+                                embedCode: item.embedCode, c1: c1, c2: c2
+                            });
+                        });
+                    } else if (item.type === 'serie') {
+                        if (item.id) card.dataset.serieId = item.id;
+                        var g = catGradient(item.cat); var c1 = item.c1 || g.c1; var c2 = item.c2 || g.c2;
+                        var nbSaisons = item.nb_saisons || 1;
+                        var nbEp = item.episodes ? item.episodes.length : 0;
+                        
+                        var thumb = '<div class="card-thumb" style="background:linear-gradient(135deg,' + c1 + ',' + c2 + ');position:relative">';
+                        if (item.thumbUrl) thumb += '<img src="' + item.thumbUrl + '" alt="' + item.title + '" loading="lazy" onerror="this.style.display=\'none\'">';
+                        else thumb += '<div style="font-size:3.5rem;line-height:1;display:flex;align-items:center;justify-content:center;width:100%;height:100%;position:absolute;inset:0;">' + item.emoji + '</div>';
+                        if (item.access === 'vip') thumb += '<span class="card-vip-lock">👑 VIP</span>';
+                        thumb += '<div class="card-play-btn"><div class="card-play-icon' + (nbEp > 0 ? '' : ' no-video') + '">' + (nbEp > 0 ? '▶' : '🔒') + '</div></div>';
+                        if (item.id) thumb += '<button class="btn-fav" id="fav-btn-serie-' + item.id + '" onclick="event.stopPropagation();toggleFav(\'serie\',\'' + item.id + '\',\'' + item.title.replace(/'/g, "\\'") + '\')" title="Ajouter aux favoris">♡</button>';
+                        thumb += '</div>';
+
+                        var displayCat = item.cat ? (item.cat.charAt(0).toUpperCase() + item.cat.slice(1)) : '';
+                        var info = '<div class="card-info">';
+                        info += '<div class="card-tags-row"><span class="card-type-tag-ext" style="background:rgba(231,76,139,.15);color:#e74c8b;border-color:rgba(231,76,139,.25)">📺 SÉRIE</span>' + (displayCat ? '<span class="card-cat-tag-ext">' + displayCat + '</span>' : '') + '</div>';
+                        info += '<div class="card-title">' + item.title + '</div>';
+                        var metaText = nbSaisons + ' saison' + (nbSaisons > 1 ? 's' : '');
+                        if (item.episodes && item.episodes.length > 0) metaText += ' · ' + item.episodes.length + ' ép.';
+                        info += '<div class="card-meta">' + metaText + '</div>';
+                        info += badgeHtml(item.badge || 'serie') + '</div>';
+
+                        card.innerHTML = thumb + info;
+                        card.addEventListener('click', function () {
+                            openDetailModal({
+                                type: 'serie', title: item.title, description: item.description || '', thumb: item.thumbUrl,
+                                banner: item.bannerUrl, emoji: item.emoji || '📺', badge: item.badge || 'serie', cat: item.cat, access: item.access,
+                                nb_saisons: nbSaisons, episodes: item.episodes || [], id: item.id, c1: c1, c2: c2
+                            });
+                        });
+                    }
+                    fragment.appendChild(card);
+                    addFilterCatBtn(item.cat);
+                });
+                
+                grid.appendChild(fragment);
+                var totalPages = Math.ceil(_totalItemsCount / ITEMS_PER_PAGE);
+                renderPagination(totalPages);
+                if (window.applyVip && window.currentRole) window.applyVip(window.currentRole);
+            }
+
+            function renderPagination(totalPages) {
+                var container = document.getElementById('catalogue-pagination');
+                if (!container) return;
+                
+                if (totalPages <= 1) {
+                    container.style.display = 'none';
+                    return;
+                }
+                
+                container.style.display = 'flex';
+                var html = '';
+                
+                // Prev button
+                html += '<button class="pag-btn" ' + (_currentPage === 1 ? 'disabled' : '') + ' onclick="window.fetchPage(' + (_currentPage - 1) + ')">←</button>';
+                
+                // Pagination logic (show 5 pages around current)
+                var startPage = Math.max(1, _currentPage - 2);
+                var endPage = Math.min(totalPages, _currentPage + 2);
+                
+                if (startPage > 1) {
+                    html += '<button class="pag-btn" onclick="window.fetchPage(1)">1</button>';
+                    if (startPage > 2) html += '<span class="pag-ellipsis">...</span>';
+                }
+                
+                for (var i = startPage; i <= endPage; i++) {
+                    var activeCls = i === _currentPage ? ' active' : '';
+                    html += '<button class="pag-btn' + activeCls + '" onclick="window.fetchPage(' + i + ')">' + i + '</button>';
+                }
+                
+                if (endPage < totalPages) {
+                    if (endPage < totalPages - 1) html += '<span class="pag-ellipsis">...</span>';
+                    html += '<button class="pag-btn" onclick="window.fetchPage(' + totalPages + ')">' + totalPages + '</button>';
+                }
+                
+                // Next button
+                html += '<button class="pag-btn" ' + (_currentPage === totalPages ? 'disabled' : '') + ' onclick="window.fetchPage(' + (_currentPage + 1) + ')">→</button>';
+                
+                // Info
+                html += '<span class="pag-info">(' + _totalItemsCount + ' contenus)</span>';
+                
+                container.innerHTML = html;
+            }
+
             function badgeHtml(badge) {
                 if (!badge || badge === 'NULL') return '';
                 var lbl = { new: 'NOUVEAU', popular: '⭐ POPULAIRE', vip: '👑 VIP', '4k': '4K HDR', serie: '📺 SÉRIE' };
@@ -8330,86 +8647,8 @@
                 return { c1: g[0], c2: g[1] };
             }
 
-            function addFilmCard(f) {
-                var g = catGradient(f.cat); var c1 = f.c1 || g.c1; var c2 = f.c2 || g.c2;
-                var empty = document.getElementById('empty-msg');
-                if (empty) empty.style.display = 'none';
-
-                var card = document.createElement('div');
-                card.className = 'card'; card.dataset.type = 'film'; card.dataset.cat = f.cat; card.dataset.title = f.title || '';
-                if (f.id) card.dataset.filmId = f.id;
-                if (f.access === 'vip') card.dataset.access = 'vip';
-
-                var thumb = '<div class="card-thumb" style="background:linear-gradient(135deg,' + c1 + ',' + c2 + ');position:relative">';
-                if (f.thumbUrl) thumb += '<img src="' + f.thumbUrl + '" alt="' + f.title + '" onerror="this.style.display=\'none\'">';
-                else thumb += '<div style="font-size:3.5rem;line-height:1;display:flex;align-items:center;justify-content:center;width:100%;height:100%;position:absolute;inset:0;">' + f.emoji + '</div>';
-                if (f.access === 'vip') thumb += '<span class="card-vip-lock">👑 VIP</span>';
-                thumb += '<div class="card-play-btn"><div class="card-play-icon' + (f.embedCode ? '' : ' no-video') + '">' + (f.embedCode ? '▶' : '🔒') + '</div></div>';
-                if (f.id) thumb += '<button class="btn-fav" id="fav-btn-film-' + f.id + '" onclick="event.stopPropagation();toggleFav(\'film\',\'' + f.id + '\',\'' + f.title.replace(/'/g, "\\'") + '\')" title="Ajouter aux favoris">♡</button>';
-                thumb += '</div>';
-
-                var displayCat = f.cat ? (f.cat.charAt(0).toUpperCase() + f.cat.slice(1)) : '';
-                var info = '<div class="card-info">';
-                info += '<div class="card-tags-row"><span class="card-type-tag-ext">🎬 FILM</span>' + (displayCat ? '<span class="card-cat-tag-ext">' + displayCat + '</span>' : '') + '</div>';
-                info += '<div class="card-title">' + f.title + '</div>';
-                if (f.description) info += '<div class="card-meta">' + f.description.substring(0, 40) + (f.description.length > 40 ? '…' : '') + '</div>';
-                info += badgeHtml(f.badge) + '</div>';
-
-                card.innerHTML = thumb + info;
-                card.addEventListener('click', function () {
-                    openDetailModal({
-                        type: 'film', id: f.id, title: f.title, description: f.description || '', thumb: f.thumbUrl,
-                        banner: f.bannerUrl, emoji: f.emoji, badge: f.badge, cat: f.cat, access: f.access,
-                        embedCode: f.embedCode, c1: c1, c2: c2
-                    });
-                });
-                document.getElementById('cards-grid').appendChild(card);
-                addFilterCatBtn(f.cat);
-                applyFilters();
-            }
-
-            function addSerieCard(s, episodes) {
-                var g = catGradient(s.cat); var c1 = s.c1 || g.c1; var c2 = s.c2 || g.c2;
-                var empty = document.getElementById('empty-msg');
-                if (empty) empty.style.display = 'none';
-
-                var card = document.createElement('div');
-                card.className = 'card'; card.dataset.type = 'serie'; card.dataset.cat = s.cat; card.dataset.title = s.title || '';
-                if (s.id) card.dataset.serieId = s.id;
-                if (s.access === 'vip') card.dataset.access = 'vip';
-
-                var nbSaisons = s.nb_saisons || 1;
-                var nbEp = episodes ? episodes.length : 0;
-
-                var thumb = '<div class="card-thumb" style="background:linear-gradient(135deg,' + c1 + ',' + c2 + ');position:relative">';
-                if (s.thumbUrl) thumb += '<img src="' + s.thumbUrl + '" alt="' + s.title + '" onerror="this.style.display=\'none\'">';
-                else thumb += '<div style="font-size:3.5rem;line-height:1;display:flex;align-items:center;justify-content:center;width:100%;height:100%;position:absolute;inset:0;">' + s.emoji + '</div>';
-                if (s.access === 'vip') thumb += '<span class="card-vip-lock">👑 VIP</span>';
-                thumb += '<div class="card-play-btn"><div class="card-play-icon' + (nbEp > 0 ? '' : ' no-video') + '">' + (nbEp > 0 ? '▶' : '🔒') + '</div></div>';
-                if (s.id) thumb += '<button class="btn-fav" id="fav-btn-serie-' + s.id + '" onclick="event.stopPropagation();toggleFav(\'serie\',\'' + s.id + '\',\'' + s.title.replace(/'/g, "\\'") + '\')" title="Ajouter aux favoris">♡</button>';
-                thumb += '</div>';
-
-                var displayCat = s.cat ? (s.cat.charAt(0).toUpperCase() + s.cat.slice(1)) : '';
-                var info = '<div class="card-info">';
-                info += '<div class="card-tags-row"><span class="card-type-tag-ext" style="background:rgba(231,76,139,.15);color:#e74c8b;border-color:rgba(231,76,139,.25)">📺 SÉRIE</span>' + (displayCat ? '<span class="card-cat-tag-ext">' + displayCat + '</span>' : '') + '</div>';
-                info += '<div class="card-title">' + s.title + '</div>';
-                info += '<div class="card-meta">' + nbSaisons + ' saison' + (nbSaisons > 1 ? 's' : '') + ' · ' + nbEp + ' ép.</div>';
-                info += badgeHtml(s.badge || 'serie') + '</div>';
-
-                card.innerHTML = thumb + info;
-                card.addEventListener('click', function () {
-                    openDetailModal({
-                        type: 'serie', title: s.title, description: s.description || '', thumb: s.thumbUrl,
-                        banner: s.bannerUrl, emoji: s.emoji || '📺', badge: s.badge || 'serie', cat: s.cat, access: s.access,
-                        nb_saisons: nbSaisons, episodes: episodes || [], id: s.id, c1: c1, c2: c2
-                    });
-                });
-                document.getElementById('cards-grid').appendChild(card);
-                addFilterCatBtn(s.cat);
-                applyFilters();
-            }
-
             function addFilterCatBtn(catKey) {
+                if (!catKey) return;
                 if (document.querySelector('.cat-btn[data-cat="' + catKey + '"]')) return;
                 var def = DEFAULT_CATS.find(function (c) { return c.key === catKey; });
                 if (def) return; // bouton déjà dans le HTML
@@ -8673,84 +8912,35 @@
             /* ═══════════════════════════════════
                CHARGEMENT INITIAL CATALOGUE
             ═══════════════════════════════════ */
-            function loadCatalogue() {
-                // Films
-                sb.from('films').select('*').order('created_at', { ascending: true }).then(function (res) {
-                    if (res.error) { console.error('loadCatalogue films error', { status: res.status, error: res.error, message: (res.error && res.error.message), details: (res.error && res.error.details), hint: (res.error && res.error.hint) }); return; }
-                    if (!res.data) { console.warn('loadCatalogue films: no data', res); return; }
-                    res.data.forEach(function (f) {
-                        addFilmCard({ id: f.id, title: f.title, cat: f.cat || 'anime', emoji: f.emoji || '🎬', badge: f.badge || 'new', access: f.access || 'all', embedCode: f.video_url, thumbUrl: f.thumb_url, bannerUrl: f.banner_url, description: f.description });
-                    });
-                    applyVip(currentRole);
-                });
-                // Séries + épisodes
-                sb.from('series').select('*').order('created_at', { ascending: true }).then(function (res) {
-                    if (res.error || !res.data) return;
-                    res.data.forEach(function (s) {
-                        sb.from('episodes').select('*').eq('serie_id', s.id).order('saison').order('numero').then(function (epRes) {
-                            var eps = (!epRes.error && epRes.data) ? epRes.data : [];
-                            addSerieCard({ id: s.id, title: s.title, cat: s.cat || 'anime', emoji: s.emoji || '📺', badge: s.badge || 'serie', access: s.access || 'all', thumbUrl: s.thumb_url, bannerUrl: s.banner_url, description: s.description, nb_saisons: s.nb_saisons || 1 }, eps);
-                        });
-                    });
-                    applyVip(currentRole);
-                });
-            }
-            loadCatalogue();
+            // Premier chargement de la page 1
+            setTimeout(function() {
+                window.applyFilters();
+            }, 100);
 
             /* Realtime sync catalogue (films + séries) */
             setTimeout(function () {
                 if (!window.sb) return;
                 window.sb.channel('catalogue-films')
                     .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'films' }, function (payload) {
-                        var f = payload.new;
-                        if (!f) return;
-                        // Éviter les doublons
-                        if (document.querySelector('[data-film-id="' + f.id + '"]')) return;
-                        addFilmCard({ id: f.id, title: f.title, cat: f.cat || 'anime', emoji: f.emoji || '🎬', badge: f.badge || 'new', access: f.access || 'all', embedCode: f.video_url, thumbUrl: f.thumb_url, bannerUrl: f.banner_url, description: f.description });
-                        applyVip(currentRole);
+                        window.fetchPage(_currentPage);
                     })
                     .on('postgres_changes', { event: 'DELETE', schema: 'public', table: 'films' }, function (payload) {
-                        var old = payload.old;
-                        if (!old) return;
-                        var card = document.querySelector('[data-film-id="' + old.id + '"]');
-                        if (card) card.remove();
-                        applyFilters();
+                        window.fetchPage(_currentPage);
                     })
                     .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'films' }, function (payload) {
-                        var f = payload.new;
-                        if (!f) return;
-                        var old = document.querySelector('[data-film-id="' + f.id + '"]');
-                        if (old) old.remove();
-                        addFilmCard({ id: f.id, title: f.title, cat: f.cat || 'anime', emoji: f.emoji || '🎬', badge: f.badge || 'new', access: f.access || 'all', embedCode: f.video_url, thumbUrl: f.thumb_url, bannerUrl: f.banner_url, description: f.description });
-                        applyVip(currentRole);
+                        window.fetchPage(_currentPage);
                     })
                     .subscribe();
 
                 window.sb.channel('catalogue-series')
                     .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'series' }, function (payload) {
-                        var s = payload.new;
-                        if (!s || document.querySelector('[data-serie-id="' + s.id + '"]')) return;
-                        window.sb.from('episodes').select('*').eq('serie_id', s.id).order('saison').order('numero').then(function (epR) {
-                            addSerieCard({ id: s.id, title: s.title, cat: s.cat || 'anime', emoji: s.emoji || '📺', badge: s.badge || 'serie', access: s.access || 'all', thumbUrl: s.thumb_url, bannerUrl: s.banner_url, description: s.description, nb_saisons: s.nb_saisons || 1 }, epR.data || []);
-                            applyVip(currentRole);
-                        });
+                        window.fetchPage(_currentPage);
                     })
                     .on('postgres_changes', { event: 'DELETE', schema: 'public', table: 'series' }, function (payload) {
-                        var old = payload.old;
-                        if (!old) return;
-                        var card = document.querySelector('[data-serie-id="' + old.id + '"]');
-                        if (card) card.remove();
-                        applyFilters();
+                        window.fetchPage(_currentPage);
                     })
                     .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'series' }, function (payload) {
-                        var s = payload.new;
-                        if (!s) return;
-                        var old = document.querySelector('[data-serie-id="' + s.id + '"]');
-                        if (old) old.remove();
-                        window.sb.from('episodes').select('*').eq('serie_id', s.id).order('saison').order('numero').then(function (epR) {
-                            addSerieCard({ id: s.id, title: s.title, cat: s.cat || 'anime', emoji: s.emoji || '📺', badge: s.badge || 'serie', access: s.access || 'all', thumbUrl: s.thumb_url, bannerUrl: s.banner_url, description: s.description, nb_saisons: s.nb_saisons || 1 }, epR.data || []);
-                            applyVip(currentRole);
-                        });
+                        window.fetchPage(_currentPage);
                     })
                     .subscribe();
             }, 2200);
@@ -10693,18 +10883,35 @@
 
             // ── Épisodes ──
             var epsWrap = document.getElementById('detail-episodes-wrap');
-            if (item.type === 'serie' && item.episodes && item.episodes.length > 0) {
+            if (item.type === 'serie') {
                 epsWrap.style.display = '';
-                var eps = item.episodes;
-                var saisons = [];
-                for (var i = 1; i <= (item.nb_saisons || 1); i++) saisons.push(i);
-                window._currentDetailItem = item;
-                var tabsHtml = saisons.length > 1 ? '<div class="detail-saison-tabs" id="detail-saison-tabs">' +
-                    saisons.map(function (n) {
-                        return '<button class="detail-saison-tab' + (n === 1 ? ' active' : '') + '" onclick="switchDetailSaison(' + n + ')">S' + n + '</button>';
-                    }).join('') + '</div>' : '';
-                epsWrap.innerHTML = '<h4>📋 Épisodes</h4>' + tabsHtml + '<div class="detail-ep-list" id="detail-ep-list"></div>';
-                renderDetailEpisodes(eps, 1, item);
+                
+                function buildEpsUI() {
+                    var eps = item.episodes || [];
+                    var saisons = [];
+                    for (var i = 1; i <= (item.nb_saisons || 1); i++) saisons.push(i);
+                    window._currentDetailItem = item;
+                    var tabsHtml = saisons.length > 1 ? '<div class="detail-saison-tabs" id="detail-saison-tabs">' +
+                        saisons.map(function (n) {
+                            return '<button class="detail-saison-tab' + (n === 1 ? ' active' : '') + '" onclick="switchDetailSaison(' + n + ')">S' + n + '</button>';
+                        }).join('') + '</div>' : '';
+                    epsWrap.innerHTML = '<h4>📋 Épisodes</h4>' + tabsHtml + '<div class="detail-ep-list" id="detail-ep-list"></div>';
+                    renderDetailEpisodes(eps, 1, item);
+                }
+
+                if (item.episodes && item.episodes.length > 0) {
+                    buildEpsUI();
+                } else {
+                    epsWrap.innerHTML = '<h4>📋 Épisodes</h4><div class="detail-ep-list"><div style="color:rgba(255,255,255,.5);padding:20px;text-align:center;">⏳ Chargement des épisodes...</div></div>';
+                    window.sb.from('episodes').select('*').eq('serie_id', item.id).order('saison').order('numero').then(function(res) {
+                        if (res.error) {
+                            epsWrap.innerHTML = '<h4>📋 Épisodes</h4><div class="detail-ep-list"><div style="color:#e74c3c;padding:20px;">❌ Erreur: ' + res.error.message + '</div></div>';
+                        } else {
+                            item.episodes = res.data || [];
+                            buildEpsUI();
+                        }
+                    });
+                }
             } else {
                 epsWrap.style.display = 'none';
                 epsWrap.innerHTML = '<div class="detail-ep-list" id="detail-ep-list"></div>';
@@ -11509,7 +11716,7 @@ body.theme-feu_artifice .aurora-bg .a3{background:#f1c40f;}
                     : Promise.resolve();
                 Promise.all([
                     sagaPromise,
-                    window.sb.from('films').select('id,title,thumb_url,emoji').order('title'),
+                    window.sb.from('films').select('id,title,thumb_url,emoji,tmdb_id').order('title'),
                     window.sb.from('series').select('id,title,thumb_url,emoji').order('title')
                 ]).then(function (results) {
                     var films = (results[1].data || []), series = (results[2].data || []);
@@ -13300,6 +13507,78 @@ body.theme-feu_artifice .aurora-bg .a3{background:#f1c40f;}
                 });
             });
 
+            function normalizeSagaName(value) {
+                return (value || '')
+                    .toString()
+                    .normalize('NFD')
+                    .replace(/[\u0300-\u036f]/g, '')
+                    .toLowerCase()
+                    .replace(/[^a-z0-9]+/g, ' ')
+                    .trim()
+                    .replace(/\s+/g, ' ');
+            }
+
+            window.applySagaTmdbSelection = function (tmdbDetails) {
+                var parts = tmdbDetails && Array.isArray(tmdbDetails.parts) ? tmdbDetails.parts : [];
+                if (!parts.length) {
+                    return;
+                }
+
+                if (!window._sagaPickerData || !Array.isArray(window._sagaPickerData.films)) {
+                    return;
+                }
+
+                var selected = Array.isArray(window._sagaPickerData.currentFilmIds) ? window._sagaPickerData.currentFilmIds.slice() : [];
+                var matched = [];
+
+                window._sagaPickerData.films.forEach(function (film) {
+                    var filmId = film && film.id;
+                    if (!filmId || selected.indexOf(filmId) !== -1) return;
+
+                    var isMatch = parts.some(function (part) {
+                        var partId = part && part.id;
+                        if (film.tmdb_id && partId && String(film.tmdb_id) === String(partId)) return true;
+                        var filmName = normalizeSagaName(film.title);
+                        var partName = normalizeSagaName(part.title);
+                        if (!filmName || !partName) return false;
+                        if (filmName === partName) return true;
+                        if (filmName.indexOf(partName) !== -1 || partName.indexOf(filmName) !== -1) return true;
+                        var filmYear = String(film.release_year || '');
+                        var partYear = (part.release_date || '').slice(0, 4);
+                        return !!(filmYear && partYear && filmYear === partYear);
+                    });
+
+                    if (isMatch) {
+                        selected.push(filmId);
+                        matched.push(film.title || filmId);
+                    }
+                });
+
+                window._sagaPickerData.currentFilmIds = selected;
+
+                var picker = document.getElementById('saga-contents-picker');
+                if (picker) {
+                    picker.querySelectorAll('input[type="checkbox"][data-type="film"]').forEach(function (cb) {
+                        var shouldCheck = selected.indexOf(cb.dataset.id) !== -1;
+                        cb.checked = shouldCheck;
+                        var label = cb.closest('label');
+                        if (label) label.classList.toggle('checked', shouldCheck);
+                    });
+
+                    var checkedCount = picker.querySelectorAll('input[type="checkbox"]:checked').length;
+                    var countEl = document.getElementById('saga-picker-count');
+                    if (countEl) {
+                        countEl.textContent = checkedCount + ' sélectionné' + (checkedCount !== 1 ? 's' : '');
+                    }
+                }
+
+                if (matched.length) {
+                    window.toast('✅ ' + matched.length + ' film(s) déjà présents sur le site ont été pré-sélectionnés pour la saga.');
+                } else {
+                    window.toast('⚠️ Aucun film déjà présent sur le site ne correspond à cette collection TMDB.', true);
+                }
+            };
+
             // ─── Fonction partagée : traitement des détails TMDB ────────────
             function _handleTMDBDetails(type, tmdbType, key, item, details) {
                 var prefix = type === 'film' ? 'film' : (type === 'serie' ? 'serie' : 'saga');
@@ -13388,6 +13667,7 @@ body.theme-feu_artifice .aurora-bg .a3{background:#f1c40f;}
                 } else if (type === 'saga') {
                     var st = document.getElementById('saga-tmdb-status');
                     if (st) st.innerHTML = '<span style="color:#2ecc71;">✅ ID Rempli</span>';
+                    if (window.applySagaTmdbSelection) window.applySagaTmdbSelection(details);
                     window.toast("✅ Auto-remplissage Saga TMDB réussi !");
                 }
             }
@@ -13588,23 +13868,8 @@ body.theme-feu_artifice .aurora-bg .a3{background:#f1c40f;}
 
         // ===== RATE LIMITING (LocalStorage) =====
         function checkRateLimit(email) {
-            var key = 'reset-code-' + email;
-            var attempts = JSON.parse(localStorage.getItem(key) || '[]');
-            var now = Date.now();
-            var oneHourAgo = now - (60 * 60 * 1000);
-            
-            // Supprimer les tentatives > 1h
-            attempts = attempts.filter(function(t) { return t > oneHourAgo; });
-            
-            if (attempts.length >= 3) {
-                var oldestAttempt = Math.min.apply(null, attempts);
-                var timeUntilReset = Math.ceil((oldestAttempt + 3600000 - now) / 1000 / 60);
-                throw new Error('⏱️ Trop de tentatives. Réessaie dans ' + timeUntilReset + ' min');
-            }
-            
-            // Ajouter la tentative actuelle
-            attempts.push(now);
-            localStorage.setItem(key, JSON.stringify(attempts));
+            // Cooldown supprimé à la demande de l'utilisateur
+            return;
         }
 
         // ===== ÉTAPE 1: Envoyer code =====
