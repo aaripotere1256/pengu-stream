@@ -6957,9 +6957,18 @@
                 logDiv.innerHTML = 'Récupération depuis la base de données...<br>';
 
                 try {
-                    var r = await window.sb.from(tableName).select('*');
-                    if (r.error) throw r.error;
-                    var items = r.data || [];
+                    // Récupération paginée pour éviter la limite 1000 lignes de Supabase
+                    var items = [];
+                    var page = 0;
+                    var pageSize = 500;
+                    while (true) {
+                        var r = await window.sb.from(tableName).select('*').range(page * pageSize, (page + 1) * pageSize - 1);
+                        if (r.error) throw r.error;
+                        if (!r.data || r.data.length === 0) break;
+                        items = items.concat(r.data);
+                        if (r.data.length < pageSize) break;
+                        page++;
+                    }
                     logDiv.innerHTML += '👉 ' + items.length + ' ' + tableName + ' trouvés.<br>';
 
                     var key = 'f34c56c945e5e0de8bd72f85371deea0';
@@ -7062,8 +7071,13 @@
 
                                 await window.sb.from('episodes').delete().eq('serie_id', currentItem.id);
                                 if (epsToInsert.length > 0) {
-                                    var epsRes = await window.sb.from('episodes').insert(epsToInsert);
-                                    if (epsRes.error) throw epsRes.error;
+                                    var chunkSize = 15;
+                                    for (var ci = 0; ci < epsToInsert.length; ci += chunkSize) {
+                                        var chunk = epsToInsert.slice(ci, ci + chunkSize);
+                                        var epsRes = await window.sb.from('episodes').insert(chunk);
+                                        if (epsRes.error) throw epsRes.error;
+                                        await new Promise(function(r) { setTimeout(r, 100); });
+                                    }
                                 }
                             }
 
@@ -7533,8 +7547,13 @@
                             episodes.forEach(function(ep) { ep.serie_id = serieId; });
                             
                             if (episodes.length) {
-                                var epInsert = await window.sb.from('episodes').insert(episodes);
-                                if (epInsert.error) throw epInsert.error;
+                                var chunkSize = 15;
+                                for (var ci = 0; ci < episodes.length; ci += chunkSize) {
+                                    var chunk = episodes.slice(ci, ci + chunkSize);
+                                    var epInsert = await window.sb.from('episodes').insert(chunk);
+                                    if (epInsert.error) throw epInsert.error;
+                                    await new Promise(function(r) { setTimeout(r, 100); });
+                                }
                             }
                             addLog('✅ ' + emoji + ' Série ajoutée: ' + contentTitle + ' (' + releaseYear + ') [TMDB #' + item.id + '] - ' + numSeasons + ' saison(s), ' + episodeCount + ' épisode(s)', '#2ecc71');
                             episodesBySerieTitle[contentTitle] = episodeCount;
@@ -8976,6 +8995,8 @@
             /* ═══════════════════════════════════
                PANNEAU FONDATEUR
             ═══════════════════════════════════ */
+            window._fpLoadedTabs = window._fpLoadedTabs || { users:false, films:false, series:false, cats:false, sagas:false, themes:false, spotlight:false };
+
             window.openFounderPanel = function () {
                 if ((ROLES[currentRole] || ROLES.user).level < 3) { toast('🚫 Accès refusé.', true); return; }
                 document.getElementById('founder-panel').classList.add('open');
@@ -8993,11 +9014,14 @@
                 }
 
                 populateCatSelects();
-                searchUsers(true);
-                loadFilmsList();
-                loadSeriesList();
-                renderCatPanel();
-                if (window.loadSagasList) window.loadSagasList();
+                if (!window._fpLoadedTabs.users) {
+                    searchUsers(true);
+                    window._fpLoadedTabs.users = true;
+                }
+                if (!window._fpLoadedTabs.cats) {
+                    renderCatPanel();
+                    window._fpLoadedTabs.cats = true;
+                }
             };
             function closeFounderPanel() {
                 document.getElementById('founder-panel').classList.remove('open');
@@ -9010,6 +9034,31 @@
                 btn.classList.add('active');
                 document.querySelectorAll('.fp-section').forEach(function (s) { s.classList.remove('active'); });
                 document.getElementById('fp-' + tab).classList.add('active');
+                if (tab === 'films' && !window._fpLoadedTabs.films) {
+                    loadFilmsList();
+                    window._fpLoadedTabs.films = true;
+                }
+                if (tab === 'series' && !window._fpLoadedTabs.series) {
+                    loadSeriesList();
+                    window._fpLoadedTabs.series = true;
+                }
+                if (tab === 'sagas' && !window._fpLoadedTabs.sagas && window.loadSagasList) {
+                    window.loadSagasList();
+                    window._fpLoadedTabs.sagas = true;
+                }
+                if (tab === 'cats' && !window._fpLoadedTabs.cats) {
+                    renderCatPanel();
+                    window._fpLoadedTabs.cats = true;
+                }
+                if (tab === 'themes' && !window._fpLoadedTabs.themes) {
+                    renderThemeGrid();
+                    window._fpLoadedTabs.themes = true;
+                }
+                if (tab === 'spotlight' && !window._fpLoadedTabs.spotlight) {
+                    loadSpotlightContentList();
+                    syncSpotlightPanelPreview(window._spotlightData);
+                    window._fpLoadedTabs.spotlight = true;
+                }
             };
 
             /* ═══════════════════════════════════
@@ -9258,7 +9307,7 @@
             function loadSeriesList() {
                 var list = document.getElementById('series-list');
                 list.innerHTML = '<p style="color:rgba(255,255,255,.3);font-size:.82rem;">⏳ Chargement...</p>';
-                sb.from('series').select('*').order('created_at', { ascending: false }).then(function (res) {
+                sb.from('series').select('id,title,thumb_url,cat,access,nb_saisons,emoji,badge').order('created_at', { ascending: false }).then(function (res) {
                     if (res.error || !res.data || res.data.length === 0) {
                         list.innerHTML = '<p style="color:rgba(255,255,255,.3);font-size:.82rem;">Aucune série enregistrée.</p>'; return;
                     }
@@ -9342,7 +9391,7 @@
                     var serieTmdbField = document.getElementById('serie-tmdb-id');
                     if (serieTmdbField) serieTmdbField.value = s.tmdb_id || '';
                     // Charger les épisodes
-                    sb.from('episodes').select('*').eq('serie_id', s.id).order('saison').order('numero').then(function (epRes) {
+                    sb.from('episodes').select('id,saison,numero,title,video_url,duration,description').eq('serie_id', s.id).order('saison').order('numero').then(function (epRes) {
                         seasonsData = {};
                         var nb = s.nb_saisons || 1;
                         for (var n = 1; n <= nb; n++) seasonsData[n] = [];
@@ -9369,6 +9418,21 @@
 
             window.updateSeasonsBuilder = function () {
                 var nb = parseInt(document.getElementById('serie-nb-saisons').value) || 1;
+
+                // ── Sauvegarder les valeurs DOM actuelles dans seasonsData AVANT tout re-render ──
+                Object.keys(seasonsData).forEach(function(k) {
+                    var sn = parseInt(k);
+                    (seasonsData[sn] || []).forEach(function(ep, idx) {
+                        var row = document.getElementById('ep-row-' + sn + '-' + idx);
+                        if (!row) return;
+                        var inputs = row.querySelectorAll('input');
+                        if (inputs[0]) ep.num = parseInt(inputs[0].value) || idx + 1;
+                        if (inputs[1]) ep.title = inputs[1].value;
+                        if (inputs[2]) ep.embed = inputs[2].value;
+                        if (inputs[3]) ep.duration = inputs[3].value;
+                    });
+                });
+
                 // Conserver les données existantes, ajouter les nouvelles saisons
                 for (var n = 1; n <= nb; n++) {
                     if (!seasonsData[n]) seasonsData[n] = [];
@@ -9401,19 +9465,35 @@
 
             function buildEpsHtml(saison, eps) {
                 if (eps.length === 0) return '';
-                // Les valeurs sont lues depuis le DOM dans saveSerie() - oninput met à jour seasonsData
                 return eps.map(function (ep, idx) {
                     var embedVal = (ep.embed || ep.video_url || '').replace(/"/g, '&quot;');
                     var titleVal = (ep.title || '').replace(/"/g, '&quot;');
                     var durVal = (ep.duration || '').replace(/"/g, '&quot;');
                     return '<div class="ep-form-row" id="ep-row-' + saison + '-' + idx + '">' +
-                        '<input type="number" value="' + (ep.num || ep.numero || idx + 1) + '" min="1" placeholder="N°">' +
-                        '<input type="text" value="' + titleVal + '" placeholder="Titre de l\'épisode">' +
-                        '<input type="text" value="' + embedVal + '" placeholder="Embed / URL lecteur">' +
-                        '<input type="text" value="' + durVal + '" placeholder="Durée (ex: 45min)">' +
+                        '<input type="number" value="' + (ep.num || ep.numero || idx + 1) + '" min="1" placeholder="N°" oninput="updateEp(' + saison + ',' + idx + ',\'num\',this.value)">' +
+                        '<input type="text" value="' + titleVal + '" placeholder="Titre de l\'épisode" oninput="updateEp(' + saison + ',' + idx + ',\'title\',this.value)">' +
+                        '<input type="text" value="' + embedVal + '" placeholder="Embed / URL lecteur" oninput="updateEp(' + saison + ',' + idx + ',\'embed\',this.value)">' +
+                        '<input type="text" value="' + durVal + '" placeholder="Durée (ex: 45min)" oninput="updateEp(' + saison + ',' + idx + ',\'duration\',this.value)">' +
                         '<button class="btn-ep-del" onclick="removeEpRow(' + saison + ',' + idx + ')">🗑️</button>' +
                         '</div>';
                 }).join('');
+            }
+
+            function syncSeasonRowsToData() {
+                var nb = parseInt(document.getElementById('serie-nb-saisons').value) || 1;
+                for (var sn = 1; sn <= nb; sn++) {
+                    if (seasonsData[sn]) {
+                        seasonsData[sn].forEach(function (ep, idx) {
+                            var row = document.getElementById('ep-row-' + sn + '-' + idx);
+                            if (!row) return;
+                            var inputs = row.querySelectorAll('input');
+                            if (inputs[0]) ep.num = parseInt(inputs[0].value) || idx + 1;
+                            if (inputs[1]) ep.title = inputs[1].value.trim();
+                            if (inputs[2]) ep.embed = inputs[2].value.trim();
+                            if (inputs[3]) ep.duration = inputs[3].value.trim();
+                        });
+                    }
+                }
             }
 
             window.toggleSeasonBlock = function (n) {
@@ -9426,42 +9506,13 @@
 
             window.addEpRow = function (saison) {
                 if (!seasonsData[saison]) seasonsData[saison] = [];
-                // Sync current DOM values into seasonsData before re-rendering
-                var nb = parseInt(document.getElementById('serie-nb-saisons').value) || 1;
-                for (var sn = 1; sn <= nb; sn++) {
-                    if (seasonsData[sn]) {
-                        seasonsData[sn].forEach(function (ep, idx) {
-                            var row = document.getElementById('ep-row-' + sn + '-' + idx);
-                            if (!row) return;
-                            var inputs = row.querySelectorAll('input');
-                            if (inputs[0]) ep.num = parseInt(inputs[0].value) || idx + 1;
-                            if (inputs[1]) ep.title = inputs[1].value;
-                            if (inputs[2]) ep.embed = inputs[2].value;
-                            if (inputs[3]) ep.duration = inputs[3].value;
-                        });
-                    }
-                }
+                syncSeasonRowsToData();
                 var num = seasonsData[saison].length + 1;
                 seasonsData[saison].push({ num: num, title: '', embed: '', duration: '' });
                 renderSeasonsBuilder();
             };
-
             window.removeEpRow = function (saison, idx) {
-                // Sync DOM before removing
-                var nb = parseInt(document.getElementById('serie-nb-saisons').value) || 1;
-                for (var sn = 1; sn <= nb; sn++) {
-                    if (seasonsData[sn]) {
-                        seasonsData[sn].forEach(function (ep, i) {
-                            var row = document.getElementById('ep-row-' + sn + '-' + i);
-                            if (!row) return;
-                            var inputs = row.querySelectorAll('input');
-                            if (inputs[0]) ep.num = parseInt(inputs[0].value) || i + 1;
-                            if (inputs[1]) ep.title = inputs[1].value;
-                            if (inputs[2]) ep.embed = inputs[2].value;
-                            if (inputs[3]) ep.duration = inputs[3].value;
-                        });
-                    }
-                }
+                syncSeasonRowsToData();
                 if (seasonsData[saison]) seasonsData[saison].splice(idx, 1);
                 renderSeasonsBuilder();
             };
@@ -9500,24 +9551,28 @@
                 function _doSaveSerie() {
                     setBtn('btn-save-serie', true, '💾 Enregistrement…');
 
-                    // ─── LECTURE DIRECTE DU DOM (fix principal) ───
+                    // Lecture DOM limitée au conteneur #seasons-builder
+                    var container = document.getElementById('seasons-builder');
                     var allEps = [];
-                    for (var sn = 1; sn <= nb; sn++) {
-                        var epIdx = 0;
-                        while (true) {
-                            var row = document.getElementById('ep-row-' + sn + '-' + epIdx);
-                            if (!row) break;
+                    if (container) {
+                        container.querySelectorAll('[id^="ep-row-"]').forEach(function(row) {
+                            // ID: ep-row-{saison}-{idx}
+                            var sn = parseInt(row.id.split('-')[2]);
+                            if (!sn || isNaN(sn)) return;
                             var inputs = row.querySelectorAll('input');
-                            var epNum = inputs[0] ? (parseInt(inputs[0].value) || epIdx + 1) : epIdx + 1;
+                            var epNum = inputs[0] ? (parseInt(inputs[0].value) || 1) : 1;
                             var epTit = inputs[1] ? inputs[1].value.trim() : '';
                             var epEmb = inputs[2] ? inputs[2].value.trim() : '';
                             var epDur = inputs[3] ? inputs[3].value.trim() : '';
                             if (epTit) {
                                 allEps.push({ saison: sn, numero: epNum, title: epTit, video_url: epEmb || null, duration: epDur || null });
                             }
-                            epIdx++;
-                        }
+                        });
                     }
+                    allEps.sort(function(a, b) { return (a.saison - b.saison) || (a.numero - b.numero); });
+
+                    // Vider le cache episodes pour forcer rechargement
+                    if (editId && window._epCache) delete window._epCache['ep_' + editId];
 
                     var uploaderName = currentUser ? ((currentUser.user_metadata && currentUser.user_metadata.username) || currentUser.email.split('@')[0]) : 'Inconnu';
                     var op = editId
@@ -9528,31 +9583,46 @@
                         if (res.error) { setBtn('btn-save-serie', false, '💾 Enregistrer la série'); toast('❌ Erreur : ' + res.error.message, true); return; }
                         var serieId = res.data[0].id;
 
-                        // Supprimer les anciens épisodes puis réinsérer proprement
-                        var deleteOp = sb.from('episodes').delete().eq('serie_id', serieId);
-                        deleteOp.then(function (delRes) {
-                            if (delRes.error) {
-                                // Ignorer l'erreur de delete si la table est vide pour cette série
+                        sb.from('episodes').delete().eq('serie_id', serieId).then(function () {
+                            var insertPromise = Promise.resolve();
+                            if (allEps.length > 0) {
+                                var formatted = allEps.map(function(e) { return Object.assign({}, e, { serie_id: serieId }); });
+                                var chunks = [];
+                                for (var i = 0; i < formatted.length; i += 15) {
+                                    chunks.push(formatted.slice(i, i + 15));
+                                }
+                                insertPromise = chunks.reduce(function(p, chunk) {
+                                    return p.then(function() {
+                                        return sb.from('episodes').insert(chunk).then(function(r) {
+                                            if (r.error) throw new Error(r.error.message);
+                                            return new Promise(function(resolve) { setTimeout(resolve, 100); });
+                                        });
+                                    });
+                                }, Promise.resolve());
                             }
-                            var insertOp = allEps.length > 0
-                                ? sb.from('episodes').insert(allEps.map(function (e) { return Object.assign({}, e, { serie_id: serieId }); }))
-                                : Promise.resolve({ error: null });
 
-                            insertOp.then(function (epRes) {
+                            insertPromise.then(function() {
                                 setBtn('btn-save-serie', false, '💾 Enregistrer la série');
-                                if (epRes && epRes.error) { toast('⚠️ Série sauvée mais erreur épisodes : ' + epRes.error.message, true); }
-                                else toast(editId ? '✅ Série modifiée avec ' + allEps.length + ' épisode(s) !' : '📺 Série ajoutée au catalogue !');
-                                // Retirer ancienne carte et recréer
+                                toast(editId ? '✅ Série modifiée avec ' + allEps.length + ' épisode(s) !' : '📺 Série ajoutée !');
+                                if (editId && window._epCache) delete window._epCache['ep_' + editId];
+                                
                                 if (editId) {
                                     var old = document.querySelector('[data-serie-id="' + editId + '"]');
                                     if (old) old.remove();
                                 }
                                 var s = res.data[0];
                                 var cardEps = allEps.map(function (e) { return Object.assign({}, e, { serie_id: serieId, embed: e.video_url || '' }); });
-                                addSerieCard({ id: s.id, title: s.title, cat: s.cat, emoji: s.emoji || '📺', badge: s.badge || 'serie', access: s.access || 'all', thumbUrl: s.thumb_url, bannerUrl: s.banner_url, description: s.description, nb_saisons: s.nb_saisons || 1 }, cardEps);
-                                applyVip(currentRole);
+                                if (window.addSerieCard) {
+                                    window.addSerieCard({ id: s.id, title: s.title, cat: s.cat, emoji: s.emoji || '📺', badge: s.badge || 'serie', access: s.access || 'all', thumbUrl: s.thumb_url, bannerUrl: s.banner_url, description: s.description, nb_saisons: s.nb_saisons || 1 }, cardEps);
+                                    if (window.applyVip) window.applyVip(window.currentRole);
+                                }
+                                
                                 window.hideSerieForm();
                                 loadSeriesList();
+                                applyFilters();
+                            }).catch(function(err) {
+                                setBtn('btn-save-serie', false, '💾 Enregistrer la série');
+                                toast('⚠️ Erreur épisodes : ' + err.message, true);
                             });
                         });
                     });
@@ -10835,8 +10905,9 @@
                 var firstEp = item.episodes && item.episodes.length > 0 ? item.episodes[0] : null;
                 var playBtn2 = document.createElement('button');
                 playBtn2.className = 'btn-play-detail';
+                playBtn2.id = 'detail-serie-playbtn';
                 playBtn2.disabled = !firstEp;
-                playBtn2.innerHTML = firstEp ? '▶&nbsp;Voir S1 E1' : '📭&nbsp;Pas encore disponible';
+                playBtn2.innerHTML = firstEp ? '▶&nbsp;Voir S1 E1' : '⏳&nbsp;Chargement...';
                 if (firstEp) {
                     playBtn2.onclick = function () {
                         checkAndPlay(function () {
@@ -10899,18 +10970,47 @@
                     renderDetailEpisodes(eps, 1, item);
                 }
 
+                function _activatePlayBtn() {
+                    var btn = document.getElementById('detail-serie-playbtn');
+                    if (!btn) return;
+                    var fp = item.episodes && item.episodes.length > 0 ? item.episodes[0] : null;
+                    btn.disabled = !fp;
+                    btn.innerHTML = fp ? '▶&nbsp;Voir S1 E1' : '📭&nbsp;Pas encore disponible';
+                    if (fp) {
+                        btn.onclick = function () {
+                            checkAndPlay(function () {
+                                window.closeDetailModal();
+                                window.openPlayer(null, item.title, item.cat, item.access, {
+                                    id: item.id, nb_saisons: item.nb_saisons || 1, episodes: item.episodes || []
+                                });
+                            }, btn, '▶&nbsp;Voir S1 E1');
+                        };
+                    }
+                }
+
                 if (item.episodes && item.episodes.length > 0) {
                     buildEpsUI();
+                    _activatePlayBtn();
                 } else {
-                    epsWrap.innerHTML = '<h4>📋 Épisodes</h4><div class="detail-ep-list"><div style="color:rgba(255,255,255,.5);padding:20px;text-align:center;">⏳ Chargement des épisodes...</div></div>';
-                    window.sb.from('episodes').select('*').eq('serie_id', item.id).order('saison').order('numero').then(function(res) {
-                        if (res.error) {
-                            epsWrap.innerHTML = '<h4>📋 Épisodes</h4><div class="detail-ep-list"><div style="color:#e74c3c;padding:20px;">❌ Erreur: ' + res.error.message + '</div></div>';
-                        } else {
-                            item.episodes = res.data || [];
-                            buildEpsUI();
-                        }
-                    });
+                    var _epCacheKey = 'ep_' + item.id;
+                    if (window._epCache && window._epCache[_epCacheKey]) {
+                        item.episodes = window._epCache[_epCacheKey];
+                        buildEpsUI();
+                        _activatePlayBtn();
+                    } else {
+                        epsWrap.innerHTML = '<h4>📋 Épisodes</h4><div class="detail-ep-list"><div style="color:rgba(255,255,255,.5);padding:20px;text-align:center;">⏳ Chargement...</div></div>';
+                        window.sb.from('episodes').select('id,saison,numero,title,video_url,duration,description').eq('serie_id', item.id).order('saison').order('numero').then(function(res) {
+                            if (res.error) {
+                                epsWrap.innerHTML = '<h4>📋 Épisodes</h4><div class="detail-ep-list"><div style="color:#e74c3c;padding:20px;">❌ Erreur: ' + res.error.message + '</div></div>';
+                            } else {
+                                item.episodes = res.data || [];
+                                if (!window._epCache) window._epCache = {};
+                                window._epCache[_epCacheKey] = item.episodes;
+                                buildEpsUI();
+                                _activatePlayBtn();
+                            }
+                        });
+                    }
                 }
             } else {
                 epsWrap.style.display = 'none';
@@ -12302,7 +12402,7 @@ body.theme-feu_artifice .aurora-bg .a3{background:#f1c40f;}
                 if (!window.sb) return;
                 
                 window.sb.from('films')
-                    .select('id,title,thumb_url,genre,created_at')
+                    .select('id,title,thumb_url,cat,created_at')
                     .order('created_at', { ascending: false })
                     .then(function (r) {
                         if (r.error) { console.error('initCategories films error', { status: r.status, error: r.error, message: (r.error && r.error.message), details: (r.error && r.error.details), hint: (r.error && r.error.hint) }); return; }
@@ -12490,7 +12590,7 @@ body.theme-feu_artifice .aurora-bg .a3{background:#f1c40f;}
                     window.sb.from('series').select('*').eq('id', id).single().then(function (r) {
                         if (!r.data) return;
                         var s = r.data;
-                        window.sb.from('episodes').select('*').eq('serie_id', id).order('saison').order('numero').then(function (epR) {
+                        window.sb.from('episodes').select('id,saison,numero,title,video_url,duration,description').eq('serie_id', id).order('saison').order('numero').then(function (epR) {
                             window.openDetailModal({ type: 'serie', title: s.title, description: s.description || '', thumb: s.thumb_url, banner: s.banner_url, emoji: s.emoji || '📺', badge: s.badge || 'serie', cat: s.cat, access: s.access, nb_saisons: s.nb_saisons || 1, episodes: epR.data || [], id: s.id });
                         });
                     });
@@ -12693,7 +12793,7 @@ body.theme-feu_artifice .aurora-bg .a3{background:#f1c40f;}
                     if (data.type === 'film' && data.embedCode) {
                         window.openPlayer(data.embedCode, data.title, data.cat, data.access, null);
                     } else if (data.type === 'serie') {
-                        window.sb.from('episodes').select('*').eq('serie_id', data.id).order('saison').order('numero').then(function (r) {
+                        window.sb.from('episodes').select('id,saison,numero,title,video_url,duration,description').eq('serie_id', data.id).order('saison').order('numero').then(function (r) {
                             window.openPlayer(null, data.title, data.cat, data.access, { id: data.id, nb_saisons: data.nb_saisons || 1, episodes: r.data || [] });
                         });
                     } else {
@@ -12705,7 +12805,7 @@ body.theme-feu_artifice .aurora-bg .a3{background:#f1c40f;}
                     if (data.type === 'film') {
                         window.openDetailModal({ type: 'film', title: data.title, description: data.description || '', thumb: data.thumb, banner: data.banner, emoji: data.emoji || '🎬', badge: data.badge, cat: data.cat, access: data.access, embedCode: data.embedCode, id: data.id });
                     } else {
-                        window.sb.from('episodes').select('*').eq('serie_id', data.id).order('saison').order('numero').then(function (r) {
+                        window.sb.from('episodes').select('id,saison,numero,title,video_url,duration,description').eq('serie_id', data.id).order('saison').order('numero').then(function (r) {
                             window.openDetailModal({ type: 'serie', title: data.title, description: data.description || '', thumb: data.thumb, banner: data.banner, emoji: data.emoji || '📺', badge: data.badge || 'serie', cat: data.cat, access: data.access, nb_saisons: data.nb_saisons || 1, episodes: r.data || [], id: data.id });
                         });
                     }
